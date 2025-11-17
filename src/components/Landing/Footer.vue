@@ -1,36 +1,37 @@
 <template>
   <footer class="footer">
-    <div class="footer-background">
-      <div class="footer-pattern"></div>
-    </div>
-
     <div class="footer-content">
       <!-- Sección Principal -->
       <div class="footer-main">
         <div class="footer-brand">
           <div class="footer-logo">
-            <div class="logo-icon">⚽</div>
+            <img src="../../assets/icons/logo.png" class="logo-icon">
             <div class="logo-text">
               <span class="club-name">Club Atlético</span>
               <span class="club-subname">Deportivo Acarigua</span>
             </div>
           </div>
           <p class="footer-description">
-            Más de 35 años formando atletas de élite y construyendo comunidad
-            a través del deporte en Acarigua y toda Venezuela.
+            "La Armadura de Dios"<br>
+            Asociación Civil - RIF: J-503114630<br>
+            Afiliada a la Asociación de Fútbol de Portuguesa
           </p>
           <div class="social-links">
-            <a href="#" class="social-link" aria-label="Facebook">
-              <i class="el-icon-facebook"></i>
+            <a href="mailto:clubatleticodeportivoacarigua@gmail.com" class="social-link" aria-label="Email">
+              <img src="../../assets/icons/email-icon.png" alt="Email" class="custom-icon">
             </a>
-            <a href="#" class="social-link" aria-label="Instagram">
-              <i class="el-icon-instagram"></i>
+            <a href="https://www.facebook.com/profile.php?id=100086449924024" class="social-link" aria-label="Facebook" target="_blank" rel="noopener">
+              <img src="../../assets/icons/facebook-icon.png" alt="Facebook" class="custom-icon">
             </a>
-            <a href="#" class="social-link" aria-label="Twitter">
-              <i class="el-icon-twitter"></i>
+            <a href="https://instagram.com/Deportivoacarigua_oficial" class="social-link" aria-label="Instagram" target="_blank" rel="noopener">
+              <img src="../../assets/icons/instagram-icon.png" alt="Instagram" class="custom-icon">
             </a>
-            <a href="#" class="social-link" aria-label="YouTube">
-              <i class="el-icon-video-play"></i>
+            <a href="https://www.google.com/maps/place/Universidad+Polit%C3%A9cnica+Territorial+de+Puerto+Cabello/@10.4578943,-68.0537897,17z/data=!4m6!3m5!1s0x8e8054018566d7a3:0x70a7d25b77dc46ff!8m2!3d10.4577097!4d-68.0527812!16s%2Fg%2F1hc63v0bq?entry=ttu&g_ep=EgoyMDI1MTExMi4wIKXMDSoASAFQAw%3D%3D" 
+              class="social-link" 
+              aria-label="Google Maps" 
+              target="_blank" 
+              rel="noopener">
+              <img src="../../assets/icons/maps-icon.png" alt="Google Maps" class="custom-icon">
             </a>
           </div>
         </div>
@@ -38,35 +39,11 @@
         <!-- Enlaces Rápidos -->
         <div class="footer-links">
           <div class="link-group">
-            <h3 class="link-group-title">El Club</h3>
+            <h3 class="link-group-title">Enlaces</h3>
             <ul class="link-list">
+              <li><a href="#inicio" class="footer-link">Inicio</a></li>
               <li><a href="#nosotros" class="footer-link">Nosotros</a></li>
-              <li><a href="#historia" class="footer-link">Nuestra Historia</a></li>
-              <li><a href="#directiva" class="footer-link">Directiva</a></li>
-              <li><a href="#instalaciones" class="footer-link">Instalaciones</a></li>
-              <li><a href="#logros" class="footer-link">Logros</a></li>
-            </ul>
-          </div>
-
-          <div class="link-group">
-            <h3 class="link-group-title">Deportes</h3>
-            <ul class="link-list">
-              <li><a href="#futbol" class="footer-link">Fútbol</a></li>
-              <li><a href="#baloncesto" class="footer-link">Baloncesto</a></li>
-              <li><a href="#beisbol" class="footer-link">Béisbol</a></li>
-              <li><a href="#tenis" class="footer-link">Tenis</a></li>
-              <li><a href="#atletismo" class="footer-link">Atletismo</a></li>
-            </ul>
-          </div>
-
-          <div class="link-group">
-            <h3 class="link-group-title">Programas</h3>
-            <ul class="link-list">
-              <li><a href="#escuelas" class="footer-link">Escuelas Deportivas</a></li>
-              <li><a href="#competencias" class="footer-link">Competencias</a></li>
-              <li><a href="#torneos" class="footer-link">Torneos Internos</a></li>
-              <li><a href="#clinicas" class="footer-link">Clínicas Deportivas</a></li>
-              <li><a href="#becas" class="footer-link">Programa de Becas</a></li>
+              <li><a href="#contacto" class="footer-link">Contacto</a></li>
             </ul>
           </div>
 
@@ -74,51 +51,26 @@
             <h3 class="link-group-title">Contacto</h3>
             <ul class="link-list">
               <li class="contact-item">
-                <i class="el-icon-location-information"></i>
-                <span>Av. Libertador, Acarigua 3301, Portuguesa</span>
+                <img src="../../assets/icons/maps-icon.png" alt="Ubicación" class="contact-icon">
+                <span>U.P.T.P Juan de Jesús Montilla<br>Acarigua, Portuguesa</span>
               </li>
               <li class="contact-item">
-                <i class="el-icon-phone"></i>
+                <img src="../../assets/icons/whatsapp-icon.png" alt="Whatsapp" class="contact-icon">
                 <span>+58 255-123-4567</span>
               </li>
               <li class="contact-item">
-                <i class="el-icon-message"></i>
-                <span>info@clubdeportivoacarigua.com</span>
+                <img src="../../assets/icons/email-icon.png" alt="Email" class="contact-icon">
+                <span>Clubatleticodeportivoacarigua@gmail.com</span>
               </li>
               <li class="contact-item">
-                <i class="el-icon-time"></i>
-                <span>Lun-Vie: 6:00 AM - 10:00 PM</span>
+                <img src="../../assets/icons/facebook-icon.png" alt="Facebook" class="contact-icon">
+                <span>Club Atlético Deportivo Acarigua</span>
+              </li>
+              <li class="contact-item">
+                <img src="../../assets/icons/instagram-icon.png" alt="Instagram" class="contact-icon">
+                <span>@Deportivoacarigua_oficial</span>
               </li>
             </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Newsletter -->
-      <div class="newsletter-section">
-        <div class="newsletter-content">
-          <div class="newsletter-text">
-            <h3 class="newsletter-title">Mantente Informado</h3>
-            <p class="newsletter-description">
-              Suscríbete para recibir noticias, resultados y eventos del club.
-            </p>
-          </div>
-          <div class="newsletter-form">
-            <el-input
-              v-model="email"
-              placeholder="Tu correo electrónico"
-              class="newsletter-input"
-            >
-              <template #append>
-                <el-button
-                  type="primary"
-                  class="subscribe-btn"
-                  @click="subscribeNewsletter"
-                >
-                  Suscribirse
-                </el-button>
-              </template>
-            </el-input>
           </div>
         </div>
       </div>
@@ -130,122 +82,43 @@
       <div class="footer-bottom">
         <div class="footer-copyright">
           <p>&copy; 2024 Club Atlético Deportivo Acarigua. Todos los derechos reservados.</p>
+          <p class="legal-info">Inscrito en el Ministerio del Poder Popular del Deporte</p>
         </div>
 
         <div class="footer-legal">
           <a href="#privacidad" class="legal-link">Política de Privacidad</a>
           <a href="#terminos" class="legal-link">Términos de Servicio</a>
-          <a href="#cookies" class="legal-link">Política de Cookies</a>
-        </div>
-
-        <div class="footer-badges">
-          <div class="badge certified">
-            <i class="el-icon-medal"></i>
-            <span>Club Certificado</span>
-          </div>
-          <div class="badge members">
-            <i class="el-icon-user-solid"></i>
-            <span>500+ Miembros</span>
-          </div>
         </div>
       </div>
-    </div>
-
-    <!-- Botón Flotante para Ir Arriba -->
-    <div
-      class="scroll-to-top"
-      :class="{ visible: showScrollTop }"
-      @click="scrollToTop"
-    >
-      <i class="el-icon-arrow-up"></i>
     </div>
   </footer>
 </template>
 
 <script>
 export default {
-  name: 'LandingFooter',
-  data() {
-    return {
-      email: '',
-      showScrollTop: false
-    }
-  },
-  mounted() {
-    window.addEventListener('scroll', this.handleScroll)
-  },
-  beforeDestroy() {
-    window.removeEventListener('scroll', this.handleScroll)
-  },
-  methods: {
-    subscribeNewsletter() {
-      if (this.email) {
-        this.$message({
-          message: '¡Gracias por suscribirte! Te hemos enviado un email de confirmación.',
-          type: 'success'
-        })
-        this.email = ''
-      } else {
-        this.$message({
-          message: 'Por favor ingresa tu correo electrónico.',
-          type: 'warning'
-        })
-      }
-    },
-    handleScroll() {
-      this.showScrollTop = window.scrollY > 500
-    },
-    scrollToTop() {
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      })
-    }
-  }
+  name: 'LandingFooter'
 }
 </script>
 
 <style scoped>
 .footer {
-  position: relative;
-  background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
-  color: white;
-  overflow: hidden;
-}
-
-.footer-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-}
-
-.footer-pattern {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image:
-    radial-gradient(circle at 25% 25%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 75% 75%, rgba(247, 147, 30, 0.1) 0%, transparent 50%);
+  background: var(--color-text-dark);
+  color: var(--color-background);
+  padding: 3rem 0 2rem;
 }
 
 .footer-content {
-  position: relative;
-  z-index: 2;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 4rem 2rem 2rem;
+  padding: 0 2rem;
 }
 
 /* Sección Principal */
 .footer-main {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 1fr;
   gap: 4rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 /* Brand Section */
@@ -261,14 +134,8 @@ export default {
 }
 
 .footer-logo .logo-icon {
-  font-size: 2.5rem;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border-radius: 8px;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 50px;
+  width: auto;
 }
 
 .footer-logo .logo-text {
@@ -290,8 +157,8 @@ export default {
 
 .footer-description {
   line-height: 1.6;
-  margin-bottom: 2rem;
   opacity: 0.8;
+  margin-bottom: 1.5rem;
 }
 
 .social-links {
@@ -313,14 +180,26 @@ export default {
 }
 
 .social-link:hover {
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  background: var(--color-primary);
   transform: translateY(-2px);
+}
+
+.custom-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  transition: all 0.3s ease;
+}
+
+.social-link:hover .custom-icon {
+  filter: brightness(0) invert(1);
 }
 
 /* Links Section */
 .footer-links {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
 }
 
@@ -328,7 +207,7 @@ export default {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
-  color: #ff6b35;
+  color: var(--color-primary);
 }
 
 .link-list {
@@ -345,12 +224,10 @@ export default {
   color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   transition: all 0.3s ease;
-  position: relative;
 }
 
 .footer-link:hover {
-  color: #ff6b35;
-  padding-left: 5px;
+  color: var(--color-primary);
 }
 
 .contact-item {
@@ -360,76 +237,30 @@ export default {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.contact-item i {
-  color: #ff6b35;
+.contact-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
   margin-top: 0.2rem;
   flex-shrink: 0;
-}
-
-/* Newsletter */
-.newsletter-section {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 15px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.newsletter-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 2rem;
-}
-
-.newsletter-text {
-  flex: 1;
-}
-
-.newsletter-title {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #ff6b35;
-}
-
-.newsletter-description {
+  filter: brightness(0) invert(1);
   opacity: 0.8;
-  margin: 0;
+  transition: all 0.3s ease;
 }
 
-.newsletter-form {
-  flex: 1;
-  max-width: 400px;
+.contact-item span {
+  margin-top: 0.2rem;
 }
 
-.newsletter-input {
-  border-radius: 25px;
-  overflow: hidden;
-}
-
-.newsletter-input :deep(.el-input__inner) {
-  border: none;
-  padding-left: 20px;
-}
-
-.subscribe-btn {
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border: none;
-  border-radius: 0 25px 25px 0;
-  padding: 12px 25px;
-  font-weight: 600;
-}
-
-.subscribe-btn:hover {
-  background: linear-gradient(135deg, #e55a2b, #e5841a);
+.contact-item:hover .contact-icon {
+  opacity: 1;
+  filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(320deg);
 }
 
 /* Footer Bottom */
 .footer-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background: rgba(255, 255, 255, 0.2);
   margin: 2rem 0;
 }
 
@@ -446,6 +277,12 @@ export default {
   font-size: 0.9rem;
 }
 
+.legal-info {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  margin-top: 0.5rem;
+}
+
 .footer-legal {
   display: flex;
   gap: 2rem;
@@ -459,70 +296,18 @@ export default {
 }
 
 .legal-link:hover {
-  color: #ff6b35;
-}
-
-.footer-badges {
-  display: flex;
-  gap: 1rem;
-}
-
-.badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.badge i {
-  color: #ff6b35;
-}
-
-/* Scroll to Top */
-.scroll-to-top {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(20px);
-  z-index: 1000;
-}
-
-.scroll-to-top.visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.scroll-to-top:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+  color: var(--color-primary);
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
+  .footer-content {
+    padding: 0 1rem;
+  }
+
   .footer-main {
     grid-template-columns: 1fr;
     gap: 3rem;
-  }
-
-  .footer-links {
-    grid-template-columns: repeat(2, 1fr);
   }
 
   .footer-brand {
@@ -536,22 +321,31 @@ export default {
 
   .social-links {
     justify-content: center;
-  }
-}
-
-@media (max-width: 768px) {
-  .footer-content {
-    padding: 3rem 1rem 1.5rem;
+    gap: 0.75rem;
   }
 
-  .newsletter-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 1.5rem;
+  .social-link {
+    width: 35px;
+    height: 35px;
   }
 
-  .newsletter-form {
-    max-width: 100%;
+  .custom-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .footer-links {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .contact-item {
+    gap: 0.75rem;
+  }
+
+  .contact-icon {
+    width: 16px;
+    height: 16px;
   }
 
   .footer-bottom {
@@ -563,26 +357,60 @@ export default {
     flex-direction: column;
     gap: 1rem;
   }
-
-  .footer-badges {
-    justify-content: center;
-  }
 }
 
 @media (max-width: 480px) {
-  .footer-links {
-    grid-template-columns: 1fr;
+  .footer {
+    padding: 2rem 0 1.5rem;
   }
 
-  .newsletter-section {
-    padding: 1.5rem;
+  .footer-logo .logo-text {
+    display: none;
   }
 
-  .scroll-to-top {
-    bottom: 1rem;
-    right: 1rem;
-    width: 45px;
-    height: 45px;
+  .social-links {
+    gap: 0.5rem;
+  }
+
+  .social-link {
+    width: 32px;
+    height: 32px;
+  }
+
+  .custom-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .contact-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    text-align: left;
+  }
+
+  .contact-icon {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .footer-content {
+    padding: 0 0.75rem;
+  }
+
+  .social-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .link-group-title {
+    font-size: 1rem;
+  }
+
+  .footer-link,
+  .contact-item span {
+    font-size: 0.85rem;
   }
 }
 </style>

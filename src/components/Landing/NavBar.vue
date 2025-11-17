@@ -1,11 +1,10 @@
 <template>
   <div class="navbar">
     <div class="navbar-container">
-      <!-- Logo y nombre del club -->
+      <!-- Logo -->
       <div class="navbar-brand">
         <div class="logo">
-          <!-- Puedes reemplazar esto con tu logo real -->
-          <div class="logo-icon">⚽</div>
+          <img src="../../assets/icons/logo.png" class="logo-icon">
           <div class="logo-text">
             <span class="club-name">Club Atlético</span>
             <span class="club-subname">Deportivo Acarigua</span>
@@ -18,18 +17,13 @@
         <nav class="nav-links">
           <a href="#inicio" class="nav-link">Inicio</a>
           <a href="#nosotros" class="nav-link">Nosotros</a>
-          <a href="#equipos" class="nav-link">Equipos</a>
-          <a href="#noticias" class="nav-link">Noticias</a>
           <a href="#contacto" class="nav-link">Contacto</a>
         </nav>
       </div>
 
-      <!-- Botones de acción -->
+      <!-- Botón de acción -->
       <div class="navbar-actions">
         <el-button class="login-btn" @click="goToLogin">Acceder</el-button>
-        <el-button type="primary" class="register-btn" @click="goToRegister">
-          Registrarse
-        </el-button>
 
         <!-- Menú móvil -->
         <div class="mobile-menu" @click="toggleMobileMenu">
@@ -42,14 +36,9 @@
     <div v-show="mobileMenuOpen" class="mobile-nav">
       <a href="#inicio" class="mobile-nav-link" @click="closeMobileMenu">Inicio</a>
       <a href="#nosotros" class="mobile-nav-link" @click="closeMobileMenu">Nosotros</a>
-      <a href="#equipos" class="mobile-nav-link" @click="closeMobileMenu">Equipos</a>
-      <a href="#noticias" class="mobile-nav-link" @click="closeMobileMenu">Noticias</a>
       <a href="#contacto" class="mobile-nav-link" @click="closeMobileMenu">Contacto</a>
       <div class="mobile-actions">
         <el-button class="mobile-login-btn" @click="goToLogin">Acceder</el-button>
-        <el-button type="primary" class="mobile-register-btn" @click="goToRegister">
-          Registrarse
-        </el-button>
       </div>
     </div>
   </div>
@@ -67,10 +56,6 @@ export default {
     goToLogin() {
       this.$router.push('/login')
     },
-    goToRegister() {
-      // Puedes crear una ruta de registro o redirigir al login
-      this.$router.push('/login?action=register')
-    },
     toggleMobileMenu() {
       this.mobileMenuOpen = !this.mobileMenuOpen
     },
@@ -79,7 +64,6 @@ export default {
     }
   },
   mounted() {
-    // Cerrar menú móvil al hacer resize
     window.addEventListener('resize', this.closeMobileMenu)
   },
   beforeDestroy() {
@@ -90,24 +74,23 @@ export default {
 
 <style scoped>
 .navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e8e8e8;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-text-light);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  transition: all 0.3s ease;
+  padding: 1rem 0;
 }
 
 .navbar-container {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem;
+  align-items: center;
+  padding: 0 2rem;
 }
 
 /* Logo y marca */
@@ -123,15 +106,8 @@ export default {
 }
 
 .logo-icon {
-  font-size: 2rem;
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border-radius: 8px;
-  width: 50px;
   height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+  width: auto;
 }
 
 .logo-text {
@@ -143,13 +119,14 @@ export default {
 .club-name {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1a365d;
+  color: var(--color-text-dark);
 }
 
 .club-subname {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #2d3748;
+  color: var(--color-text-dark);
+  opacity: 0.8;
 }
 
 /* Menú de navegación */
@@ -164,7 +141,7 @@ export default {
 }
 
 .nav-link {
-  color: #2d3748;
+  color: var(--color-text-dark);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
@@ -173,7 +150,7 @@ export default {
 }
 
 .nav-link:hover {
-  color: #ff6b35;
+  color: var(--color-primary);
 }
 
 .nav-link::after {
@@ -183,7 +160,7 @@ export default {
   left: 0;
   width: 0;
   height: 2px;
-  background: #ff6b35;
+  background: var(--color-primary);
   transition: width 0.3s ease;
 }
 
@@ -199,58 +176,45 @@ export default {
 }
 
 .login-btn {
-  border-color: #ff6b35;
-  color: #ff6b35;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
   font-weight: 500;
 }
 
 .login-btn:hover {
-  background-color: #fff5f0;
-  border-color: #f7931e;
-  color: #f7931e;
-}
-
-.register-btn {
-  background: linear-gradient(135deg, #ff6b35, #f7931e);
-  border: none;
-  font-weight: 500;
-}
-
-.register-btn:hover {
-  background: linear-gradient(135deg, #e55a2b, #e5841a);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  background-color: var(--color-primary);
+  color: var(--color-background);
 }
 
 /* Menú móvil */
 .mobile-menu {
   display: none;
   font-size: 1.5rem;
-  color: #2d3748;
+  color: var(--color-text-dark);
   cursor: pointer;
   padding: 0.5rem;
 }
 
 .mobile-nav {
   display: none;
-  background: white;
-  border-top: 1px solid #e8e8e8;
+  background: var(--color-background);
+  border-top: 1px solid var(--color-text-light);
   padding: 1rem 2rem;
   flex-direction: column;
   gap: 1rem;
 }
 
 .mobile-nav-link {
-  color: #2d3748;
+  color: var(--color-text-dark);
   text-decoration: none;
   font-weight: 500;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #f7f7f7;
+  border-bottom: 1px solid var(--color-text-light);
   transition: color 0.3s ease;
 }
 
 .mobile-nav-link:hover {
-  color: #ff6b35;
+  color: var(--color-primary);
 }
 
 .mobile-actions {
@@ -259,21 +223,31 @@ export default {
   gap: 0.75rem;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid var(--color-text-light);
+}
+
+.mobile-login-btn {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.mobile-login-btn:hover {
+  background-color: var(--color-primary);
+  color: var(--color-background);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .navbar-container {
-    padding: 1rem;
+    padding: 0 1rem;
   }
 
   .navbar-menu {
     display: none;
   }
 
-  .navbar-actions .login-btn,
-  .navbar-actions .register-btn {
+  .navbar-actions .login-btn {
     display: none;
   }
 
@@ -296,15 +270,7 @@ export default {
   }
 
   .logo-icon {
-    width: 40px;
     height: 40px;
-    font-size: 1.5rem;
   }
-}
-
-/* Efecto de scroll */
-.navbar.scrolled {
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 </style>
