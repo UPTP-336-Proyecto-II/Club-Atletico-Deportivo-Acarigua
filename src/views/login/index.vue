@@ -38,9 +38,9 @@
         >
           <el-form-item prop="username" class="form-item-custom">
             <div class="input-group">
-              <span class="input-icon" :class="{ 'input-icon-hidden': loginForm.username }">
+              <!-- <span class="input-icon" :class="{ 'input-icon-hidden': loginForm.username }">
                 <i class="el-icon-user" />
-              </span>
+              </span> -->
               <el-input
                 ref="username"
                 v-model="loginForm.username"
@@ -54,9 +54,9 @@
 
           <el-form-item prop="password" class="form-item-custom">
             <div class="input-group">
-              <span class="input-icon" :class="{ 'input-icon-hidden': loginForm.password }">
+              <!-- <span class="input-icon" :class="{ 'input-icon-hidden': loginForm.password }">
                 <i class="el-icon-lock" />
-              </span>
+              </span> -->
               <el-input
                 ref="password"
                 v-model="loginForm.password"
