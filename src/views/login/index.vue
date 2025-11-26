@@ -2,8 +2,8 @@
   <div class="login-container">
     <!-- Fondo con cancha de fútbol -->
     <div class="login-background">
-      <div class="soccer-field"></div>
-      <div class="gradient-overlay"></div>
+      <div class="soccer-field" />
+      <div class="gradient-overlay" />
     </div>
 
     <!-- Contenedor principal -->
@@ -251,7 +251,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.2) 49%, rgba(255,255,255,0.2) 51%, transparent 51%),
     linear-gradient(transparent 49%, rgba(255,255,255,0.2) 49%, rgba(255,255,255,0.2) 51%, transparent 51%),
     radial-gradient(circle at 50% 50%, transparent 69%, rgba(255,255,255,0.2) 69%, rgba(255,255,255,0.2) 71%, transparent 71%);
@@ -346,7 +346,7 @@ export default {
 }
 
 .welcome-section p {
-  color: var(--color-text-light);
+  color: #000;
   margin: 0;
   font-size: 0.9rem;
 }
@@ -572,7 +572,7 @@ export default {
 }
 
 .login-footer p {
-  color: var(--color-text-light);
+  color: #000;
   margin: 0;
   font-size: 0.85rem;
 }
@@ -752,7 +752,7 @@ export default {
   .input-group {
     margin-bottom: 0.75rem;
   }
-  
+
   .login-copyright-card {
     display: none;
   }

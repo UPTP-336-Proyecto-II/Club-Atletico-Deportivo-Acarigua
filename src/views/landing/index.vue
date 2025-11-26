@@ -1,10 +1,10 @@
 <template>
   <div class="landing-container">
     <!-- NavBar Component -->
-    <NavBar/>
+    <NavBar />
 
     <!-- Banner Component -->
-    <Banner/>
+    <Banner />
 
     <!-- Secciones de contenido -->
     <main class="main-content">
@@ -71,70 +71,17 @@
         </div>
       </section>
 
-      <!-- Sección Contacto -->
-      <section id="contacto" class="content-section contact-section">
-        <div class="section-content">
-          <h2>Contacto</h2>
-          <div class="contact-grid">
-            <div class="contact-info">
-              <div class="contact-item">
-                <i class="el-icon-location"></i>
-                <div>
-                  <h4>Ubicación</h4>
-                  <p>U.P.T.P Juan de Jesús Montilla<br>Acarigua, Estado Portuguesa</p>
-                </div>
-              </div>
-              <div class="contact-item">
-                <i class="el-icon-message"></i>
-                <div>
-                  <h4>Email</h4>
-                  <p>Clubatleticodeportivoacarigua@gmail.com</p>
-                </div>
-              </div>
-              <div class="contact-item">
-                <i class="el-icon-picture-outline"></i>
-                <div>
-                  <h4>Instagram</h4>
-                  <p>@Deportivoacarigua_oficial</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="contact-directiva">
-              <h3>Directiva</h3>
-              <div class="directiva-list">
-                <div class="directiva-item">
-                  <strong>Presidente:</strong>
-                  <span>0412-1556442</span>
-                </div>
-                <div class="directiva-item">
-                  <strong>Vicepresidente:</strong>
-                  <span>0424-5832335</span>
-                </div>
-                <div class="directiva-item">
-                  <strong>Secretaria:</strong>
-                  <span>0412-2623177</span>
-                </div>
-                <div class="directiva-item">
-                  <strong>Tesorero:</strong>
-                  <span>+57 312-4157710</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
 
     <!-- Footer Component -->
-    <Footer/>
+    <Footer />
   </div>
 </template>
 
 <script>
-import NavBar from '@/components/Landing/NavBar.vue';
-import Banner from '@/components/Landing/Banner.vue';
-import Footer from '@/components/Landing/Footer.vue';
+import NavBar from '@/components/Landing/NavBar.vue'
+import Banner from '@/components/Landing/Banner.vue'
+import Footer from '@/components/Landing/Footer.vue'
 
 export default {
   name: 'LandingPage',
@@ -255,82 +202,6 @@ export default {
   opacity: 0.8;
 }
 
-/* Estilos para la sección Contacto */
-.contact-section {
-  background: var(--color-text-dark) !important;
-  color: var(--color-background);
-}
-
-.contact-section h2 {
-  color: var(--color-background);
-  margin-bottom: 3rem;
-}
-
-.contact-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  text-align: left;
-}
-
-.contact-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.contact-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.contact-item i {
-  color: var(--color-primary);
-  font-size: 1.5rem;
-  margin-top: 0.25rem;
-}
-
-.contact-item h4 {
-  color: var(--color-primary);
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-}
-
-.contact-item p {
-  color: var(--color-text-light);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.contact-directiva h3 {
-  color: var(--color-primary);
-  margin-bottom: 1.5rem;
-  font-size: 1.3rem;
-}
-
-.directiva-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.directiva-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.directiva-item strong {
-  color: var(--color-background);
-}
-
-.directiva-item span {
-  color: var(--color-text-light);
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .content-section {
@@ -356,17 +227,6 @@ export default {
 
   .stat-number {
     font-size: 2rem;
-  }
-
-  .contact-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .directiva-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
   }
 }
 

@@ -26,57 +26,22 @@
             <a href="https://instagram.com/Deportivoacarigua_oficial" class="social-link" aria-label="Instagram" target="_blank" rel="noopener">
               <img src="../../assets/icons/instagram-icon.png" alt="Instagram" class="custom-icon">
             </a>
-            <a href="https://www.google.com/maps/place/Universidad+Polit%C3%A9cnica+Territorial+de+Puerto+Cabello/@10.4578943,-68.0537897,17z/data=!4m6!3m5!1s0x8e8054018566d7a3:0x70a7d25b77dc46ff!8m2!3d10.4577097!4d-68.0527812!16s%2Fg%2F1hc63v0bq?entry=ttu&g_ep=EgoyMDI1MTExMi4wIKXMDSoASAFQAw%3D%3D" 
-              class="social-link" 
-              aria-label="Google Maps" 
-              target="_blank" 
-              rel="noopener">
+            <a
+              href="https://www.google.com/maps/place/Universidad+Polit%C3%A9cnica+Territorial+de+Puerto+Cabello/@10.4578943,-68.0537897,17z/data=!4m6!3m5!1s0x8e8054018566d7a3:0x70a7d25b77dc46ff!8m2!3d10.4577097!4d-68.0527812!16s%2Fg%2F1hc63v0bq?entry=ttu&g_ep=EgoyMDI1MTExMi4wIKXMDSoASAFQAw%3D%3D"
+              class="social-link"
+              aria-label="Google Maps"
+              target="_blank"
+              rel="noopener"
+            >
               <img src="../../assets/icons/maps-icon.png" alt="Google Maps" class="custom-icon">
             </a>
           </div>
         </div>
 
-        <!-- Enlaces Rápidos -->
-        <div class="footer-links">
-          <div class="link-group">
-            <h3 class="link-group-title">Enlaces</h3>
-            <ul class="link-list">
-              <li><a href="#inicio" class="footer-link">Inicio</a></li>
-              <li><a href="#nosotros" class="footer-link">Nosotros</a></li>
-              <li><a href="#contacto" class="footer-link">Contacto</a></li>
-            </ul>
-          </div>
-
-          <div class="link-group">
-            <h3 class="link-group-title">Contacto</h3>
-            <ul class="link-list">
-              <li class="contact-item">
-                <img src="../../assets/icons/maps-icon.png" alt="Ubicación" class="contact-icon">
-                <span>U.P.T.P Juan de Jesús Montilla<br>Acarigua, Portuguesa</span>
-              </li>
-              <li class="contact-item">
-                <img src="../../assets/icons/whatsapp-icon.png" alt="Whatsapp" class="contact-icon">
-                <span>+58 255-123-4567</span>
-              </li>
-              <li class="contact-item">
-                <img src="../../assets/icons/email-icon.png" alt="Email" class="contact-icon">
-                <span>Clubatleticodeportivoacarigua@gmail.com</span>
-              </li>
-              <li class="contact-item">
-                <img src="../../assets/icons/facebook-icon.png" alt="Facebook" class="contact-icon">
-                <span>Club Atlético Deportivo Acarigua</span>
-              </li>
-              <li class="contact-item">
-                <img src="../../assets/icons/instagram-icon.png" alt="Instagram" class="contact-icon">
-                <span>@Deportivoacarigua_oficial</span>
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       <!-- Línea Separadora -->
-      <div class="footer-divider"></div>
+      <div class="footer-divider" />
 
       <!-- Pie Inferior -->
       <div class="footer-bottom">
@@ -196,66 +161,7 @@ export default {
   filter: brightness(0) invert(1);
 }
 
-/* Links Section */
-.footer-links {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.link-group-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--color-primary);
-}
-
-.link-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.link-list li {
-  margin-bottom: 0.75rem;
-}
-
-.footer-link {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.footer-link:hover {
-  color: var(--color-primary);
-}
-
-.contact-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.contact-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  margin-top: 0.2rem;
-  flex-shrink: 0;
-  filter: brightness(0) invert(1);
-  opacity: 0.8;
-  transition: all 0.3s ease;
-}
-
-.contact-item span {
-  margin-top: 0.2rem;
-}
-
-.contact-item:hover .contact-icon {
-  opacity: 1;
-  filter: brightness(0) invert(1) sepia(1) saturate(5) hue-rotate(320deg);
-}
+/* Contact card moderno */
 
 /* Footer Bottom */
 .footer-divider {
@@ -333,21 +239,6 @@ export default {
     width: 18px;
     height: 18px;
   }
-
-  .footer-links {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .contact-item {
-    gap: 0.75rem;
-  }
-
-  .contact-icon {
-    width: 16px;
-    height: 16px;
-  }
-
   .footer-bottom {
     flex-direction: column;
     text-align: center;
@@ -382,16 +273,6 @@ export default {
     height: 16px;
   }
 
-  .contact-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-    text-align: left;
-  }
-
-  .contact-icon {
-    margin-top: 0;
-  }
 }
 
 @media (max-width: 360px) {
@@ -404,13 +285,5 @@ export default {
     justify-content: center;
   }
 
-  .link-group-title {
-    font-size: 1rem;
-  }
-
-  .footer-link,
-  .contact-item span {
-    font-size: 0.85rem;
-  }
 }
 </style>
