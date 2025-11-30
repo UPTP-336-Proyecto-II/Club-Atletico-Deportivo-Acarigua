@@ -50,12 +50,9 @@ const actions = {
   generateRoutes({ commit }, roles) {
     return new Promise(resolve => {
       let accessedRoutes
-      // Roles del sistema: ADMIN, ENTRENADOR, USUARIO
-      if (roles.includes('ADMIN')) {
-        // Admin tiene acceso a todo
+      if (roles.includes('admin')) {
         accessedRoutes = asyncRoutes || []
       } else {
-        // Filtrar rutas según roles del usuario
         accessedRoutes = filterAsyncRoutes(asyncRoutes, roles)
       }
       commit('SET_ROUTES', accessedRoutes)
