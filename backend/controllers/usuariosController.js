@@ -1,4 +1,6 @@
 const pool = require('../config/database');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../middleware/auth');
 
 const getUsuarios = async (req, res) => {
   try {
@@ -39,20 +41,72 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    res.json({
-      message: 'Login exitoso',
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        apellido: user.apellido,
+    // Generar token JWT
+    const token = jwt.sign(
+      {
+        userId: user.id,
         email: user.email,
         rol: user.rol
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      data: {
+        token: token
       }
     });
 
   } catch (error) {
     console.error('Error en login:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+const getInfo = async (req, res) => {
+  try {
+    // El token ya fue verificado por el middleware
+    const userId = req.userId;
+
+    const [users] = await pool.execute(
+      'SELECT id, email, nombre, apellido, rol, telefono FROM usuarios WHERE id = ? AND activo = true',
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const user = users[0];
+
+    res.json({
+      data: {
+        roles: [user.rol],
+        name: `${user.nombre} ${user.apellido}`,
+        avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+        introduction: `${user.rol} del Club Deportivo Acarigua`
+      }
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo info del usuario:', error);
+    res.status(500).json({ error: 'Error al obtener información del usuario' });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    // En un sistema con tokens JWT, el logout se maneja en el cliente
+    // eliminando el token. Aquí solo confirmamos la acción.
+    res.json({
+      data: {
+        message: 'Logout exitoso'
+      }
+    });
+  } catch (error) {
+    console.error('Error en logout:', error);
+    res.status(500).json({ error: 'Error al cerrar sesión' });
   }
 };
 
@@ -75,9 +129,9 @@ const createUsuario = async (req, res) => {
       [email, password || '111111', nombre, apellido, rol || 'entrenador', telefono]
     );
 
-    res.status(201).json({ 
-      message: 'Usuario creado exitosamente', 
-      id: result.insertId 
+    res.status(201).json({
+      message: 'Usuario creado exitosamente',
+      id: result.insertId
     });
 
   } catch (error) {
@@ -89,5 +143,7 @@ const createUsuario = async (req, res) => {
 module.exports = {
   getUsuarios,
   login,
+  getInfo,
+  logout,
   createUsuario
 };
