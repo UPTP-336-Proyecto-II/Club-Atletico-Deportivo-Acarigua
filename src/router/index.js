@@ -7,6 +7,11 @@ Vue.use(Router)
 import Layout from '@/layout'
 
 /* Router Modules */
+import atletasRouter from './modules/atletas'
+import asistenciasRouter from './modules/asistencias'
+import pagosRouter from './modules/pagos'
+import saludRouter from './modules/salud'
+import configuracionRouter from './modules/configuracion'
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -93,6 +98,11 @@ export const constantRoutes = [
  * the routes that need to be dynamically loaded based on user roles
  */
 export const asyncRoutes = [
+  atletasRouter,
+  asistenciasRouter,
+  pagosRouter,
+  saludRouter,
+  configuracionRouter,
   // 404 fallback must stay last
   { path: '*', redirect: '/404', hidden: true }
 ]
