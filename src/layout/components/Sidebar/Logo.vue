@@ -24,8 +24,8 @@ export default {
   },
   data() {
     return {
-      title: 'Vue Element Admin',
-      logo: 'https://wpimg.wallstcn.com/69a1c46c-eb1c-4b46-8bd4-e9e686ef5251.png'
+      title: 'Club Atlético Deportivo Acarigua',
+      logo: require('@/assets/icons/logo.png') // Cambia esto a tu ruta real
     }
   }
 }
@@ -44,19 +44,25 @@ export default {
 .sidebar-logo-container {
   position: relative;
   width: 100%;
-  height: 50px;
-  line-height: 50px;
-  background: #2b2f3a;
+  height: 60px;
+  line-height: 60px;
+  background: rgba(0, 0, 0, 0.15); // Fondo oscuro para destacar
   text-align: center;
   overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
 
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
 
     & .sidebar-logo {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
       vertical-align: middle;
       margin-right: 12px;
     }
@@ -66,16 +72,37 @@ export default {
       margin: 0;
       color: #fff;
       font-weight: 600;
-      line-height: 50px;
-      font-size: 14px;
-      font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
+      line-height: 1.2;
+      font-size: 16px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       vertical-align: middle;
+      text-align: left;
+
+      // Estilo similar al navbar del home
+      .club-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        display: block;
+      }
+
+      .club-subname {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #fff;
+        opacity: 0.9;
+        display: block;
+      }
     }
   }
 
   &.collapse {
     .sidebar-logo {
-      margin-right: 0px;
+      margin-right: 0;
+    }
+
+    .sidebar-title {
+      display: none;
     }
   }
 }

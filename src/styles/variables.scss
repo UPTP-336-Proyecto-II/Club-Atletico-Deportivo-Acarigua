@@ -1,39 +1,37 @@
 :root {
   /* Rojo principal */
-  --color-primary:#E51D22;
+  --color-primary: #E51D22;
 
   /* Colores Secundarios/Texto/Fondos */
   --color-background: #ffffff;
   --color-text-dark: #000000;
   --color-text-light: #c7c7c7;
-
 }
 
 // base color
-$blue:#324157;
-$light-blue:#3A71A8;
-$red:#C03639;
+$blue: #324157;
+$light-blue: #3A71A8;
+$red: #C03639;
 $pink: #E65D6E;
 $green: #30B08F;
 $tiffany: #4AB7BD;
-$yellow:#FEC171;
+$yellow: #FEC171;
 $panGreen: #30B08F;
 
-// sidebar
-$menuText:#bfcbd9;
-$menuActiveText:#409EFF;
-$subMenuActiveText:#f4f4f5; // https://github.com/ElemeFE/element/issues/12951
+// sidebar - MODIFICADO PARA COINCIDIR CON EL HOME
+$menuText: rgba(255, 255, 255, 0.9); // Texto blanco con opacidad
+$menuActiveText: #ffffff; // Texto blanco cuando está activo
+$subMenuActiveText: rgba(255, 255, 255, 0.9); // Texto de submenús activo
 
-$menuBg:#304156;
-$menuHover:#263445;
+$menuBg: #E51D22; // Fondo rojo igual que navbar
+$menuHover: rgba(0, 0, 0, 0.15); // Hover con oscurecimiento
 
-$subMenuBg:#1f2d3d;
-$subMenuHover:#001528;
+$subMenuBg: rgba(0, 0, 0, 0.1); // Fondo oscuro para submenús
+$subMenuHover: rgba(0, 0, 0, 0.2); // Hover más oscuro para submenús
 
-$sideBarWidth: 210px;
+$sideBarWidth: 260px; // Ancho más amplio
 
 // the :export directive is the magic sauce for webpack
-// https://www.bluematador.com/blog/how-to-share-variables-between-js-and-sass
 :export {
   menuText: $menuText;
   menuActiveText: $menuActiveText;
