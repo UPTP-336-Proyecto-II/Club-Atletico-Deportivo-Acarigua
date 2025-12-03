@@ -17,10 +17,10 @@
       </router-link>
     </scroll-pane>
     <ul v-show="visible" :style="{left:left+'px',top:top+'px'}" class="contextmenu">
-      <li @click="refreshSelectedTag(selectedTag)">Refresh</li>
-      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">Close</li>
-      <li @click="closeOthersTags">Close Others</li>
-      <li @click="closeAllTags(selectedTag)">Close All</li>
+      <li @click="refreshSelectedTag(selectedTag)">Recargar</li>
+      <li v-if="!isAffix(selectedTag)" @click="closeSelectedTag(selectedTag)">Cerrar</li>
+      <li @click="closeOthersTags">Cerrar otros</li>
+      <li @click="closeAllTags(selectedTag)">Cerrar todos</li>
     </ul>
   </div>
 </template>
@@ -171,7 +171,7 @@ export default {
       }
     },
     openMenu(tag, e) {
-      const menuMinWidth = 105
+      const menuMinWidth = 120
       const offsetLeft = this.$el.getBoundingClientRect().left // container margin left
       const offsetWidth = this.$el.offsetWidth // container width
       const maxLeft = offsetWidth - menuMinWidth // left boundary
@@ -199,66 +199,102 @@ export default {
 
 <style lang="scss" scoped>
 .tags-view-container {
-  height: 34px;
+  height: 40px; /* Aumentada para mejor visibilidad */
   width: 100%;
-  background: #fff;
-  border-bottom: 1px solid #d8dce5;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, .12), 0 0 3px 0 rgba(0, 0, 0, .04);
+  background: #f5f7fa; /* Fondo claro en lugar de blanco */
+  border-bottom: 1px solid rgba(229, 29, 34, 0.1); /* Borde rojo sutil */
+  box-shadow: 0 2px 4px rgba(229, 29, 34, 0.05);
+
   .tags-view-wrapper {
+    /* Permitir scroll horizontal sin barra visible */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+
+    /* Ocultar scrollbar en Chrome, Safari y Opera */
+    &::-webkit-scrollbar {
+      display: none;
+    }
     .tags-view-item {
       display: inline-block;
       position: relative;
       cursor: pointer;
-      height: 26px;
-      line-height: 26px;
-      border: 1px solid #d8dce5;
-      color: #495060;
+      height: 32px; /* Aumentada */
+      line-height: 30px; /* Ajustada */
+      border: 1px solid rgba(229, 29, 34, 0.2); /* Borde rojo sutil */
+      color: #666;
       background: #fff;
-      padding: 0 8px;
-      font-size: 12px;
-      margin-left: 5px;
+      padding: 0 12px; /* Más padding */
+      font-size: 13px;
+      font-weight: 400;
+      margin-left: 6px;
       margin-top: 4px;
+      border-radius: 4px; /* Bordes redondeados */
+      transition: all 0.3s ease;
+
       &:first-of-type {
         margin-left: 15px;
       }
       &:last-of-type {
         margin-right: 15px;
       }
+
+      &:hover {
+        border-color: rgba(229, 29, 34, 0.4);
+        background: rgba(229, 29, 34, 0.02);
+        color: #333;
+      }
+
       &.active {
-        background-color: #42b983;
+        background-color: #E51D22; /* Rojo igual que navbar */
         color: #fff;
-        border-color: #42b983;
+        border-color: #E51D22;
+        font-weight: 500;
+
+        /* Eliminado el punto blanco anterior */
         &::before {
+          display: none; /* Eliminamos el punto blanco */
+        }
+
+        /* Nueva decoración: línea superior */
+        &::after {
           content: '';
-          background: #fff;
-          display: inline-block;
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          position: relative;
-          margin-right: 2px;
+          position: absolute;
+          top: -1px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: rgba(255, 255, 255, 0.8);
+          border-radius: 2px 2px 0 0;
         }
       }
     }
   }
+
   .contextmenu {
     margin: 0;
     background: #fff;
     z-index: 3000;
     position: absolute;
     list-style-type: none;
-    padding: 5px 0;
+    padding: 6px 0;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 400;
     color: #333;
-    box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, .3);
+    border: 1px solid rgba(229, 29, 34, 0.1);
+    box-shadow: 0 4px 12px rgba(229, 29, 34, 0.15);
+
     li {
       margin: 0;
-      padding: 7px 16px;
+      padding: 8px 20px;
       cursor: pointer;
+      transition: all 0.2s ease;
+
       &:hover {
-        background: #eee;
+        background: rgba(229, 29, 34, 0.08);
+        color: #E51D22;
       }
     }
   }
@@ -266,25 +302,41 @@ export default {
 </style>
 
 <style lang="scss">
-//reset element css of el-icon-close
+// Estilos para el botón de cerrar
 .tags-view-wrapper {
   .tags-view-item {
     .el-icon-close {
-      width: 16px;
-      height: 16px;
-      vertical-align: 2px;
+      width: 14px;
+      height: 14px;
+      vertical-align: middle;
       border-radius: 50%;
       text-align: center;
-      transition: all .3s cubic-bezier(.645, .045, .355, 1);
-      transform-origin: 100% 50%;
+      transition: all 0.3s ease;
+      transform-origin: center;
+      margin-left: 4px;
+      color: #999;
+
       &:before {
-        transform: scale(.6);
+        transform: scale(0.8);
         display: inline-block;
-        vertical-align: -3px;
+        vertical-align: -1px;
       }
+
       &:hover {
-        background-color: #b4bccc;
-        color: #fff;
+        background-color: rgba(229, 29, 34, 0.1);
+        color: #E51D22;
+        transform: scale(1.1);
+      }
+    }
+
+    &.active {
+      .el-icon-close {
+        color: rgba(255, 255, 255, 0.7);
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.2);
+          color: #fff;
+        }
       }
     }
   }

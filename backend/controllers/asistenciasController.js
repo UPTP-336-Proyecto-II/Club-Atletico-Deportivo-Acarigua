@@ -4,31 +4,33 @@ const pool = require('../config/database');
 const getAsistencias = async (req, res) => {
   try {
     const { fecha, atleta_id } = req.query;
-    
+
     let query = `
       SELECT a.*, 
-             atl.nombre as atleta_nombre, 
-             atl.apellido as atleta_apellido,
-             atl.categoria as atleta_categoria,
-             u.nombre as usuario_nombre
-      FROM asistencias a
-      LEFT JOIN atletas atl ON a.atleta_id = atl.id
-      LEFT JOIN usuarios u ON a.usuario_id = u.id
+             atl.NOMBRE as atleta_nombre, 
+             atl.APELLIDO as atleta_apellido,
+             c.NOMBRE_CATEGORIA as categoria_nombre,
+             p.NOMBRE as entrenador_nombre,
+             p.APELLIDO as entrenador_apellido
+      FROM control_asistencias a
+      LEFT JOIN atletas atl ON a.ATLETA_ID = atl.ATLETA_ID
+      LEFT JOIN categoria c ON atl.CATEGORIA_ID = c.CATEGORIA_ID
+      LEFT JOIN plantel p ON a.ENTRENADOR_ID = p.PLANTEL_ID
       WHERE 1=1
     `;
     const params = [];
 
     if (fecha) {
-      query += ' AND a.fecha = ?';
+      query += ' AND a.FECHA = ?';
       params.push(fecha);
     }
 
     if (atleta_id) {
-      query += ' AND a.atleta_id = ?';
+      query += ' AND a.ATLETA_ID = ?';
       params.push(atleta_id);
     }
 
-    query += ' ORDER BY a.fecha DESC, atl.nombre ASC';
+    query += ' ORDER BY a.FECHA DESC, atl.NOMBRE ASC';
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);
@@ -41,11 +43,11 @@ const getAsistencias = async (req, res) => {
 // Registrar asistencia
 const createAsistencia = async (req, res) => {
   try {
-    const { atleta_id, fecha, estado, observaciones, usuario_id } = req.body;
+    const { atleta_id, fecha, tipo_evento, estatus, observaciones, entrenador_id } = req.body;
 
     // Verificar si ya existe registro para ese atleta en esa fecha
     const [existing] = await pool.execute(
-      'SELECT id FROM asistencias WHERE atleta_id = ? AND fecha = ?',
+      'SELECT ASISTENCIA_ID FROM control_asistencias WHERE ATLETA_ID = ? AND FECHA = ?',
       [atleta_id, fecha]
     );
 
@@ -54,15 +56,15 @@ const createAsistencia = async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO asistencias 
-       (atleta_id, fecha, estado, observaciones, usuario_id) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [atleta_id, fecha, estado || 'presente', observaciones, usuario_id]
+      `INSERT INTO control_asistencias 
+       (ATLETA_ID, FECHA, TIPO_EVENTO, ESTATUS, OBSERVACIONES, ENTRENADOR_ID) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [atleta_id, fecha, tipo_evento || 'ENTRENAMIENTO', estatus || 'PRESENTE', observaciones, entrenador_id]
     );
 
-    res.status(201).json({ 
-      message: 'Asistencia registrada exitosamente', 
-      id: result.insertId 
+    res.status(201).json({
+      message: 'Asistencia registrada exitosamente',
+      id: result.insertId
     });
 
   } catch (error) {
@@ -75,17 +77,18 @@ const createAsistencia = async (req, res) => {
 const getAsistenciasByFecha = async (req, res) => {
   try {
     const { fecha } = req.params;
-    
+
     const [rows] = await pool.execute(
       `SELECT a.*, 
-              atl.nombre as atleta_nombre, 
-              atl.apellido as atleta_apellido,
-              atl.categoria as atleta_categoria,
-              TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad
-       FROM asistencias a
-       LEFT JOIN atletas atl ON a.atleta_id = atl.id
-       WHERE a.fecha = ? AND atl.activo = true
-       ORDER BY atl.nombre ASC`,
+              atl.NOMBRE as atleta_nombre, 
+              atl.APELLIDO as atleta_apellido,
+              c.NOMBRE_CATEGORIA as categoria_nombre,
+              TIMESTAMPDIFF(YEAR, atl.FECHA_NACIMIENTO, CURDATE()) as edad
+       FROM control_asistencias a
+       LEFT JOIN atletas atl ON a.ATLETA_ID = atl.ATLETA_ID
+       LEFT JOIN categoria c ON atl.CATEGORIA_ID = c.CATEGORIA_ID
+       WHERE a.FECHA = ? AND atl.ESTATUS IN ('ACTIVO', 'LESIONADO')
+       ORDER BY atl.NOMBRE ASC`,
       [fecha]
     );
 
@@ -100,11 +103,11 @@ const getAsistenciasByFecha = async (req, res) => {
 const updateAsistencia = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado, observaciones } = req.body;
+    const { estatus, observaciones } = req.body;
 
     const [result] = await pool.execute(
-      'UPDATE asistencias SET estado = ?, observaciones = ? WHERE id = ?',
-      [estado, observaciones, id]
+      'UPDATE control_asistencias SET ESTATUS = ?, OBSERVACIONES = ? WHERE ASISTENCIA_ID = ?',
+      [estatus, observaciones, id]
     );
 
     if (result.affectedRows === 0) {

@@ -5,7 +5,7 @@
 </template>
 
 <script>
-const tagAndTagSpacing = 4 // tagAndTagSpacing
+const tagAndTagSpacing = 6 // Aumentado el espaciado
 
 export default {
   name: 'ScrollPane',
@@ -82,12 +82,22 @@ export default {
   position: relative;
   overflow: hidden;
   width: 100%;
+
   ::v-deep {
+    /* OCULTAR COMPLETAMENTE LA BARRA DE SCROLL */
     .el-scrollbar__bar {
-      bottom: 0px;
+      display: none !important; /* Esto oculta la barra */
     }
+
     .el-scrollbar__wrap {
       height: 49px;
+      padding-bottom: 0; /* Eliminar padding para scrollbar */
+      overflow-x: auto !important; /* Permitir scroll horizontal */
+      overflow-y: hidden !important; /* Ocultar scroll vertical */
+    }
+
+    .el-scrollbar__view {
+      padding: 0 2px;
     }
   }
 }

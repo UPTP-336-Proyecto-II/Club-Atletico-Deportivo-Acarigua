@@ -25,17 +25,24 @@ export default {
     }
 
     if (title) {
-      vnodes.push(<span slot='title'>{(title)}</span>)
+      vnodes.push(<span slot='title' class='menu-item-text'>{title}</span>)
     }
     return vnodes
   }
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .sub-el-icon {
   color: currentColor;
   width: 1em;
   height: 1em;
+  vertical-align: -0.15em;
+}
+
+// Estilos para el texto del menú
+.menu-item-text {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 0.3px;
 }
 </style>

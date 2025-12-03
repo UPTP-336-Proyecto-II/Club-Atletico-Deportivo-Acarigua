@@ -1,5 +1,4 @@
 #app {
-
   .main-container {
     min-height: 100%;
     transition: margin-left .28s;
@@ -19,6 +18,7 @@
     left: 0;
     z-index: 1001;
     overflow: hidden;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); // Sombra para profundidad
 
     // reset element-ui css
     .horizontal-collapse-transition {
@@ -39,7 +39,7 @@
 
     &.has-logo {
       .el-scrollbar {
-        height: calc(100% - 50px);
+        height: calc(100% - 60px);
       }
     }
 
@@ -55,49 +55,84 @@
 
     .svg-icon {
       margin-right: 16px;
+      font-size: 18px;
     }
 
     .sub-el-icon {
       margin-right: 12px;
       margin-left: -2px;
+      font-size: 16px;
     }
 
     .el-menu {
       border: none;
       height: 100%;
       width: 100% !important;
+      background-color: transparent !important;
     }
 
-    // menu hover
+    // menu hover - ESTILOS MODIFICADOS
     .submenu-title-noDropdown,
     .el-submenu__title {
+      height: 48px;
+      line-height: 48px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+
       &:hover {
         background-color: $menuHover !important;
       }
     }
 
     .is-active>.el-submenu__title {
-      color: $subMenuActiveText !important;
+      color: $menuActiveText !important;
+      font-weight: 600;
     }
 
     & .nest-menu .el-submenu>.el-submenu__title,
     & .el-submenu .el-menu-item {
       min-width: $sideBarWidth !important;
       background-color: $subMenuBg !important;
+      transition: all 0.3s ease;
 
       &:hover {
         background-color: $subMenuHover !important;
+      }
+    }
+
+    // Estilo para items activos
+    .el-menu-item {
+      height: 48px;
+      line-height: 48px;
+      font-size: 14px;
+
+      &.is-active {
+        background-color: rgba(0, 0, 0, 0.15) !important;
+        color: $menuActiveText !important;
+        font-weight: 600;
+        position: relative;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background-color: white;
+        }
       }
     }
   }
 
   .hideSidebar {
     .sidebar-container {
-      width: 54px !important;
+      width: 60px !important;
     }
 
     .main-container {
-      margin-left: 54px;
+      margin-left: 60px;
     }
 
     .submenu-title-noDropdown {
@@ -191,6 +226,7 @@
     .svg-icon {
       margin-right: 16px;
     }
+
     .sub-el-icon {
       margin-right: 12px;
       margin-left: -2px;
@@ -200,7 +236,6 @@
   .nest-menu .el-submenu>.el-submenu__title,
   .el-menu-item {
     &:hover {
-      // you can use $subMenuHover
       background-color: $menuHover !important;
     }
   }
@@ -209,9 +244,10 @@
   >.el-menu--popup {
     max-height: 100vh;
     overflow-y: auto;
+    background-color: $menuBg !important;
 
     &::-webkit-scrollbar-track-piece {
-      background: #d3dce6;
+      background: rgba(255, 255, 255, 0.1);
     }
 
     &::-webkit-scrollbar {
@@ -219,7 +255,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #99a9bf;
+      background: rgba(255, 255, 255, 0.3);
       border-radius: 20px;
     }
   }

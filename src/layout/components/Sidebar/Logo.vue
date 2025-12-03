@@ -1,14 +1,17 @@
 <template>
-  <div class="sidebar-logo-container" :class="{'collapse':collapse}">
+  <div class="sidebar-logo-container" :class="{'collapse':collapse}" @click="toggleSideBar">
     <transition name="sidebarLogoFade">
-      <router-link v-if="collapse" key="collapse" class="sidebar-logo-link" to="/">
+      <div v-if="collapse" key="collapse" class="sidebar-logo-link">
         <img v-if="logo" :src="logo" class="sidebar-logo">
         <h1 v-else class="sidebar-title">{{ title }} </h1>
-      </router-link>
-      <router-link v-else key="expand" class="sidebar-logo-link" to="/">
+      </div>
+      <div v-else key="expand" class="sidebar-logo-link">
         <img v-if="logo" :src="logo" class="sidebar-logo">
-        <h1 class="sidebar-title">{{ title }} </h1>
-      </router-link>
+        <h1 class="sidebar-title">
+          <span class="club-name">Club Atlético</span>
+          <span class="club-subname">Deportivo Acarigua</span>
+        </h1>
+      </div>
     </transition>
   </div>
 </template>
@@ -24,8 +27,13 @@ export default {
   },
   data() {
     return {
-      title: 'Vue Element Admin',
-      logo: 'https://wpimg.wallstcn.com/69a1c46c-eb1c-4b46-8bd4-e9e686ef5251.png'
+      title: 'Club Atlético Deportivo Acarigua',
+      logo: require('@/assets/icons/logo.png')
+    }
+  },
+  methods: {
+    toggleSideBar() {
+      this.$store.dispatch('app/toggleSideBar')
     }
   }
 }
@@ -46,37 +54,76 @@ export default {
   width: 100%;
   height: 50px;
   line-height: 50px;
-  background: #2b2f3a;
+  background: rgba(0, 0, 0, 0.15);
   text-align: center;
   overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: background 0.3s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
 
   & .sidebar-logo-link {
     height: 100%;
     width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
 
     & .sidebar-logo {
       width: 32px;
       height: 32px;
       vertical-align: middle;
       margin-right: 12px;
+      transition: transform 0.3s ease;
     }
 
     & .sidebar-title {
-      display: inline-block;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       margin: 0;
       color: #fff;
       font-weight: 600;
-      line-height: 50px;
+      line-height: 1.2;
       font-size: 14px;
       font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
       vertical-align: middle;
+      text-align: left;
+      flex-grow: 1;
+
+      .club-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .club-subname {
+        font-size: 12px;
+        font-weight: 500;
+        color: #fff;
+        opacity: 0.9;
+        display: block;
+      }
     }
   }
 
   &.collapse {
     .sidebar-logo {
-      margin-right: 0px;
+      margin-right: 0;
     }
+
+    .sidebar-title {
+      display: none;
+    }
+  }
+
+  &:hover .sidebar-logo {
+    transform: scale(1.1);
   }
 }
 </style>

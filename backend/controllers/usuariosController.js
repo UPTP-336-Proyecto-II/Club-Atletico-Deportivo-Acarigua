@@ -1,9 +1,12 @@
 const pool = require('../config/database');
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../middleware/auth');
 
 const getUsuarios = async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      'SELECT id, email, nombre, apellido, rol, telefono, activo, created_at FROM usuarios WHERE activo = true ORDER BY created_at DESC'
+      'SELECT USUARIO_ID, EMAIL, ROL, ESTATUS, CREATED_AT FROM usuarios WHERE ESTATUS = ? ORDER BY CREATED_AT DESC',
+      ['ACTIVO']
     );
     res.json(rows);
   } catch (error) {
@@ -22,8 +25,8 @@ const login = async (req, res) => {
 
     // Buscar usuario en la base de datos
     const [users] = await pool.execute(
-      'SELECT * FROM usuarios WHERE email = ? AND activo = true',
-      [email]
+      'SELECT * FROM usuarios WHERE EMAIL = ? AND ESTATUS = ?',
+      [email, 'ACTIVO']
     );
 
     if (users.length === 0) {
@@ -32,21 +35,31 @@ const login = async (req, res) => {
 
     const user = users[0];
 
-    // Verificar contraseña (simple para desarrollo - sin hash)
-    const validPassword = password === '111111';
-
-    if (!validPassword) {
+    // Verificar contraseña (comparación directa - sin hash para desarrollo)
+    if (password !== user.PASSWORD) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
+    // Generar token JWT
+    const token = jwt.sign(
+      {
+        userId: user.USUARIO_ID,
+        email: user.EMAIL,
+        rol: user.ROL
+      },
+      JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    // Guardar token en la base de datos
+    await pool.execute(
+      'UPDATE usuarios SET TOKEN = ?, ULTIMO_ACCESO = NOW() WHERE USUARIO_ID = ?',
+      [token, user.USUARIO_ID]
+    );
+
     res.json({
-      message: 'Login exitoso',
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        apellido: user.apellido,
-        email: user.email,
-        rol: user.rol
+      data: {
+        token: token
       }
     });
 
@@ -56,13 +69,65 @@ const login = async (req, res) => {
   }
 };
 
+const getInfo = async (req, res) => {
+  try {
+    // El token ya fue verificado por el middleware
+    const userId = req.userId;
+
+    const [users] = await pool.execute(
+      'SELECT USUARIO_ID, EMAIL, ROL FROM usuarios WHERE USUARIO_ID = ? AND ESTATUS = ?',
+      [userId, 'ACTIVO']
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    const user = users[0];
+
+    res.json({
+      data: {
+        roles: [user.ROL],
+        name: user.EMAIL, // Usamos email como nombre ya que no hay nombre/apellido
+        avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+        introduction: `${user.ROL} del Club Atlético Deportivo Acarigua`
+      }
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo info del usuario:', error);
+    res.status(500).json({ error: 'Error al obtener información del usuario' });
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    // Limpiar el token de la base de datos
+    const userId = req.userId;
+
+    await pool.execute(
+      'UPDATE usuarios SET TOKEN = NULL WHERE USUARIO_ID = ?',
+      [userId]
+    );
+
+    res.json({
+      data: {
+        message: 'Logout exitoso'
+      }
+    });
+  } catch (error) {
+    console.error('Error en logout:', error);
+    res.status(500).json({ error: 'Error al cerrar sesión' });
+  }
+};
+
 const createUsuario = async (req, res) => {
   try {
-    const { email, password, nombre, apellido, rol, telefono } = req.body;
+    const { email, password, rol } = req.body;
 
     // Verificar si el email ya existe
     const [existing] = await pool.execute(
-      'SELECT id FROM usuarios WHERE email = ?',
+      'SELECT USUARIO_ID FROM usuarios WHERE EMAIL = ?',
       [email]
     );
 
@@ -71,13 +136,13 @@ const createUsuario = async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      'INSERT INTO usuarios (email, password, nombre, apellido, rol, telefono) VALUES (?, ?, ?, ?, ?, ?)',
-      [email, password || '111111', nombre, apellido, rol || 'entrenador', telefono]
+      'INSERT INTO usuarios (EMAIL, PASSWORD, ROL) VALUES (?, ?, ?)',
+      [email, password || '123456', rol || 'USUARIO']
     );
 
-    res.status(201).json({ 
-      message: 'Usuario creado exitosamente', 
-      id: result.insertId 
+    res.status(201).json({
+      message: 'Usuario creado exitosamente',
+      id: result.insertId
     });
 
   } catch (error) {
@@ -89,5 +154,7 @@ const createUsuario = async (req, res) => {
 module.exports = {
   getUsuarios,
   login,
+  getInfo,
+  logout,
   createUsuario
 };

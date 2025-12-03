@@ -4,10 +4,14 @@ const getAtletas = async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT a.*, 
-              TIMESTAMPDIFF(YEAR, a.fecha_nacimiento, CURDATE()) as edad
+              TIMESTAMPDIFF(YEAR, a.FECHA_NACIMIENTO, CURDATE()) as edad,
+              c.NOMBRE_CATEGORIA as categoria_nombre,
+              t.NOMBRE_COMPLETO as tutor_nombre
        FROM atletas a 
-       WHERE a.activo = true 
-       ORDER BY a.created_at DESC`
+       LEFT JOIN categoria c ON a.CATEGORIA_ID = c.CATEGORIA_ID
+       LEFT JOIN tutor t ON a.TUTOR_ID = t.TUTOR_ID
+       WHERE a.ESTATUS IN ('ACTIVO', 'LESIONADO')
+       ORDER BY a.CREATED_AT DESC`
     );
     res.json(rows);
   } catch (error) {
@@ -21,9 +25,14 @@ const getAtletaById = async (req, res) => {
     const { id } = req.params;
     const [rows] = await pool.execute(
       `SELECT a.*, 
-              TIMESTAMPDIFF(YEAR, a.fecha_nacimiento, CURDATE()) as edad
+              TIMESTAMPDIFF(YEAR, a.FECHA_NACIMIENTO, CURDATE()) as edad,
+              c.NOMBRE_CATEGORIA as categoria_nombre,
+              t.NOMBRE_COMPLETO as tutor_nombre,
+              t.TELEFONO as tutor_telefono
        FROM atletas a 
-       WHERE a.id = ? AND a.activo = true`,
+       LEFT JOIN categoria c ON a.CATEGORIA_ID = c.CATEGORIA_ID
+       LEFT JOIN tutor t ON a.TUTOR_ID = t.TUTOR_ID
+       WHERE a.ATLETA_ID = ?`,
       [id]
     );
 
@@ -40,48 +49,32 @@ const getAtletaById = async (req, res) => {
 
 const createAtleta = async (req, res) => {
   try {
-    const { 
-      cedula, 
-      nombre, 
-      apellido, 
-      fecha_nacimiento, 
-      genero, 
-      categoria, 
-      telefono, 
-      email, 
+    const {
+      nombre,
+      apellido,
+      telefono,
       direccion,
-      observaciones_medicas 
+      fecha_nacimiento,
+      posicion_de_juego,
+      categoria_id,
+      tutor_id,
+      estatus
     } = req.body;
-
-    // Verificar si la cédula ya existe
-    const [existing] = await pool.execute(
-      'SELECT id FROM atletas WHERE cedula = ?',
-      [cedula]
-    );
-
-    if (existing.length > 0) {
-      return res.status(400).json({ error: 'La cédula ya está registrada' });
-    }
 
     const [result] = await pool.execute(
       `INSERT INTO atletas 
-       (cedula, nombre, apellido, fecha_nacimiento, genero, categoria, telefono, email, direccion, observaciones_medicas, fecha_ingreso) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURDATE())`,
-      [cedula, nombre, apellido, fecha_nacimiento, genero, categoria, telefono, email, direccion, observaciones_medicas]
+       (NOMBRE, APELLIDO, TELEFONO, DIRECCION, FECHA_NACIMIENTO, POSICION_DE_JUEGO, CATEGORIA_ID, TUTOR_ID, ESTATUS) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombre, apellido, telefono, direccion, fecha_nacimiento, posicion_de_juego, categoria_id, tutor_id, estatus || 'ACTIVO']
     );
 
-    res.status(201).json({ 
-      message: 'Atleta creado exitosamente', 
-      id: result.insertId 
+    res.status(201).json({
+      message: 'Atleta creado exitosamente',
+      id: result.insertId
     });
 
   } catch (error) {
     console.error('Error creando atleta:', error);
-    
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(400).json({ error: 'La cédula ya está registrada' });
-    }
-    
     res.status(500).json({ error: 'Error al crear atleta' });
   }
 };
@@ -89,18 +82,24 @@ const createAtleta = async (req, res) => {
 const updateAtleta = async (req, res) => {
   try {
     const { id } = req.params;
-    const { 
-      nombre, apellido, fecha_nacimiento, genero, categoria, 
-      telefono, email, direccion, observaciones_medicas 
+    const {
+      nombre,
+      apellido,
+      telefono,
+      direccion,
+      fecha_nacimiento,
+      posicion_de_juego,
+      categoria_id,
+      tutor_id,
+      estatus
     } = req.body;
 
     const [result] = await pool.execute(
       `UPDATE atletas 
-       SET nombre = ?, apellido = ?, fecha_nacimiento = ?, genero = ?, categoria = ?,
-           telefono = ?, email = ?, direccion = ?, observaciones_medicas = ?
-       WHERE id = ?`,
-      [nombre, apellido, fecha_nacimiento, genero, categoria, 
-       telefono, email, direccion, observaciones_medicas, id]
+       SET NOMBRE = ?, APELLIDO = ?, TELEFONO = ?, DIRECCION = ?, FECHA_NACIMIENTO = ?, 
+           POSICION_DE_JUEGO = ?, CATEGORIA_ID = ?, TUTOR_ID = ?, ESTATUS = ?
+       WHERE ATLETA_ID = ?`,
+      [nombre, apellido, telefono, direccion, fecha_nacimiento, posicion_de_juego, categoria_id, tutor_id, estatus, id]
     );
 
     if (result.affectedRows === 0) {
@@ -119,8 +118,8 @@ const deleteAtleta = async (req, res) => {
     const { id } = req.params;
 
     const [result] = await pool.execute(
-      'UPDATE atletas SET activo = false WHERE id = ?',
-      [id]
+      'UPDATE atletas SET ESTATUS = ? WHERE ATLETA_ID = ?',
+      ['INACTIVO', id]
     );
 
     if (result.affectedRows === 0) {

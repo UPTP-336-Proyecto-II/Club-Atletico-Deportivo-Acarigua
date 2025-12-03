@@ -3,33 +3,27 @@ const pool = require('../config/database');
 // Obtener todos los tests
 const getTests = async (req, res) => {
   try {
-    const { atleta_id, tipo_test } = req.query;
-    
+    const { atleta_id } = req.query;
+
     let query = `
       SELECT t.*, 
-             atl.nombre as atleta_nombre, 
-             atl.apellido as atleta_apellido,
-             atl.categoria as atleta_categoria,
-             TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad,
-             u.nombre as usuario_nombre
-      FROM tests_rendimiento t
-      LEFT JOIN atletas atl ON t.atleta_id = atl.id
-      LEFT JOIN usuarios u ON t.usuario_id = u.id
+             atl.NOMBRE as atleta_nombre, 
+             atl.APELLIDO as atleta_apellido,
+             c.NOMBRE_CATEGORIA as categoria_nombre,
+             TIMESTAMPDIFF(YEAR, atl.FECHA_NACIMIENTO, CURDATE()) as edad
+      FROM test_de_rendimiento t
+      LEFT JOIN atletas atl ON t.ATLETA_ID = atl.ATLETA_ID
+      LEFT JOIN categoria c ON atl.CATEGORIA_ID = c.CATEGORIA_ID
       WHERE 1=1
     `;
     const params = [];
 
     if (atleta_id) {
-      query += ' AND t.atleta_id = ?';
+      query += ' AND t.ATLETA_ID = ?';
       params.push(atleta_id);
     }
 
-    if (tipo_test) {
-      query += ' AND t.tipo_test = ?';
-      params.push(tipo_test);
-    }
-
-    query += ' ORDER BY t.fecha_test DESC, atl.nombre ASC';
+    query += ' ORDER BY t.FECHA_TEST DESC, atl.NOMBRE ASC';
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);
@@ -43,13 +37,13 @@ const getTests = async (req, res) => {
 const getTestsByAtleta = async (req, res) => {
   try {
     const { atleta_id } = req.params;
-    
+
     const [rows] = await pool.execute(
       `SELECT t.*
-       FROM tests_rendimiento t
-       LEFT JOIN atletas atl ON t.atleta_id = atl.id
-       WHERE t.atleta_id = ? AND atl.activo = true
-       ORDER BY t.fecha_test DESC, t.tipo_test ASC`,
+       FROM test_de_rendimiento t
+       LEFT JOIN atletas atl ON t.ATLETA_ID = atl.ATLETA_ID
+       WHERE t.ATLETA_ID = ? AND atl.ESTATUS IN ('ACTIVO', 'LESIONADO')
+       ORDER BY t.FECHA_TEST DESC`,
       [atleta_id]
     );
 
@@ -63,28 +57,26 @@ const getTestsByAtleta = async (req, res) => {
 // Crear test
 const createTest = async (req, res) => {
   try {
-    const { 
-      atleta_id, 
-      fecha_test, 
-      tipo_test, 
-      nombre_test, 
-      resultado, 
-      valor, 
-      unidad, 
-      observaciones, 
-      usuario_id 
+    const {
+      atleta_id,
+      fecha_test,
+      test_de_fuerza,
+      test_resistencia,
+      test_velocidad,
+      test_coordinacion,
+      test_de_reaccion
     } = req.body;
 
     const [result] = await pool.execute(
-      `INSERT INTO tests_rendimiento 
-       (atleta_id, fecha_test, tipo_test, nombre_test, resultado, valor, unidad, observaciones, usuario_id) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [atleta_id, fecha_test, tipo_test, nombre_test, resultado, valor, unidad, observaciones, usuario_id]
+      `INSERT INTO test_de_rendimiento 
+       (ATLETA_ID, FECHA_TEST, TEST_DE_FUERZA, TEST_RESISTENCIA, TEST_VELOCIDAD, TEST_COORDINACION, TEST_DE_REACCION) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [atleta_id, fecha_test, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion]
     );
 
-    res.status(201).json({ 
-      message: 'Test registrado exitosamente', 
-      id: result.insertId 
+    res.status(201).json({
+      message: 'Test registrado exitosamente',
+      id: result.insertId
     });
 
   } catch (error) {
@@ -93,40 +85,38 @@ const createTest = async (req, res) => {
   }
 };
 
-// Obtener estadísticas de tests por tipo
+// Obtener estadísticas de tests
 const getEstadisticasTests = async (req, res) => {
   try {
     const [rows] = await pool.execute(
       `SELECT 
-        tipo_test,
         COUNT(*) as total_tests,
-        AVG(valor) as promedio_valor,
-        MIN(valor) as minimo_valor,
-        MAX(valor) as maximo_valor
-       FROM tests_rendimiento 
-       WHERE valor IS NOT NULL
-       GROUP BY tipo_test
-       ORDER BY tipo_test`
+        AVG(TEST_DE_FUERZA) as promedio_fuerza,
+        AVG(TEST_RESISTENCIA) as promedio_resistencia,
+        AVG(TEST_VELOCIDAD) as promedio_velocidad,
+        AVG(TEST_COORDINACION) as promedio_coordinacion,
+        AVG(TEST_DE_REACCION) as promedio_reaccion
+       FROM test_de_rendimiento`
     );
 
-    res.json(rows);
+    res.json(rows[0]);
   } catch (error) {
     console.error('Error obteniendo estadísticas:', error);
     res.status(500).json({ error: 'Error al obtener estadísticas' });
   }
 };
 
-// Obtener evolución de un test específico para un atleta
+// Obtener evolución de tests para un atleta
 const getEvolucionTest = async (req, res) => {
   try {
-    const { atleta_id, tipo_test } = req.params;
-    
+    const { atleta_id } = req.params;
+
     const [rows] = await pool.execute(
-      `SELECT fecha_test, valor, unidad, resultado
-       FROM tests_rendimiento 
-       WHERE atleta_id = ? AND tipo_test = ? AND valor IS NOT NULL
-       ORDER BY fecha_test ASC`,
-      [atleta_id, tipo_test]
+      `SELECT FECHA_TEST, TEST_DE_FUERZA, TEST_RESISTENCIA, TEST_VELOCIDAD, TEST_COORDINACION, TEST_DE_REACCION
+       FROM test_de_rendimiento 
+       WHERE ATLETA_ID = ?
+       ORDER BY FECHA_TEST ASC`,
+      [atleta_id]
     );
 
     res.json(rows);
@@ -136,10 +126,36 @@ const getEvolucionTest = async (req, res) => {
   }
 };
 
+// Obtener último test de un atleta
+const getUltimoTest = async (req, res) => {
+  try {
+    const { atleta_id } = req.params;
+
+    const [rows] = await pool.execute(
+      `SELECT *
+       FROM test_de_rendimiento 
+       WHERE ATLETA_ID = ?
+       ORDER BY FECHA_TEST DESC
+       LIMIT 1`,
+      [atleta_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron tests para este atleta' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('Error obteniendo último test:', error);
+    res.status(500).json({ error: 'Error al obtener test' });
+  }
+};
+
 module.exports = {
   getTests,
   getTestsByAtleta,
   createTest,
   getEstadisticasTests,
-  getEvolucionTest
+  getEvolucionTest,
+  getUltimoTest
 };
