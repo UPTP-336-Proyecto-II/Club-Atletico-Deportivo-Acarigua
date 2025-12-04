@@ -26,27 +26,20 @@
             <a href="https://instagram.com/Deportivoacarigua_oficial" class="social-link" aria-label="Instagram" target="_blank" rel="noopener">
               <img src="../../assets/icons/instagram-icon.png" alt="Instagram" class="custom-icon">
             </a>
-            <a href="https://www.google.com/maps/place/Universidad+Polit%C3%A9cnica+Territorial+de+Puerto+Cabello/@10.4578943,-68.0537897,17z/data=!4m6!3m5!1s0x8e8054018566d7a3:0x70a7d25b77dc46ff!8m2!3d10.4577097!4d-68.0527812!16s%2Fg%2F1hc63v0bq?entry=ttu&g_ep=EgoyMDI1MTExMi4wIKXMDSoASAFQAw%3D%3D" 
-              class="social-link" 
-              aria-label="Google Maps" 
-              target="_blank" 
-              rel="noopener">
+            <a
+              href="https://www.google.com/maps/place/Universidad+Polit%C3%A9cnica+Territorial+de+Puerto+Cabello/@10.4578943,-68.0537897,17z/data=!4m6!3m5!1s0x8e8054018566d7a3:0x70a7d25b77dc46ff!8m2!3d10.4577097!4d-68.0527812!16s%2Fg%2F1hc63v0bq?entry=ttu&g_ep=EgoyMDI1MTExMi4wIKXMDSoASAFQAw%3D%3D"
+              class="social-link"
+              aria-label="Google Maps"
+              target="_blank"
+              rel="noopener"
+            >
               <img src="../../assets/icons/maps-icon.png" alt="Google Maps" class="custom-icon">
             </a>
           </div>
         </div>
 
-        <!-- Enlaces Rápidos -->
+        <!-- Sección de enlaces rápidos eliminada: Enlaces (Inicio, Nosotros, Contacto) -->
         <div class="footer-links">
-          <div class="link-group">
-            <h3 class="link-group-title">Enlaces</h3>
-            <ul class="link-list">
-              <li><a href="#inicio" class="footer-link">Inicio</a></li>
-              <li><a href="#nosotros" class="footer-link">Nosotros</a></li>
-              <li><a href="#contacto" class="footer-link">Contacto</a></li>
-            </ul>
-          </div>
-
           <div class="link-group">
             <h3 class="link-group-title">Contacto</h3>
             <ul class="link-list">
@@ -56,7 +49,7 @@
               </li>
               <li class="contact-item">
                 <img src="../../assets/icons/whatsapp-icon.png" alt="Whatsapp" class="contact-icon">
-                <span>+58 255-123-4567</span>
+                <span>+58 412-15562442</span>
               </li>
               <li class="contact-item">
                 <img src="../../assets/icons/email-icon.png" alt="Email" class="contact-icon">
@@ -76,7 +69,7 @@
       </div>
 
       <!-- Línea Separadora -->
-      <div class="footer-divider"></div>
+      <div class="footer-divider" />
 
       <!-- Pie Inferior -->
       <div class="footer-bottom">
