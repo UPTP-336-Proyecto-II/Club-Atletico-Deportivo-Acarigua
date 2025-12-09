@@ -29,8 +29,8 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
-    // Si la API devuelve un error
-    if (response.status !== 200) {
+    // Si la API devuelve un error (200 = OK, 201 = Created son éxitos)
+    if (response.status !== 200 && response.status !== 201) {
       Message({
         message: res.message || 'Error',
         type: 'error',
