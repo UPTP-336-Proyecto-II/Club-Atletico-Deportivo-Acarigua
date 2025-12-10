@@ -2,8 +2,8 @@
   <div class="login-container">
     <!-- Fondo con cancha de fútbol -->
     <div class="login-background">
-      <div class="soccer-field"></div>
-      <div class="gradient-overlay"></div>
+      <div class="soccer-field" />
+      <div class="gradient-overlay" />
     </div>
 
     <!-- Contenedor principal -->
@@ -67,8 +67,8 @@
                 @keyup.enter.native="handleLogin"
                 @input="handleInput"
               />
-              <button type="button" class="password-toggle" @click="showPwd">
-                <i :class="passwordType === 'password' ? 'el-icon-view' : 'el-icon-hide'" />
+              <button type="button" class="password-toggle" aria-label="Mostrar u ocultar contraseña" @click="showPwd">
+                <i class="el-icon-view" />
               </button>
             </div>
           </el-form-item>
@@ -251,7 +251,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
+  background-image:
     linear-gradient(90deg, transparent 49%, rgba(255,255,255,0.2) 49%, rgba(255,255,255,0.2) 51%, transparent 51%),
     linear-gradient(transparent 49%, rgba(255,255,255,0.2) 49%, rgba(255,255,255,0.2) 51%, transparent 51%),
     radial-gradient(circle at 50% 50%, transparent 69%, rgba(255,255,255,0.2) 69%, rgba(255,255,255,0.2) 71%, transparent 71%);
@@ -346,7 +346,7 @@ export default {
 }
 
 .welcome-section p {
-  color: var(--color-text-light);
+  color: #000; /* Texto en negro para mejor legibilidad */
   margin: 0;
   font-size: 0.9rem;
 }
@@ -392,11 +392,11 @@ export default {
   position: absolute;
   right: 12px;
   z-index: 3;
-  color: var(--color-text-light);
+  color: var(--color-text-dark); /* Color oscuro para mayor contraste */
   cursor: pointer;
   font-size: 1.1rem;
   transition: all 0.2s ease;
-  background: transparent;
+  background: rgba(0,0,0,0.04);
   border: none;
   padding: 8px;
   border-radius: 6px;
@@ -407,6 +407,7 @@ export default {
   justify-content: center;
   top: 50%;
   transform: translateY(-50%);
+  opacity: 1; /* Asegura que siempre sea visible */
 }
 
 .password-toggle:hover {
@@ -572,7 +573,7 @@ export default {
 }
 
 .login-footer p {
-  color: var(--color-text-light);
+  color: #000; /* Texto en negro para '¿Necesitas acceso?' */
   margin: 0;
   font-size: 0.85rem;
 }
@@ -752,7 +753,7 @@ export default {
   .input-group {
     margin-bottom: 0.75rem;
   }
-  
+
   .login-copyright-card {
     display: none;
   }
