@@ -55,9 +55,9 @@
               >
                 <el-option
                   v-for="cat in categorias"
-                  :key="cat.CATEGORIA_ID"
-                  :label="cat.NOMBRE_CATEGORIA"
-                  :value="cat.CATEGORIA_ID"
+                  :key="cat.categoria_id"
+                  :label="cat.nombre_categoria"
+                  :value="cat.categoria_id"
                 />
               </el-select>
             </el-form-item>
@@ -71,9 +71,9 @@
               >
                 <el-option
                   v-for="atleta in atletasFiltrados"
-                  :key="atleta.ATLETA_ID"
-                  :label="`${atleta.NOMBRE} ${atleta.APELLIDO}`"
-                  :value="atleta.ATLETA_ID"
+                  :key="atleta.atleta_id"
+                  :label="`${atleta.nombre} ${atleta.apellido}`"
+                  :value="atleta.atleta_id"
                 />
               </el-select>
             </el-form-item>
@@ -108,9 +108,9 @@
               <el-select v-model="form.entrenador_id" placeholder="Seleccionar entrenador" filterable>
                 <el-option
                   v-for="entrenador in entrenadores"
-                  :key="entrenador.PLANTEL_ID"
-                  :label="`${entrenador.NOMBRE} ${entrenador.APELLIDO}`"
-                  :value="entrenador.PLANTEL_ID"
+                  :key="entrenador.plantel_id"
+                  :label="`${entrenador.nombre} ${entrenador.apellido}`"
+                  :value="entrenador.plantel_id"
                 />
               </el-select>
             </el-form-item>
@@ -156,9 +156,9 @@
               >
                 <el-option
                   v-for="cat in categorias"
-                  :key="cat.CATEGORIA_ID"
-                  :label="cat.NOMBRE_CATEGORIA"
-                  :value="cat.CATEGORIA_ID"
+                  :key="cat.categoria_id"
+                  :label="cat.nombre_categoria"
+                  :value="cat.categoria_id"
                 />
               </el-select>
             </el-col>
@@ -173,9 +173,9 @@
               >
                 <el-option
                   v-for="atleta in atletas"
-                  :key="atleta.ATLETA_ID"
-                  :label="`${atleta.NOMBRE} ${atleta.APELLIDO}`"
-                  :value="atleta.ATLETA_ID"
+                  :key="atleta.atleta_id"
+                  :label="`${atleta.nombre} ${atleta.apellido}`"
+                  :value="atleta.atleta_id"
                 />
               </el-select>
             </el-col>
@@ -213,7 +213,7 @@
             border
             style="width: 100%; margin-top: 20px"
           >
-            <el-table-column prop="ASISTENCIA_ID" label="ID" width="60" />
+            <el-table-column prop="asistencia_id" label="ID" width="60" />
             <el-table-column label="Atleta" min-width="150">
               <template slot-scope="scope">
                 {{ scope.row.atleta_nombre }} {{ scope.row.atleta_apellido }}
@@ -222,14 +222,14 @@
             <el-table-column prop="categoria_nombre" label="Categoría" width="120" />
             <el-table-column label="Fecha" width="110">
               <template slot-scope="scope">
-                {{ formatDate(scope.row.FECHA) }}
+                {{ formatDate(scope.row.fecha) }}
               </template>
             </el-table-column>
-            <el-table-column prop="TIPO_EVENTO" label="Tipo" width="130" />
+            <el-table-column prop="tipo_evento" label="Tipo" width="130" />
             <el-table-column label="Estatus" width="130">
               <template slot-scope="scope">
-                <el-tag :type="getStatusType(scope.row.ESTATUS)">
-                  {{ getStatusLabel(scope.row.ESTATUS) }}
+                <el-tag :type="getStatusType(scope.row.estatus)">
+                  {{ getStatusLabel(scope.row.estatus) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -238,7 +238,7 @@
                 {{ scope.row.entrenador_nombre }} {{ scope.row.entrenador_apellido }}
               </template>
             </el-table-column>
-            <el-table-column prop="OBSERVACIONES" label="Observaciones" min-width="150" show-overflow-tooltip />
+            <el-table-column prop="observaciones" label="Observaciones" min-width="150" show-overflow-tooltip />
             <el-table-column label="Acciones" width="150" fixed="right">
               <template slot-scope="scope">
                 <el-button
@@ -314,13 +314,13 @@ export default {
       if (!this.form.categoria_id) {
         return []
       }
-      return this.atletas.filter(a => a.CATEGORIA_ID === this.form.categoria_id)
+      return this.atletas.filter(a => a.categoria_id === this.form.categoria_id)
     },
     asistenciasFiltradas() {
       let filtered = [...this.asistencias]
 
       if (this.filters.estatus) {
-        filtered = filtered.filter(a => a.ESTATUS === this.filters.estatus)
+        filtered = filtered.filter(a => a.estatus === this.filters.estatus)
       }
 
       return filtered
@@ -329,9 +329,9 @@ export default {
       const filtered = this.asistenciasFiltradas
       return {
         total: filtered.length,
-        presentes: filtered.filter(a => a.ESTATUS === 'PRESENTE').length,
-        ausentes: filtered.filter(a => a.ESTATUS === 'AUSENTE').length,
-        justificados: filtered.filter(a => a.ESTATUS === 'JUSTIFICADO').length
+        presentes: filtered.filter(a => a.estatus === 'PRESENTE').length,
+        ausentes: filtered.filter(a => a.estatus === 'AUSENTE').length,
+        justificados: filtered.filter(a => a.estatus === 'JUSTIFICADO').length
       }
     }
   },
@@ -435,19 +435,19 @@ export default {
     },
     editAsistencia(row) {
       this.isEditing = true
-      this.editingId = row.ASISTENCIA_ID
+      this.editingId = row.asistencia_id
 
       // Buscar el atleta para obtener su categoría
-      const atleta = this.atletas.find(a => a.ATLETA_ID === row.ATLETA_ID)
+      const atleta = this.atletas.find(a => a.atleta_id === row.atleta_id)
 
       this.form = {
-        categoria_id: atleta ? atleta.CATEGORIA_ID : '',
-        atleta_id: row.ATLETA_ID,
-        fecha: row.FECHA,
-        tipo_evento: row.TIPO_EVENTO,
-        estatus: row.ESTATUS,
-        entrenador_id: row.ENTRENADOR_ID,
-        observaciones: row.OBSERVACIONES || ''
+        categoria_id: atleta ? atleta.categoria_id : '',
+        atleta_id: row.atleta_id,
+        fecha: row.fecha,
+        tipo_evento: row.tipo_evento,
+        estatus: row.estatus,
+        entrenador_id: row.entrenador_id,
+        observaciones: row.observaciones || ''
       }
 
       // Scroll to form
@@ -460,7 +460,7 @@ export default {
         type: 'warning'
       }).then(async() => {
         try {
-          await deleteAsistencia(row.ASISTENCIA_ID)
+          await deleteAsistencia(row.asistencia_id)
           this.$message.success('Asistencia eliminada correctamente')
           await this.fetchAsistencias()
         } catch (error) {
