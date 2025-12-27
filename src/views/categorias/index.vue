@@ -15,8 +15,8 @@
       <div class="sidebar">
         <div class="card category-card">
           <div class="category-icon">🏆</div>
-          <div class="category-name">{{ categoriaSeleccionada ? categoriaSeleccionada.NOMBRE_CATEGORIA : 'Selecciona una categoría' }}</div>
-          <div class="category-age">{{ categoriaSeleccionada ? `${categoriaSeleccionada.EDAD_MIN} - ${categoriaSeleccionada.EDAD_MAX} años` : '-' }}</div>
+          <div class="category-name">{{ categoriaSeleccionada ? categoriaSeleccionada.nombre_categoria : 'Selecciona una categoría' }}</div>
+          <div class="category-age">{{ categoriaSeleccionada ? `${categoriaSeleccionada.edad_min} - ${categoriaSeleccionada.edad_max} años` : '-' }}</div>
 
           <div class="category-info">
             <div class="info-item">
@@ -37,7 +37,7 @@
               <label>Seleccionar Categoría</label>
               <select v-model="filtroCategoria" @change="seleccionarCategoria">
                 <option value="">Todas las categorías</option>
-                <option v-for="cat in categorias" :key="cat.CATEGORIA_ID" :value="cat.CATEGORIA_ID">{{ cat.NOMBRE_CATEGORIA }}</option>
+                <option v-for="cat in categorias" :key="cat.categoria_id" :value="cat.categoria_id">{{ cat.nombre_categoria }}</option>
               </select>
             </div>
 
@@ -45,7 +45,7 @@
               <label>Filtrar por Entrenador</label>
               <select v-model="filtroEntrenador">
                 <option value="">Todos los entrenadores</option>
-                <option v-for="ent in entrenadores" :key="ent.PLANTEL_ID" :value="ent.PLANTEL_ID">{{ ent.NOMBRE }} {{ ent.APELLIDO }}</option>
+                <option v-for="ent in entrenadores" :key="ent.plantel_id" :value="ent.plantel_id">{{ ent.nombre }} {{ ent.apellido }}</option>
               </select>
             </div>
 
@@ -89,7 +89,7 @@
                 <label>Entrenador Principal</label>
                 <select v-model="formulario.entrenador_id">
                   <option value="">Seleccionar entrenador</option>
-                  <option v-for="ent in entrenadores" :key="ent.PLANTEL_ID" :value="ent.PLANTEL_ID">{{ ent.NOMBRE }} {{ ent.APELLIDO }}</option>
+                  <option v-for="ent in entrenadores" :key="ent.plantel_id" :value="ent.plantel_id">{{ ent.nombre }} {{ ent.apellido }}</option>
                 </select>
               </div>
             </div>
@@ -109,10 +109,10 @@
           </div>
 
           <div v-else class="categories-grid">
-            <div v-for="categoria in categoriasFiltradas" :key="categoria.CATEGORIA_ID" class="category-item">
+            <div v-for="categoria in categoriasFiltradas" :key="categoria.categoria_id" class="category-item">
               <div class="category-header">
-                <div class="category-title">{{ categoria.NOMBRE_CATEGORIA }}</div>
-                <div class="category-age-range">{{ categoria.EDAD_MIN }}-{{ categoria.EDAD_MAX }} años</div>
+                <div class="category-title">{{ categoria.nombre_categoria }}</div>
+                <div class="category-age-range">{{ categoria.edad_min }}-{{ categoria.edad_max }} años</div>
               </div>
               <div class="category-details">
                 <div class="category-detail">
@@ -189,7 +189,7 @@ export default {
 
     seleccionarCategoria() {
       if (this.filtroCategoria) {
-        this.categoriaSeleccionada = this.categorias.find(c => c.CATEGORIA_ID === this.filtroCategoria)
+        this.categoriaSeleccionada = this.categorias.find(c => c.categoria_id === this.filtroCategoria)
       } else {
         this.categoriaSeleccionada = null
       }
@@ -198,10 +198,10 @@ export default {
     aplicarFiltros() {
       let resultado = [...this.categorias]
       if (this.filtroCategoria) {
-        resultado = resultado.filter(c => c.CATEGORIA_ID === this.filtroCategoria)
+        resultado = resultado.filter(c => c.categoria_id === this.filtroCategoria)
       }
       if (this.filtroEntrenador) {
-        resultado = resultado.filter(c => c.ENTRENADOR_ID === this.filtroEntrenador)
+        resultado = resultado.filter(c => c.entrenador_id === this.filtroEntrenador)
       }
       this.categoriasFiltradas = resultado
     },
@@ -221,11 +221,11 @@ export default {
     editarCategoria(categoria) {
       this.modoEdicion = true
       this.formulario = {
-        id: categoria.CATEGORIA_ID,
-        nombre_categoria: categoria.NOMBRE_CATEGORIA,
-        edad_min: categoria.EDAD_MIN,
-        edad_max: categoria.EDAD_MAX,
-        entrenador_id: categoria.ENTRENADOR_ID || ''
+        id: categoria.categoria_id,
+        nombre_categoria: categoria.nombre_categoria,
+        edad_min: categoria.edad_min,
+        edad_max: categoria.edad_max,
+        entrenador_id: categoria.entrenador_id || ''
       }
       this.mostrarFormulario = true
     },
@@ -284,14 +284,14 @@ export default {
 
     async eliminarCategoria(categoria) {
       try {
-        await this.$confirm(`¿Estás seguro de eliminar "${categoria.NOMBRE_CATEGORIA}"?`, 'Advertencia', {
+        await this.$confirm(`¿Estás seguro de eliminar "${categoria.nombre_categoria}"?`, 'Advertencia', {
           confirmButtonText: 'Eliminar',
           cancelButtonText: 'Cancelar',
           type: 'warning'
         })
 
         await request({
-          url: `/categoria/${categoria.CATEGORIA_ID}`,
+          url: `/categoria/${categoria.categoria_id}`,
           method: 'delete'
         })
 
