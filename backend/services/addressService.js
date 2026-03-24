@@ -79,9 +79,15 @@ const addressService = {
                         }
                     }
 
+                    let finalParroquiaId = parroquiaId;
+                    if (!finalParroquiaId) {
+                        const [defaultP] = await connection.execute('SELECT parroquia_id FROM parroquias LIMIT 1');
+                        finalParroquiaId = defaultP.length > 0 ? defaultP[0].parroquia_id : 1;
+                    }
+
                     const [dirRes] = await connection.execute(
                         'INSERT INTO direcciones (parroquias_id, localidad, tipo_vivienda, `ubicación vivienda`) VALUES (?, ?, ?, ?)',
-                        [parroquiaId || 0, localidad, '', localidad]
+                        [finalParroquiaId, localidad, '', localidad]
                     );
                     direccionId = dirRes.insertId;
                 }
@@ -209,19 +215,18 @@ const addressService = {
     },
 
     getSelectColumns: () => `
-        up.nombre as pais, 
-        ue.nombre as estado, 
-        um.nombre as municipio, 
-        upa.nombre as parroquia, 
-        d.punto_referencia as descripcion_descriptiva
+        e.estado as estado,
+        m.municipio as municipio,
+        p.parroquia as parroquia,
+        d.localidad as descripcion_descriptiva,
+        'Venezuela' as pais
     `,
 
     getJoins: () => `
         LEFT JOIN direcciones d ON entity.direccion_id = d.direccion_id
-        LEFT JOIN ubicacion_parroquia upa ON d.parroquia_id = upa.parroquia_id
-        LEFT JOIN ubicacion_municipio um ON upa.municipio_id = um.municipio_id
-        LEFT JOIN ubicacion_estado ue ON um.estado_id = ue.estado_id
-        LEFT JOIN ubicacion_pais up ON ue.pais_id = up.pais_id
+        LEFT JOIN parroquias p ON d.parroquias_id = p.parroquia_id
+        LEFT JOIN municipios m ON p.municipio_id = m.municipio_id
+        LEFT JOIN estados e ON m.estadoi_id = e.estado_id
     `,
 
     getLegacySelectColumns: (isMigrated = false) => {

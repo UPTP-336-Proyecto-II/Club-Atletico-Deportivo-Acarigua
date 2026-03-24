@@ -20,6 +20,10 @@ const tutorRoutes = require('./routes/tutor');
 const rolesRoutes = require('./routes/roles');
 const preguntasSeguridadRoutes = require('./routes/preguntasSeguridad');
 const posicionesRoutes = require('./routes/posiciones');
+const ubicacionRoutes = require('./routes/ubicacion');
+const atencionMedicaRoutes = require('./routes/atencionMedica');
+const carnetDiscapacidadRoutes = require('./routes/carnetDiscapacidad');
+const historialPartidosRoutes = require('./routes/historialPartidos');
 
 function createApp() {
   const app = express();
@@ -48,6 +52,10 @@ function createApp() {
   app.use('/api/roles', rolesRoutes);
   app.use('/api/preguntas-seguridad', preguntasSeguridadRoutes);
   app.use('/api/posiciones', posicionesRoutes);
+  app.use('/api/ubicacion', ubicacionRoutes);
+  app.use('/api/atencion-medica', atencionMedicaRoutes);
+  app.use('/api/carnet-discapacidad', carnetDiscapacidadRoutes);
+  app.use('/api/historial-partidos', historialPartidosRoutes);
 
   app.get('/api', (req, res) => {
     res.json({

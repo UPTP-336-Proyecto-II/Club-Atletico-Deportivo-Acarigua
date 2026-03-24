@@ -1,33 +1,33 @@
 const pool = require('../config/database');
 const addressService = require('../services/addressService');
 
-// Obtener todo el plantel
+// Obtener todo el plantel (personal)
 const getPlantel = async (req, res) => {
   try {
     const { rol, sort, cedula, sin_cedula } = req.query;
 
     let query = `
-            SELECT p.*, r.nombre_rol,
-                   ${addressService.getSelectColumns().replace(/d\./g, 'd.')}
-            FROM plantel p
-            LEFT JOIN rol_usuarios r ON p.rol_id = r.rol_id
-            ${addressService.getJoins().replace('entity.direccion_id', 'p.direccion_id')}
+            SELECT pl.*, r.nombre_rol, pl.personal_id as plantel_id, pl.documento_identidad as cedula, pl.rol as rol_id,
+                   ${addressService.getSelectColumns()}
+            FROM personal pl
+            LEFT JOIN rol_usuarios r ON pl.rol = r.rol_id
+            ${addressService.getJoins().replace('entity.direccion_id', 'pl.direccion_id')}
             WHERE 1=1`;
     const params = [];
 
     if (cedula) {
-      query += ' AND p.cedula LIKE ?';
+      query += ' AND pl.documento_identidad LIKE ?';
       params.push(`%${cedula}%`);
     }
 
     if (sin_cedula === 'true') {
-      query += ' AND (p.cedula IS NULL OR p.cedula = \'\')';
+      query += ' AND (pl.documento_identidad IS NULL OR pl.documento_identidad = \'\')';
     }
 
     if (rol) {
       const rolId = parseInt(rol);
       if (!isNaN(rolId)) {
-        query += ' AND p.rol_id = ?';
+        query += ' AND pl.rol = ?';
         params.push(rolId);
       } else {
         query += ' AND UPPER(r.nombre_rol) = UPPER(?)';
@@ -36,27 +36,34 @@ const getPlantel = async (req, res) => {
     }
 
     // Ordenamiento
-    let orderBy = 'p.rol_id ASC, p.nombre ASC'; // Default
+    let orderBy = 'pl.rol ASC, pl.nombre ASC'; // Default
 
     switch (sort) {
       case 'reciente':
-        orderBy = 'p.created_at DESC';
+        orderBy = 'pl.created_at DESC';
         break;
       case 'antiguo':
-        orderBy = 'p.created_at ASC';
+        orderBy = 'pl.created_at ASC';
         break;
       case 'az':
-        orderBy = 'p.nombre ASC';
+        orderBy = 'pl.nombre ASC';
         break;
       case 'za':
-        orderBy = 'p.nombre DESC';
+        orderBy = 'pl.nombre DESC';
         break;
     }
 
     query += ` ORDER BY ${orderBy}`;
 
     const [rows] = await pool.execute(query, params);
-    res.json(rows);
+    
+    // Normalize properties for the frontend expecting plantel structure
+    const normalizedRows = rows.map(row => ({
+      ...row,
+      fecha_nac: row.fecha_nacimiento
+    }));
+    
+    res.json(normalizedRows);
   } catch (error) {
     console.error('Error obteniendo plantel:', error);
     res.status(500).json({ error: 'Error al obtener plantel' });
@@ -69,11 +76,11 @@ const getPlantelById = async (req, res) => {
     const { id } = req.params;
 
     const [rows] = await pool.execute(
-      `SELECT p.*,
-                    ${addressService.getSelectColumns().replace(/d\./g, 'd.')}
-             FROM plantel p
-             ${addressService.getJoins().replace('entity.direccion_id', 'p.direccion_id')}
-             WHERE p.plantel_id = ?`,
+      `SELECT pl.*, pl.personal_id as plantel_id, pl.documento_identidad as cedula, pl.rol as rol_id, pl.fecha_nacimiento as fecha_nac,
+                    ${addressService.getSelectColumns()}
+             FROM personal pl
+             ${addressService.getJoins().replace('entity.direccion_id', 'pl.direccion_id')}
+             WHERE pl.personal_id = ?`,
       [id]
     );
 
@@ -94,7 +101,7 @@ const getPlantelByRol = async (req, res) => {
     const { rol } = req.params;
 
     const [rows] = await pool.execute(
-      'SELECT * FROM plantel WHERE rol_id = ? ORDER BY nombre ASC',
+      'SELECT *, personal_id as plantel_id, documento_identidad as cedula, rol as rol_id FROM personal WHERE rol = ? ORDER BY nombre ASC',
       [rol]
     );
 
@@ -116,7 +123,7 @@ const createMiembroPlantel = async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO plantel (nombre, apellido, telefono, rol_id, cedula, fecha_nac, direccion_id) 
+      `INSERT INTO personal (nombre, apellido, telefono, rol, documento_identidad, fecha_nacimiento, direccion_id) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [nombre, apellido, telefono, rol, cedula || null, fecha_nac || null, direccion_id]
     );
@@ -142,15 +149,15 @@ const updateMiembroPlantel = async (req, res) => {
     if (direccion) {
       finalDireccionId = await addressService.findOrCreateAddress(direccion);
     } else {
-      const [existing] = await pool.execute('SELECT direccion_id FROM plantel WHERE plantel_id = ?', [id]);
+      const [existing] = await pool.execute('SELECT direccion_id FROM personal WHERE personal_id = ?', [id]);
       if (existing.length > 0) finalDireccionId = existing[0].direccion_id;
     }
 
     // Actualizar miembro
     const [result] = await pool.execute(
-      `UPDATE plantel 
-       SET nombre = ?, apellido = ?, telefono = ?, rol_id = ?, cedula = ?, fecha_nac = ?, direccion_id = ?
-       WHERE plantel_id = ?`,
+      `UPDATE personal 
+       SET nombre = ?, apellido = ?, telefono = ?, rol = ?, documento_identidad = ?, fecha_nacimiento = ?, direccion_id = ?
+       WHERE personal_id = ?`,
       [nombre, apellido, telefono, rol, cedula || null, fecha_nac || null, finalDireccionId, id]
     );
 
@@ -182,7 +189,7 @@ const deleteMiembroPlantel = async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      'DELETE FROM plantel WHERE plantel_id = ?',
+      'DELETE FROM personal WHERE personal_id = ?',
       [id]
     );
 

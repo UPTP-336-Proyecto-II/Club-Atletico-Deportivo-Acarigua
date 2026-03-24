@@ -3,19 +3,8 @@ const pool = require('../config/database');
 // Obtener todos los implementos
 const getImplementos = async (req, res) => {
     try {
-        const { estatus } = req.query;
-
-        let query = 'SELECT * FROM implementos_deportivos WHERE 1=1';
-        const params = [];
-
-        if (estatus) {
-            query += ' AND estatus = ?';
-            params.push(estatus);
-        }
-
-        query += ' ORDER BY tipo ASC';
-
-        const [rows] = await pool.execute(query, params);
+        let query = 'SELECT * FROM implementos_deportivos ORDER BY nombre ASC';
+        const [rows] = await pool.execute(query);
         res.json(rows);
     } catch (error) {
         console.error('Error obteniendo implementos:', error);
@@ -47,12 +36,18 @@ const getImplementoById = async (req, res) => {
 // Crear implemento
 const createImplemento = async (req, res) => {
     try {
-        const { tipo, cantidad, estatus, ubicacion } = req.body;
+        const { nombre, existencia, cant_uso, cant_dañado, lugar_almacen } = req.body;
+        
+        const existencia_num = Number(existencia) || 0;
+        const uso_num = Number(cant_uso) || 0;
+        const dañado_num = Number(cant_dañado) || 0;
+        const disponible_num = existencia_num - uso_num - dañado_num;
 
         const [result] = await pool.execute(
-            `INSERT INTO implementos_deportivos (tipo, cantidad, estatus, ubicacion) 
-       VALUES (?, ?, ?, ?)`,
-            [tipo, cantidad || 0, estatus || 'DISPONIBLE', ubicacion]
+            `INSERT INTO implementos_deportivos 
+             (nombre, existencia, cant_uso, cant_dañado, cant_disponible, lugar_almacen) 
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            [nombre, existencia_num, uso_num, dañado_num, disponible_num, lugar_almacen || null]
         );
 
         res.status(201).json({
@@ -70,13 +65,18 @@ const createImplemento = async (req, res) => {
 const updateImplemento = async (req, res) => {
     try {
         const { id } = req.params;
-        const { tipo, cantidad, estatus, ubicacion } = req.body;
+        const { nombre, existencia, cant_uso, cant_dañado, lugar_almacen } = req.body;
+
+        const existencia_num = Number(existencia) || 0;
+        const uso_num = Number(cant_uso) || 0;
+        const dañado_num = Number(cant_dañado) || 0;
+        const disponible_num = existencia_num - uso_num - dañado_num;
 
         const [result] = await pool.execute(
             `UPDATE implementos_deportivos 
-       SET tipo = ?, cantidad = ?, estatus = ?, ubicacion = ?
-       WHERE implemento_id = ?`,
-            [tipo, cantidad, estatus, ubicacion, id]
+             SET nombre = ?, existencia = ?, cant_uso = ?, cant_dañado = ?, cant_disponible = ?, lugar_almacen = ?
+             WHERE implemento_id = ?`,
+            [nombre, existencia_num, uso_num, dañado_num, disponible_num, lugar_almacen || null, id]
         );
 
         if (result.affectedRows === 0) {
@@ -87,28 +87,6 @@ const updateImplemento = async (req, res) => {
     } catch (error) {
         console.error('Error actualizando implemento:', error);
         res.status(500).json({ error: 'Error al actualizar implemento' });
-    }
-};
-
-// Actualizar solo el estatus
-const updateEstatus = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { estatus } = req.body;
-
-        const [result] = await pool.execute(
-            'UPDATE implementos_deportivos SET estatus = ? WHERE implemento_id = ?',
-            [estatus, id]
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Implemento no encontrado' });
-        }
-
-        res.json({ message: 'Estatus actualizado exitosamente' });
-    } catch (error) {
-        console.error('Error actualizando estatus:', error);
-        res.status(500).json({ error: 'Error al actualizar estatus' });
     }
 };
 
@@ -138,6 +116,5 @@ module.exports = {
     getImplementoById,
     createImplemento,
     updateImplemento,
-    updateEstatus,
     deleteImplemento
 };

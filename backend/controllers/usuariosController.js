@@ -40,7 +40,7 @@ const getUsuarios = async (req, res) => {
     const { estatus, rol, sort, search } = req.query;
 
     let query = `
-      SELECT u.email, u.rol, u.estatus, u.ultimo_acceso, u.created_at, u.foto,
+      SELECT u.email, u.rol, u.estatus, u.ultimo_acceso, u.foto,
              r.nombre_rol, r.descripcion as rol_descripcion
       FROM usuarios u
       LEFT JOIN rol_usuarios r ON u.rol = r.rol_id
@@ -70,12 +70,9 @@ const getUsuarios = async (req, res) => {
     }
 
     // Ordenamiento
-    let orderBy = 'u.created_at DESC'; // Default: Más recientes
+    let orderBy = 'u.email ASC';
 
     switch (sort) {
-      case 'antiguo':
-        orderBy = 'u.created_at ASC';
-        break;
       case 'az':
         orderBy = 'u.email ASC';
         break;
@@ -83,7 +80,7 @@ const getUsuarios = async (req, res) => {
         orderBy = 'u.email DESC';
         break;
       default:
-        orderBy = 'u.created_at DESC';
+        orderBy = 'u.email ASC';
     }
 
     query += ` ORDER BY ${orderBy}`;
@@ -96,12 +93,12 @@ const getUsuarios = async (req, res) => {
   }
 };
 
-// Obtener usuario por ID
+// Obtener usuario por ID (Email)
 const getUsuarioById = async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await pool.execute(
-      `SELECT u.email, u.rol, u.estatus, u.ultimo_acceso, u.created_at, u.foto,
+      `SELECT u.email, u.rol, u.estatus, u.ultimo_acceso, u.foto,
               r.nombre_rol, r.descripcion as rol_descripcion
        FROM usuarios u
        LEFT JOIN rol_usuarios r ON u.rol = r.rol_id
@@ -135,7 +132,7 @@ const login = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      return res.status(401).json({ error: 'Credenciales inválidas o usuario inactivo' });
     }
 
     const user = users[0];
@@ -148,9 +145,9 @@ const login = async (req, res) => {
     // Generar token JWT
     const token = jwt.sign(
       {
-        userId: user.email,
         email: user.email,
-        rol: user.rol
+        rol: user.rol,
+        userId: user.email // Keep backward compatibility for frontend that matches userId to identifier
       },
       JWT_SECRET,
       { expiresIn: '24h' }
@@ -177,14 +174,14 @@ const login = async (req, res) => {
 const getInfo = async (req, res) => {
   try {
     // El token ya fue verificado por el middleware
-    const userId = req.userId; // Ahora es el email
+    const email = req.userId; // Middleware decode puts email into req.userId fallback
 
     const [users] = await pool.execute(
-      `SELECT u.email, u.rol, r.nombre_rol
+      `SELECT u.email, u.rol, u.foto, r.nombre_rol
        FROM usuarios u
        LEFT JOIN rol_usuarios r ON u.rol = r.rol_id
        WHERE u.email = ? AND u.estatus = ?`,
-      [userId, 'Activo']
+      [email, 'Activo']
     );
 
     if (users.length === 0) {
@@ -195,11 +192,11 @@ const getInfo = async (req, res) => {
 
     res.json({
       data: {
-        roles: [user.nombre_rol], // Retornar el nombre del rol exacto de la BD: 'super_user', 'administrador', 'entrenador', 'medico'
+        roles: [user.nombre_rol], // 'Super_user', 'Administrador', 'Entrenador', 'Medico'
         roleName: user.nombre_rol,
         roleId: user.rol,
-        name: user.email, // Usamos email como nombre ya que no hay nombre/apellido
-        avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
+        name: user.email,
+        avatar: user.foto || 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
         introduction: `${user.nombre_rol} del Club Atlético Deportivo Acarigua`
       }
     });
@@ -213,11 +210,11 @@ const getInfo = async (req, res) => {
 const logout = async (req, res) => {
   try {
     // Limpiar el token de la base de datos
-    const userId = req.userId; // Ahora es el email
+    const email = req.userId;
 
     await pool.execute(
       'UPDATE usuarios SET token = NULL WHERE email = ?',
-      [userId]
+      [email]
     );
 
     res.json({
@@ -239,16 +236,13 @@ const createUsuario = async (req, res) => {
       return res.status(400).json({ error: 'El email es requerido' });
     }
 
-    // Normalizar email a minúsculas
     email = email.toLowerCase().trim();
 
-    // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: 'El formato del email no es válido' });
     }
 
-    // Validar contraseña (cuando se proporciona)
     if (password) {
       const passwordErrors = [];
       if (password.length < 12) {
@@ -275,7 +269,6 @@ const createUsuario = async (req, res) => {
       }
     }
 
-    // Verificar si el email ya existe
     const [existing] = await pool.execute(
       'SELECT email FROM usuarios WHERE LOWER(email) = ?',
       [email]
@@ -285,7 +278,6 @@ const createUsuario = async (req, res) => {
       return res.status(400).json({ error: 'El email ya está registrado' });
     }
 
-    // Verificar que el rol existe
     if (rol) {
       const [rolExists] = await pool.execute(
         'SELECT rol_id FROM rol_usuarios WHERE rol_id = ?',
@@ -315,10 +307,9 @@ const createUsuario = async (req, res) => {
 // Actualizar usuario
 const updateUsuario = async (req, res) => {
   try {
-    const { id } = req.params; // id es el email
-    const { password, rol, estatus } = req.body;
+    const { id } = req.params; // id es el email original
+    const { email, password, rol, estatus } = req.body; // email is the new email? we shouldn't allow changing PK if cascaded, but let's just update other fields
 
-    // Verificar que existe
     const [existing] = await pool.execute(
       'SELECT email FROM usuarios WHERE email = ?',
       [id]
@@ -328,7 +319,6 @@ const updateUsuario = async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    // Verificar que el rol existe
     if (rol) {
       const [rolExists] = await pool.execute(
         'SELECT rol_id FROM rol_usuarios WHERE rol_id = ?',
@@ -339,7 +329,6 @@ const updateUsuario = async (req, res) => {
       }
     }
 
-    // Construir query dinámico
     const updates = [];
     const params = [];
 
@@ -374,16 +363,14 @@ const updateUsuario = async (req, res) => {
   }
 };
 
-// Actualizar perfil del usuario logueado
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.userId; // Ahora es el email
+    const emailToUpdate = req.userId;
     const { password, newPassword, confirmPassword, foto } = req.body;
 
-    // Obtener usuario actual para verificar contraseña
     const [users] = await pool.execute(
       'SELECT * FROM usuarios WHERE email = ? AND estatus = ?',
-      [userId, 'Activo']
+      [emailToUpdate, 'Activo']
     );
 
     if (users.length === 0) {
@@ -391,7 +378,6 @@ const updateProfile = async (req, res) => {
     }
     const user = users[0];
 
-    // Verificar contraseña actual obligatoria para cualquier cambio sensible
     if (!password) {
       return res.status(400).json({ error: 'Se requiere la contraseña actual para guardar cambios' });
     }
@@ -403,7 +389,6 @@ const updateProfile = async (req, res) => {
     const updates = [];
     const params = [];
 
-    // Cambiar Contraseña
     if (newPassword) {
       if (newPassword !== confirmPassword) {
         return res.status(400).json({ error: 'La nueva contraseña y la confirmación no coinciden' });
@@ -412,21 +397,18 @@ const updateProfile = async (req, res) => {
       params.push(newPassword);
     }
 
-    // Actualizar foto (si se envió desde el frontend el filename)
     if (foto) {
       updates.push('foto = ?');
       params.push(foto);
     }
 
-    if (updates.length === 0) {
-      return res.json({ message: 'No se detectaron cambios' });
+    if (updates.length > 0) {
+        params.push(emailToUpdate);
+        await pool.execute(
+            `UPDATE usuarios SET ${updates.join(', ')} WHERE email = ?`,
+            params
+        );
     }
-
-    params.push(userId);
-    await pool.execute(
-      `UPDATE usuarios SET ${updates.join(', ')} WHERE email = ?`,
-      params
-    );
 
     res.json({ message: 'Perfil actualizado exitosamente' });
 
@@ -436,14 +418,11 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// Subir Avatar
 const uploadAvatar = (req, res) => {
   upload(req, res, function (err) {
     if (err instanceof multer.MulterError) {
-      // Error de Multer
       return res.status(500).json({ error: err.message });
     } else if (err) {
-      // Otro error desconocido
       return res.status(500).json({ error: err.message });
     }
 
@@ -451,18 +430,14 @@ const uploadAvatar = (req, res) => {
       return res.status(400).json({ error: 'No se ha subido ningún archivo' });
     }
 
-    // Retorna el nombre del archivo para que el frontend lo use en updateProfile
     res.json({ filename: req.file.filename });
   });
 };
 
-
-// Eliminar usuario (HARD DELETE - Eliminar físicamente)
 const deleteUsuario = async (req, res) => {
   try {
-    const { id } = req.params; // id es el email
+    const { id } = req.params;
 
-    // Verificar que existe
     const [existing] = await pool.execute(
       'SELECT email FROM usuarios WHERE email = ?',
       [id]
@@ -472,20 +447,18 @@ const deleteUsuario = async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    // Hard delete - Eliminar de la base de datos
     await pool.execute(
       'DELETE FROM usuarios WHERE email = ?',
       [id]
     );
 
-    res.json({ message: 'Usuario eliminado físicamente exitosamente' });
+    res.json({ message: 'Usuario eliminado exitosamente' });
 
   } catch (error) {
     console.error('Error eliminando usuario:', error);
-    // Verificar si es error de constraint
     if (error.code === 'ER_ROW_IS_REFERENCED_2') {
       return res.status(400).json({
-        error: 'No se puede eliminar el usuario porque tiene registros relacionados (historial, etc). Considere desactivarlo en su lugar.'
+        error: 'No se puede eliminar el usuario porque tiene registros relacionados. Considere desactivarlo.'
       });
     }
     res.status(500).json({ error: 'Error al eliminar usuario' });

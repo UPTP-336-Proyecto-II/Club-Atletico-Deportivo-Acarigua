@@ -1,32 +1,18 @@
 const pool = require('../config/database');
-const { isLegacySchema } = require('../services/schemaService');
 
 // Obtener todos los tests
 const getTests = async (req, res) => {
   try {
     const { atleta_id } = req.query;
-    const legacySchema = await isLegacySchema();
 
-    let query = legacySchema
-      ? `SELECT t.*, 
-                a.fecha as fecha_test,
+    let query = `SELECT t.*, 
+                DATE_FORMAT(CONCAT(a.fecha, ' ', IFNULL(a.hora_inicio, '00:00:00')), '%Y-%m-%d %H:%i:%s') as fecha_test,
                 atl.nombre as atleta_nombre, 
                 atl.apellido as atleta_apellido,
                 c.nombre_categoria as categoria_nombre,
                 TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad
          FROM resultado_pruebas t
          LEFT JOIN actividades a ON t.actividad_id = a.actividad_id
-         LEFT JOIN atletas atl ON t.atleta_id = atl.atleta_id
-         LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
-         WHERE 1=1`
-      : `SELECT t.*, 
-                e.fecha_evento as fecha_test,
-                atl.nombre as atleta_nombre, 
-                atl.apellido as atleta_apellido,
-                c.nombre_categoria as categoria_nombre,
-                TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad
-         FROM resultado_pruebas t
-         LEFT JOIN evento_deportivo e ON t.evento_id = e.evento_id
          LEFT JOIN atletas atl ON t.atleta_id = atl.atleta_id
          LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
          WHERE 1=1`;
@@ -38,9 +24,7 @@ const getTests = async (req, res) => {
       params.push(atleta_id);
     }
 
-    query += legacySchema 
-      ? ' ORDER BY a.fecha DESC, t.test_id DESC, atl.nombre ASC'
-      : ' ORDER BY e.fecha_evento DESC, t.test_id DESC, atl.nombre ASC';
+    query += ' ORDER BY a.fecha DESC, t.test_id DESC, atl.nombre ASC';
 
     const [rows] = await pool.execute(query, params);
     res.json(rows);
@@ -54,21 +38,13 @@ const getTests = async (req, res) => {
 const getTestsByAtleta = async (req, res) => {
   try {
     const { atleta_id } = req.params;
-    const legacySchema = await isLegacySchema();
 
-    const query = legacySchema
-      ? `SELECT t.*, a.fecha as fecha_test
+    const query = `SELECT t.*, DATE_FORMAT(CONCAT(a.fecha, ' ', IFNULL(a.hora_inicio, '00:00:00')), '%Y-%m-%d %H:%i:%s') as fecha_test
          FROM resultado_pruebas t
          LEFT JOIN actividades a ON t.actividad_id = a.actividad_id
          LEFT JOIN atletas atl ON t.atleta_id = atl.atleta_id
-         WHERE t.atleta_id = ? AND atl.estatus IN ('ACTIVO', 'LESIONADO', 'Activo', 'Lesionado', 1, 2)
-         ORDER BY a.fecha DESC, t.test_id DESC`
-      : `SELECT t.*, e.fecha_evento as fecha_test
-         FROM resultado_pruebas t
-         LEFT JOIN evento_deportivo e ON t.evento_id = e.evento_id
-         LEFT JOIN atletas atl ON t.atleta_id = atl.atleta_id
-         WHERE t.atleta_id = ? AND atl.estatus IN ('ACTIVO', 'LESIONADO', 'Activo', 'Lesionado')
-         ORDER BY e.fecha_evento DESC, t.test_id DESC`;
+         WHERE t.atleta_id = ? AND atl.estatus IN (1, 2)
+         ORDER BY a.fecha DESC, t.test_id DESC`;
 
     const [rows] = await pool.execute(query, [atleta_id]);
 
@@ -92,58 +68,31 @@ const createTest = async (req, res) => {
       test_de_reaccion
     } = req.body;
 
-    const legacySchema = await isLegacySchema();
-
     let result;
-    if (legacySchema) {
-      // 1. Buscar o crear actividad para la fecha
-      let actividadId;
-      if (fecha_test) {
-        const [actividades] = await pool.execute("SELECT actividad_id FROM actividades WHERE fecha = ? AND tipo_actividad = 2", [fecha_test]); // Asumiremos 2 para tests/pruebas
-        if (actividades.length > 0) {
-          actividadId = actividades[0].actividad_id;
-        } else {
-          const [newActividad] = await pool.execute(
-            "INSERT INTO actividades (tipo_actividad, objetivo_principal, fecha, estatus) VALUES (2, 'Pruebas Físicas', ?, 2)",
-            [fecha_test]
-          );
-          actividadId = newActividad.insertId;
-        }
+    // Buscar o crear actividad para la fecha y hora
+    let actividadId;
+    if (fecha_test) {
+      const datePart = fecha_test.split(' ')[0];
+      const timePart = fecha_test.split(' ')[1] || '00:00:00';
+
+      const [actividades] = await pool.execute("SELECT actividad_id FROM actividades WHERE fecha = ? AND hora_inicio = ? AND tipo_actividad = 2", [datePart, timePart]); 
+      if (actividades.length > 0) {
+        actividadId = actividades[0].actividad_id;
+      } else {
+        const [newActividad] = await pool.execute(
+          "INSERT INTO actividades (tipo_actividad, objetivo_principal, fecha, hora_inicio, estatus) VALUES (2, 'Pruebas Físicas', ?, ?, 2)",
+          [datePart, timePart]
+        );
+        actividadId = newActividad.insertId;
       }
-
-      [result] = await pool.execute(
-        `INSERT INTO resultado_pruebas 
-         (actividad_id, atleta_id, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [actividadId || null, atleta_id, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion]
-      );
-    } else {
-      // 1. Buscar o crear evento_deportivo para la fecha
-      let eventoId;
-      if (fecha_test) {
-        const [eventos] = await pool.execute('SELECT evento_id FROM evento_deportivo WHERE fecha_evento = ? AND tipo_evento = ?', [fecha_test, 'Prueba']);
-        if (eventos.length > 0) {
-          eventoId = eventos[0].evento_id;
-        } else {
-          // Buscar el primer entrenador disponible
-          const [entrenadores] = await pool.execute('SELECT plantel_id FROM plantel WHERE rol_id = 3 LIMIT 1');
-          const entrenadorId = entrenadores.length > 0 ? entrenadores[0].plantel_id : 1;
-
-          const [newEvento] = await pool.execute(
-            'INSERT INTO evento_deportivo (entrenador_id, tipo_evento, fecha_evento) VALUES (?, ?, ?)',
-            [entrenadorId, 'Prueba', fecha_test]
-          );
-          eventoId = newEvento.insertId;
-        }
-      }
-
-      [result] = await pool.execute(
-        `INSERT INTO resultado_pruebas 
-         (atleta_id, evento_id, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [atleta_id, eventoId || null, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion]
-      );
     }
+
+    [result] = await pool.execute(
+      `INSERT INTO resultado_pruebas 
+       (actividad_id, atleta_id, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [actividadId || null, atleta_id, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion]
+    );
 
     res.status(201).json({
       message: 'Test registrado exitosamente',
@@ -180,19 +129,12 @@ const getEstadisticasTests = async (req, res) => {
 const getEvolucionTest = async (req, res) => {
   try {
     const { atleta_id } = req.params;
-    const legacySchema = await isLegacySchema();
 
-    const query = legacySchema
-      ? `SELECT a.fecha as fecha_test, t.test_de_fuerza, t.test_resistencia, t.test_velocidad, t.test_coordinacion, t.test_de_reaccion
+    const query = `SELECT DATE_FORMAT(CONCAT(a.fecha, ' ', IFNULL(a.hora_inicio, '00:00:00')), '%Y-%m-%d %H:%i:%s') as fecha_test, t.test_de_fuerza, t.test_resistencia, t.test_velocidad, t.test_coordinacion, t.test_de_reaccion
          FROM resultado_pruebas t
          LEFT JOIN actividades a ON t.actividad_id = a.actividad_id
          WHERE t.atleta_id = ?
-         ORDER BY a.fecha ASC`
-      : `SELECT e.fecha_evento as fecha_test, t.test_de_fuerza, t.test_resistencia, t.test_velocidad, t.test_coordinacion, t.test_de_reaccion
-         FROM resultado_pruebas t
-         LEFT JOIN evento_deportivo e ON t.evento_id = e.evento_id
-         WHERE t.atleta_id = ?
-         ORDER BY e.fecha_evento ASC`;
+         ORDER BY a.fecha ASC`;
 
     const [rows] = await pool.execute(query, [atleta_id]);
 
@@ -207,20 +149,12 @@ const getEvolucionTest = async (req, res) => {
 const getUltimoTest = async (req, res) => {
   try {
     const { atleta_id } = req.params;
-    const legacySchema = await isLegacySchema();
 
-    const query = legacySchema
-      ? `SELECT t.*, a.fecha as fecha_test
+    const query = `SELECT t.*, DATE_FORMAT(CONCAT(a.fecha, ' ', IFNULL(a.hora_inicio, '00:00:00')), '%Y-%m-%d %H:%i:%s') as fecha_test
          FROM resultado_pruebas t
          LEFT JOIN actividades a ON t.actividad_id = a.actividad_id 
          WHERE t.atleta_id = ?
          ORDER BY a.fecha DESC, t.test_id DESC
-         LIMIT 1`
-      : `SELECT t.*, e.fecha_evento as fecha_test
-         FROM resultado_pruebas t
-         LEFT JOIN evento_deportivo e ON t.evento_id = e.evento_id 
-         WHERE t.atleta_id = ?
-         ORDER BY e.fecha_evento DESC, t.test_id DESC
          LIMIT 1`;
 
     const [rows] = await pool.execute(query, [atleta_id]);
@@ -236,11 +170,82 @@ const getUltimoTest = async (req, res) => {
   }
 };
 
+// Eliminar test
+const deleteTest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [result] = await pool.execute(
+      'DELETE FROM resultado_pruebas WHERE test_id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Test no encontrado' });
+    }
+
+    res.json({ message: 'Test eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error eliminando test:', error);
+    res.status(500).json({ error: 'Error al eliminar test' });
+  }
+};
+
+// Actualizar test
+const updateTest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      fecha_test,
+      test_de_fuerza,
+      test_resistencia,
+      test_velocidad,
+      test_coordinacion,
+      test_de_reaccion
+    } = req.body;
+
+    let actividadId = null;
+    if (fecha_test) {
+      const datePart = fecha_test.split(' ')[0];
+      const timePart = fecha_test.split(' ')[1] || '00:00:00';
+
+      const [actividades] = await pool.execute("SELECT actividad_id FROM actividades WHERE fecha = ? AND hora_inicio = ? AND tipo_actividad = 2", [datePart, timePart]);
+      if (actividades.length > 0) {
+        actividadId = actividades[0].actividad_id;
+      } else {
+        const [newActividad] = await pool.execute(
+          "INSERT INTO actividades (tipo_actividad, objetivo_principal, fecha, hora_inicio, estatus) VALUES (2, 'Pruebas Físicas', ?, ?, 2)",
+          [datePart, timePart]
+        );
+        actividadId = newActividad.insertId;
+      }
+    }
+
+    const [result] = await pool.execute(
+      `UPDATE resultado_pruebas 
+       SET actividad_id = ?, test_de_fuerza = ?, test_resistencia = ?, test_velocidad = ?, test_coordinacion = ?, test_de_reaccion = ?
+       WHERE test_id = ?`,
+      [actividadId, test_de_fuerza, test_resistencia, test_velocidad, test_coordinacion, test_de_reaccion, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Test no encontrado' });
+    }
+
+    res.json({ message: 'Test actualizado exitosamente' });
+  } catch (error) {
+    console.error('Error actualizando test:', error);
+    res.status(500).json({ error: 'Error al actualizar test' });
+  }
+};
+
 module.exports = {
   getTests,
   getTestsByAtleta,
   createTest,
   getEstadisticasTests,
   getEvolucionTest,
-  getUltimoTest
+  getUltimoTest,
+  deleteTest,
+  updateTest
 };

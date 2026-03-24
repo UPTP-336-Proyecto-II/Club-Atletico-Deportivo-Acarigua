@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo Atletas - Acordeón</title>
+    <style>
+        /* Mismo CSS base de la Opción 1, con cambios en tabs por acordeón */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .search-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50px;
+            font-size: 16px;
+        }
+
+        .main-panel {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        /* Panel lateral de atletas */
+        .atletas-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .atletas-panel h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .atleta-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .atleta-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .atleta-item.selected {
+            background: #e8eef9;
+            border-color: #667eea;
+            border-left: 4px solid #667eea;
+        }
+
+        .atleta-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+
+        .badge {
+            background: #28a745;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .badge.lesionado {
+            background: #dc3545;
+        }
+
+        /* Panel de detalles con acordeón */
+        .detalles-panel {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .acordeon-item {
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .acordeon-header {
+            padding: 20px;
+            background: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .acordeon-header:hover {
+            background: #f0f0f0;
+        }
+
+        .acordeon-header.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .acordeon-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background: white;
+        }
+
+        .acordeon-content.active {
+            max-height: 500px;
+            padding: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .info-label {
+            flex: 0 0 100px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #333;
+        }
+
+        .btn-edit {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-edit:hover {
+            background: #5a67d8;
+        }
+
+        @media (max-width: 768px) {
+            .main-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚽ Club Deportivo - Gestión de Atletas</h1>
+            <p>Selecciona un atleta para ver todos sus datos</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="buscador" placeholder="Buscar atleta...">
+                </div>
+            </div>
+        </div>
+
+        <div class="main-panel">
+            <!-- Panel izquierdo: Lista de atletas -->
+            <div class="atletas-panel">
+                <h3>📋 Atletas ({total})</h3>
+                <div id="atletas-lista">
+                    <!-- Se llena con JS -->
+                </div>
+            </div>
+
+            <!-- Panel derecho: Acordeón de datos -->
+            <div class="detalles-panel" id="detalles-panel">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mismos datos de ejemplo
+        const atletas = [
+            {
+                id: 25, nombre: 'Leonel', apellido: 'Messi', cedula: '15234567',
+                fecha_nacimiento: '2001-02-20', sexo: 'm', telefono: '04121234567',
+                posicion: 'Delantero', categoria: 'sub-18(m)', pierna: 'izquierda', estatus: 1,
+                representante: { nombre: 'Albany', telefono: '04245530385', cedula: '15234567', relacion: 'abuelo/a' },
+                direccion: { localidad: 'la gonzalo', tipo: 'casa', detalle: 'calle#15 vereda#12 casa#4' },
+                ubicacion: { estado: 'Portuguesa', municipio: 'Páez', parroquia: 'Páez' },
+                medidas: [
+                    { fecha: '15/02/2026', peso: 72.5, altura: 175, grasa: 12.5, musculo: 45.2 }
+                ]
+            },
+            {
+                id: 26, nombre: 'Cristiano', apellido: 'Ronaldo', cedula: '98765432',
+                fecha_nacimiento: '2002-05-15', sexo: 'm', telefono: '04169876543',
+                posicion: 'Extremo izquierdo', categoria: 'sub-18(m)', pierna: 'derecha', estatus: 2,
+                representante: { nombre: 'Maria Ronaldo', telefono: '04161234567', cedula: '87654321', relacion: 'madre' },
+                direccion: { localidad: 'baraure 2', tipo: 'casa', detalle: 'calle#4 casa#2' },
+                ubicacion: { estado: 'Portuguesa', municipio: 'Araure', parroquia: 'Capital Araure' },
+                medidas: [
+                    { fecha: '14/02/2026', peso: 68.0, altura: 168, grasa: 11.0, musculo: 46.0 }
+                ]
+            },
+            {
+                id: 27, nombre: 'María', apellido: 'Rodríguez', cedula: '23456789',
+                fecha_nacimiento: '2007-08-22', sexo: 'f', telefono: '04140987654',
+                posicion: 'Medio centro', categoria: 'sub-18(f)', pierna: 'derecha', estatus: 1,
+                representante: { nombre: 'Carlos Rodríguez', telefono: '04140987655', cedula: '12345678', relacion: 'padre' },
+                direccion: { localidad: 'Centro', tipo: 'apto', detalle: 'edificio Gran Terraza, piso 5, apto 5B' },
+                ubicacion: { estado: 'Portuguesa', municipio: 'Guanare', parroquia: 'Guanare' },
+                medidas: [
+                    { fecha: '12/02/2026', peso: 58.2, altura: 162, grasa: 18.0, musculo: 38.0 }
+                ]
+            }
+        ];
+
+        let atletaSeleccionado = atletas[0];
+
+        function calcularEdad(fechaNac) {
+            const hoy = new Date();
+            const nac = new Date(fechaNac);
+            let edad = hoy.getFullYear() - nac.getFullYear();
+            const m = hoy.getMonth() - nac.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad--;
+            return edad;
+        }
+
+        function renderizarLista() {
+            const busqueda = document.getElementById('buscador')?.value.toLowerCase() || '';
+            const filtrados = atletas.filter(a =>
+                `${a.nombre} ${a.apellido} ${a.cedula}`.toLowerCase().includes(busqueda)
+            );
+
+            document.querySelector('.atletas-panel h3').innerHTML = `📋 Atletas (${filtrados.length})`;
+
+            document.getElementById('atletas-lista').innerHTML = filtrados.map(a => `
+                <div class="atleta-item ${a.id === atletaSeleccionado?.id ? 'selected' : ''}" 
+                     onclick="seleccionarAtleta(${a.id})">
+                    <div class="atleta-avatar">${a.nombre[0]}${a.apellido[0]}</div>
+                    <div>
+                        <strong>${a.nombre} ${a.apellido}</strong>
+                        <span class="badge ${a.estatus === 2 ? 'lesionado' : ''}">
+                            ${a.estatus === 1 ? 'ACT' : a.estatus === 2 ? 'LES' : 'INA'}
+                        </span>
+                        <div style="font-size: 12px; color: #666;">${a.categoria}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderizarAcordeon(atleta) {
+            if (!atleta) return;
+
+            const edad = calcularEdad(atleta.fecha_nacimiento);
+            const fechaFormateada = new Date(atleta.fecha_nacimiento).toLocaleDateString();
+
+            const html = `
+                <div class="acordeon-item">
+                    <div class="acordeon-header active" onclick="toggleAcordeon(this)">
+                        👤 Datos Personales
+                        <span>▼</span>
+                    </div>
+                    <div class="acordeon-content active">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button class="btn-edit" onclick="editarSeccion('personal')">Editar</button>
+                        </div>
+                        <div class="info-grid">
+                            <div>
+                                <div class="info-row"><span class="info-label">Nombre:</span> ${atleta.nombre}</div>
+                                <div class="info-row"><span class="info-label">Apellido:</span> ${atleta.apellido}</div>
+                                <div class="info-row"><span class="info-label">Cédula:</span> ${atleta.cedula}</div>
+                                <div class="info-row"><span class="info-label">F. Nac.:</span> ${fechaFormateada} (${edad} años)</div>
+                            </div>
+                            <div>
+                                <div class="info-row"><span class="info-label">Sexo:</span> ${atleta.sexo === 'm' ? 'Masculino' : 'Femenino'}</div>
+                                <div class="info-row"><span class="info-label">Teléfono:</span> ${atleta.telefono}</div>
+                                <div class="info-row"><span class="info-label">Estatus:</span> 
+                                    <span class="badge ${atleta.estatus === 2 ? 'lesionado' : ''}">
+                                        ${atleta.estatus === 1 ? 'ACTIVO' : atleta.estatus === 2 ? 'LESIONADO' : 'INACTIVO'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acordeon-item">
+                    <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                        ⚽ Datos Deportivos <span>▼</span>
+                    </div>
+                    <div class="acordeon-content">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button class="btn-edit" onclick="editarSeccion('deportivo')">Editar</button>
+                        </div>
+                        <div class="info-grid">
+                            <div>
+                                <div class="info-row"><span class="info-label">Posición:</span> ${atleta.posicion}</div>
+                                <div class="info-row"><span class="info-label">Categoría:</span> ${atleta.categoria}</div>
+                                <div class="info-row"><span class="info-label">Pierna:</span> ${atleta.pierna}</div>
+                            </div>
+                            <div>
+                                <div class="info-row"><span class="info-label">Entrenador:</span> 
+                                    ${atleta.categoria === 'sub-18(m)' ? 'Leonel Messi' : 'No asignado'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acordeon-item">
+                    <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                        🏥 Ficha Médica <span>▼</span>
+                    </div>
+                    <div class="acordeon-content">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button class="btn-edit" onclick="editarSeccion('medico')">Editar</button>
+                        </div>
+                        <div class="info-grid">
+                            <div>
+                                <div class="info-row"><span class="info-label">Grupo Sanguíneo:</span> O+</div>
+                                <div class="info-row"><span class="info-label">Alergias:</span> Ninguna</div>
+                                <div class="info-row"><span class="info-label">Cond. Crónica:</span> Ninguna</div>
+                            </div>
+                            <div>
+                                <div class="info-row"><span class="info-label">Medicación:</span> Ninguna</div>
+                                <div class="info-row"><span class="info-label">Ant. Familiares:</span> Ninguno</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acordeon-item">
+                    <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                        📏 Medidas Antropométricas <span>▼</span>
+                    </div>
+                    <div class="acordeon-content">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button class="btn-edit" onclick="nuevaMedicion()">+ Nueva</button>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f0f0f0;">
+                                    <th style="padding: 8px;">Fecha</th>
+                                    <th>Peso</th>
+                                    <th>Altura</th>
+                                    <th>% Grasa</th>
+                                    <th>% Músculo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${atleta.medidas.map(m => `
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td style="padding: 8px;">${m.fecha}</td>
+                                        <td>${m.peso} kg</td>
+                                        <td>${m.altura} cm</td>
+                                        <td>${m.grasa}%</td>
+                                        <td>${m.musculo}%</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="acordeon-item">
+                    <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                        👪 Representante <span>▼</span>
+                    </div>
+                    <div class="acordeon-content">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button class="btn-edit" onclick="editarSeccion('representante')">Editar</button>
+                        </div>
+                        <div class="info-grid">
+                            <div>
+                                <div class="info-row"><span class="info-label">Nombre:</span> ${atleta.representante.nombre}</div>
+                                <div class="info-row"><span class="info-label">Teléfono:</span> ${atleta.representante.telefono}</div>
+                            </div>
+                            <div>
+                                <div class="info-row"><span class="info-label">Cédula:</span> ${atleta.representante.cedula}</div>
+                                <div class="info-row"><span class="info-label">Relación:</span> ${atleta.representante.relacion}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="acordeon-item">
+                    <div class="acordeon-header" onclick="toggleAcordeon(this)">
+                        📍 Ubicación <span>▼</span>
+                    </div>
+                    <div class="acordeon-content">
+                        <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                            <button class="btn-edit" onclick="editarSeccion('ubicacion')">Editar</button>
+                        </div>
+                        <div class="info-grid">
+                            <div>
+                                <div class="info-row"><span class="info-label">País:</span> Venezuela</div>
+                                <div class="info-row"><span class="info-label">Estado:</span> ${atleta.ubicacion.estado}</div>
+                                <div class="info-row"><span class="info-label">Municipio:</span> ${atleta.ubicacion.municipio}</div>
+                                <div class="info-row"><span class="info-label">Parroquia:</span> ${atleta.ubicacion.parroquia}</div>
+                            </div>
+                            <div>
+                                <div class="info-row"><span class="info-label">Localidad:</span> ${atleta.direccion.localidad}</div>
+                                <div class="info-row"><span class="info-label">Tipo:</span> ${atleta.direccion.tipo}</div>
+                                <div class="info-row"><span class="info-label">Detalle:</span> ${atleta.direccion.detalle}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detalles-panel').innerHTML = html;
+        }
+
+        function toggleAcordeon(header) {
+            const content = header.nextElementSibling;
+            header.classList.toggle('active');
+            content.classList.toggle('active');
+        }
+
+        function seleccionarAtleta(id) {
+            atletaSeleccionado = atletas.find(a => a.id === id);
+            renderizarLista();
+            renderizarAcordeon(atletaSeleccionado);
+        }
+
+        function editarSeccion(seccion) {
+            alert(`Editando ${seccion} de ${atletaSeleccionado.nombre} ${atletaSeleccionado.apellido}`);
+        }
+
+        function nuevaMedicion() {
+            alert('Nueva medición para ' + atletaSeleccionado.nombre);
+        }
+
+        document.getElementById('buscador').addEventListener('input', () => {
+            renderizarLista();
+            if (atletaSeleccionado) {
+                renderizarAcordeon(atletaSeleccionado);
+            }
+        });
+
+        // Inicializar
+        renderizarLista();
+        renderizarAcordeon(atletaSeleccionado);
+    </script>
+</body>
+
+</html>

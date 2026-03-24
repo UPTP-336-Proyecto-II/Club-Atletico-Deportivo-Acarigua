@@ -5,7 +5,9 @@ const {
   getTestsByAtleta, 
   createTest, 
   getEstadisticasTests,
-  getEvolucionTest
+  getEvolucionTest,
+  deleteTest,
+  updateTest
 } = require('../controllers/testsController');
 
 router.get('/', getTests);
@@ -13,5 +15,7 @@ router.get('/estadisticas', getEstadisticasTests);
 router.get('/atleta/:atleta_id', getTestsByAtleta);
 router.get('/atleta/:atleta_id/evolucion/:tipo_test', getEvolucionTest);
 router.post('/', createTest);
+router.put('/:id', updateTest);
+router.delete('/:id', deleteTest);
 
 module.exports = router;
