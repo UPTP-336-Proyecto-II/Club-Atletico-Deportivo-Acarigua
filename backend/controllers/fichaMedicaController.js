@@ -5,9 +5,7 @@ const getFichasMedicas = async (req, res) => {
     try {
         const { atleta_id } = req.query;
 
-        let query = `SELECT f.ficha_id, f.atleta_id, f.grupo_sanguineo as tipo_sanguineo, f.alergias, 
-                      f.antecedentes_quirurgicos as lesion, f.condicion_cronica as condicion_medica, 
-                      f.medicacion_actual as observacion, f.antecedentes_familiares, f.updated_at,
+        let query = `SELECT f.*,
                       a.nombre as atleta_nombre, a.apellido as atleta_apellido
                FROM ficha_medica f
                LEFT JOIN atletas a ON f.atleta_id = a.atleta_id`;
@@ -33,9 +31,7 @@ const getFichaMedicaByAtleta = async (req, res) => {
     try {
         const { atleta_id } = req.params;
 
-        const query = `SELECT f.ficha_id, f.atleta_id, f.grupo_sanguineo as tipo_sanguineo, f.alergias, 
-                      f.antecedentes_quirurgicos as lesion, f.condicion_cronica as condicion_medica, 
-                      f.medicacion_actual as observacion, f.antecedentes_familiares, f.updated_at,
+        const query = `SELECT f.*,
                       a.nombre as atleta_nombre, a.apellido as atleta_apellido
                FROM ficha_medica f
                LEFT JOIN atletas a ON f.atleta_id = a.atleta_id
@@ -59,11 +55,12 @@ const createFichaMedica = async (req, res) => {
     try {
         const {
             atleta_id,
+            grupo_sanguineo,
             alergias,
-            tipo_sanguineo,
-            lesion,
-            condicion_medica,
-            observacion
+            antecedentes_familiares,
+            antecedentes_quirurgicos,
+            condicion_cronica,
+            medicacion_actual
         } = req.body;
 
         // Verificar si ya existe ficha para este atleta
@@ -79,9 +76,9 @@ const createFichaMedica = async (req, res) => {
         let result;
         [result] = await pool.execute(
             `INSERT INTO ficha_medica
-            (atleta_id, grupo_sanguineo, alergias, antecedentes_quirurgicos, condicion_cronica, medicacion_actual)
-            VALUES(?, ?, ?, ?, ?, ?)`,
-            [atleta_id, tipo_sanguineo || 'O+', alergias, lesion, condicion_medica, observacion]
+            (atleta_id, grupo_sanguineo, alergias, antecedentes_familiares, antecedentes_quirurgicos, condicion_cronica, medicacion_actual)
+            VALUES(?, ?, ?, ?, ?, ?, ?)`,
+            [atleta_id, grupo_sanguineo || 'O+', alergias, antecedentes_familiares, antecedentes_quirurgicos, condicion_cronica, medicacion_actual]
         );
 
         res.status(201).json({
@@ -98,21 +95,21 @@ const createFichaMedica = async (req, res) => {
 // Actualizar ficha médica
 const updateFichaMedica = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id: atleta_id } = req.params;
         const {
+            grupo_sanguineo,
             alergias,
-            tipo_sanguineo,
-            lesion,
-            condicion_medica,
-            observacion
+            antecedentes_familiares,
+            antecedentes_quirurgicos,
+            condicion_cronica,
+            medicacion_actual
         } = req.body;
 
-        let result;
-        [result] = await pool.execute(
-            `UPDATE ficha_medica 
-             SET alergias = ?, grupo_sanguineo = ?, antecedentes_quirurgicos = ?, condicion_cronica = ?, medicacion_actual = ?
-             WHERE ficha_id = ? `,
-            [alergias, tipo_sanguineo || 'O+', lesion, condicion_medica, observacion, id]
+        const [result] = await pool.execute(
+            `UPDATE ficha_medica
+             SET grupo_sanguineo = ?, alergias = ?, antecedentes_familiares = ?, antecedentes_quirurgicos = ?, condicion_cronica = ?, medicacion_actual = ?
+             WHERE atleta_id = ?`,
+            [grupo_sanguineo, alergias, antecedentes_familiares, antecedentes_quirurgicos, condicion_cronica, medicacion_actual, atleta_id]
         );
 
         if (result.affectedRows === 0) {

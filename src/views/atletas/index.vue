@@ -370,24 +370,28 @@
               </div>
               <div v-if="fichaMedica" class="form-grid">
                 <div class="form-item">
-                  <label>Tipo Sanguíneo</label>
-                  <p>{{ fichaMedica.tipo_sanguineo || 'No especificado' }}</p>
+                  <label>Grupo Sanguíneo</label>
+                  <p>{{ fichaMedica.grupo_sanguineo || 'No especificado' }}</p>
                 </div>
                 <div class="form-item">
                   <label>Alergias</label>
                   <p>{{ fichaMedica.alergias || 'Ninguna' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Lesiones</label>
-                  <p>{{ fichaMedica.lesion || 'Ninguna' }}</p>
+                  <label>Antecedentes Familiares</label>
+                  <p>{{ fichaMedica.antecedentes_familiares || 'Ninguno' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Condición Médica</label>
-                  <p>{{ fichaMedica.condicion_medica || 'Ninguna' }}</p>
+                  <label>Antecedentes Quirúrgicos / Lesiones</label>
+                  <p>{{ fichaMedica.antecedentes_quirurgicos || 'Ninguno' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Observaciones</label>
-                  <p>{{ fichaMedica.observacion || 'Sin observaciones' }}</p>
+                  <label>Condiciones Crónicas</label>
+                  <p>{{ fichaMedica.condicion_cronica || 'Ninguna' }}</p>
+                </div>
+                <div class="form-item full-width">
+                  <label>Medicación Actual</label>
+                  <p>{{ fichaMedica.medicacion_actual || 'Ninguna' }}</p>
                 </div>
               </div>
               <div v-else class="empty-tab">
@@ -989,8 +993,8 @@
       <el-form ref="medicalForm" :model="medicalForm" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Tipo Sanguíneo">
-              <el-select v-model="medicalForm.tipo_sanguineo" placeholder="Seleccionar" style="width: 100%">
+            <el-form-item label="Grupo Sanguíneo">
+              <el-select v-model="medicalForm.grupo_sanguineo" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="A+" value="A+" />
                 <el-option label="A-" value="A-" />
                 <el-option label="B+" value="B+" />
@@ -1008,14 +1012,17 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Lesiones">
-          <el-input v-model="medicalForm.lesion" type="textarea" :rows="2" placeholder="Lesiones previas" />
+        <el-form-item label="Antecedentes Familiares">
+          <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes médicos en la familia" />
         </el-form-item>
-        <el-form-item label="Condición Médica">
-          <el-input v-model="medicalForm.condicion_medica" type="textarea" :rows="2" placeholder="Condiciones médicas actuales" />
+        <el-form-item label="Antecedentes Quirúrgicos / Lesiones">
+          <el-input v-model="medicalForm.antecedentes_quirurgicos" type="textarea" :rows="2" placeholder="Operaciones o lesiones previas" />
         </el-form-item>
-        <el-form-item label="Observaciones">
-          <el-input v-model="medicalForm.observacion" type="textarea" :rows="3" placeholder="Observaciones adicionales" />
+        <el-form-item label="Condiciones Crónicas">
+          <el-input v-model="medicalForm.condicion_cronica" type="textarea" :rows="2" placeholder="Asma, diabetes, etc" />
+        </el-form-item>
+        <el-form-item label="Medicación Actual">
+          <el-input v-model="medicalForm.medicacion_actual" type="textarea" :rows="2" placeholder="Medicamentos que usa actualmente" />
         </el-form-item>
       </el-form>
       <span slot="footer">
@@ -1463,11 +1470,12 @@ export default {
         pierna_dominante: 'Derecha'
       },
       medicalForm: {
-        tipo_sanguineo: '',
+        grupo_sanguineo: '',
         alergias: '',
-        lesion: '',
-        condicion_medica: '',
-        observacion: ''
+        antecedentes_familiares: '',
+        antecedentes_quirurgicos: '',
+        condicion_cronica: '',
+        medicacion_actual: ''
       },
       anthropometricForm: {
         peso: null,
@@ -2186,11 +2194,12 @@ export default {
     openMedicalModal() {
       if (this.fichaMedica) {
         this.medicalForm = {
-          tipo_sanguineo: this.fichaMedica.tipo_sanguineo || '',
+          grupo_sanguineo: this.fichaMedica.grupo_sanguineo || '',
           alergias: this.fichaMedica.alergias || '',
-          lesion: this.fichaMedica.lesion || '',
-          condicion_medica: this.fichaMedica.condicion_medica || '',
-          observacion: this.fichaMedica.observacion || ''
+          antecedentes_familiares: this.fichaMedica.antecedentes_familiares || '',
+          antecedentes_quirurgicos: this.fichaMedica.antecedentes_quirurgicos || '',
+          condicion_cronica: this.fichaMedica.condicion_cronica || '',
+          medicacion_actual: this.fichaMedica.medicacion_actual || ''
         }
       } else {
         this.resetMedicalForm()
@@ -2414,7 +2423,6 @@ export default {
           await this.selectAtleta(this.currentAtletaId)
         } catch (error) {
           console.error('Error actualizando datos personales:', error)
-          this.$message.error('Error al actualizar datos personales')
         } finally {
           this.loading = false
         }
@@ -2442,7 +2450,6 @@ export default {
           await this.selectAtleta(this.currentAtletaId)
         } catch (error) {
           console.error('Error actualizando datos deportivos:', error)
-          this.$message.error('Error al actualizar datos deportivos')
         } finally {
           this.loading = false
         }
@@ -2459,7 +2466,7 @@ export default {
 
         if (this.fichaMedica) {
           await request({
-            url: `/ficha-medica/${this.fichaMedica.ficha_id}`,
+            url: `/ficha-medica/${this.currentAtletaId}`,
             method: 'put',
             data
           })
@@ -2477,7 +2484,6 @@ export default {
         await this.loadFichaMedica(this.currentAtletaId)
       } catch (error) {
         console.error('Error guardando ficha médica:', error)
-        this.$message.error('Error al guardar ficha médica')
       } finally {
         this.loading = false
       }
@@ -2510,7 +2516,6 @@ export default {
         await this.loadMedidas(this.currentAtletaId)
       } catch (error) {
         console.error('Error guardando medidas:', error)
-        this.$message.error('Error al guardar medidas')
       } finally {
         this.loading = false
       }
@@ -2543,7 +2548,6 @@ export default {
         await this.loadTests(this.currentAtletaId)
       } catch (error) {
         console.error('Error guardando test:', error)
-        this.$message.error('Error al guardar test')
       } finally {
         this.loading = false
       }
@@ -2594,7 +2598,6 @@ export default {
           await this.selectAtleta(this.currentAtletaId, true)
         } catch (error) {
           console.error('Error guardando tutor:', error)
-          this.$message.error('Error al guardar tutor')
         } finally {
           this.loading = false
         }
@@ -2818,11 +2821,12 @@ export default {
 
     resetMedicalForm() {
       this.medicalForm = {
-        tipo_sanguineo: '',
+        grupo_sanguineo: '',
         alergias: '',
-        lesion: '',
-        condicion_medica: '',
-        observacion: ''
+        antecedentes_familiares: '',
+        antecedentes_quirurgicos: '',
+        condicion_cronica: '',
+        medicacion_actual: ''
       }
     },
 
