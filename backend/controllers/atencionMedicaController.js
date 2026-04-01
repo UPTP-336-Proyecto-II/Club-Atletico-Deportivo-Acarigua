@@ -27,11 +27,15 @@ const createAtencion = async (req, res) => {
       tratamiento_indicado, especialista_id, estado_disponibilidad 
     } = req.body;
 
+    if (!tipo_registro || !especialista_id || !descripcion || !fecha_suceso) {
+      return res.status(400).json({ error: 'Campos obligatorios faltantes: Tipo de registro, Especialista, Descripción o Fecha.' });
+    }
+
     const [result] = await pool.execute(
       `INSERT INTO atencion_medica 
        (atleta_id, tipo_registro, descripcion, diagnostico, fecha_suceso, fecha_alta_estimada, fecha_alta_real, tratamiento_indicado, especialista_id, estado_disponibilidad)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [atleta_id, tipo_registro, descripcion, diagnostico || null, fecha_suceso, fecha_alta_estimada || null, fecha_alta_real || null, tratamiento_indicado || null, especialista_id, estado_disponibilidad || 0]
+      [atleta_id, parseInt(tipo_registro), descripcion, diagnostico || null, fecha_suceso, fecha_alta_estimada || null, fecha_alta_real || null, tratamiento_indicado || null, parseInt(especialista_id), estado_disponibilidad ? parseInt(estado_disponibilidad) : 0]
     );
 
     res.status(201).json({ id: result.insertId, message: 'Atención médica registrada correctamente' });
@@ -51,11 +55,15 @@ const updateAtencion = async (req, res) => {
       tratamiento_indicado, especialista_id, estado_disponibilidad 
     } = req.body;
 
+    if (!tipo_registro || !especialista_id || !descripcion || !fecha_suceso) {
+      return res.status(400).json({ error: 'Campos obligatorios faltantes.' });
+    }
+
     await pool.execute(
       `UPDATE atencion_medica 
        SET tipo_registro = ?, descripcion = ?, diagnostico = ?, fecha_suceso = ?, fecha_alta_estimada = ?, fecha_alta_real = ?, tratamiento_indicado = ?, especialista_id = ?, estado_disponibilidad = ?
        WHERE atencion_id = ?`,
-      [tipo_registro, descripcion, diagnostico || null, fecha_suceso, fecha_alta_estimada || null, fecha_alta_real || null, tratamiento_indicado || null, especialista_id, estado_disponibilidad || 0, id]
+      [parseInt(tipo_registro), descripcion, diagnostico || null, fecha_suceso, fecha_alta_estimada || null, fecha_alta_real || null, tratamiento_indicado || null, parseInt(especialista_id), estado_disponibilidad ? parseInt(estado_disponibilidad) : 0, id]
     );
 
     res.json({ message: 'Atención médica actualizada correctamente' });

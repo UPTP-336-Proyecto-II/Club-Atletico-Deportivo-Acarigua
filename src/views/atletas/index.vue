@@ -258,7 +258,11 @@
                   </el-table-column>
                   <el-table-column prop="peso" label="Peso (kg)" width="90" align="center" />
                   <el-table-column prop="altura" label="Altura (cm)" width="95" align="center" />
-                  <el-table-column prop="indice_de_masa" label="IMC" width="90" align="center" />
+                  <el-table-column label="IMC" width="90" align="center">
+                    <template slot-scope="{ row }">
+                      {{ row.indice_de_masa ? Number(row.indice_de_masa).toFixed(1) : '-' }}
+                    </template>
+                  </el-table-column>
                   <el-table-column prop="porcentaje_grasa" label="% Grasa" width="90" align="center" />
                   <el-table-column prop="porcentaje_musculatura" label="% Musculatura" width="115" align="center" />
                   <el-table-column prop="envergadura" label="Envergadura" width="100" align="center" />
@@ -1546,7 +1550,10 @@ export default {
           { required: true, message: 'El nombre es requerido', trigger: 'blur' },
           { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
         ],
-        cedula: [{ required: true, message: 'La cédula es requerida', trigger: 'blur' }],
+        cedula: [
+          { required: true, message: 'La cédula es requerida', trigger: 'blur' },
+          { min: 7, message: 'La cédula debe tener al menos 7 caracteres', trigger: 'blur' }
+        ],
         telefono: [
           { required: true, message: 'El teléfono es requerido', trigger: 'blur' },
           { pattern: /^[0-9]{11}$/, message: 'El teléfono debe tener 11 dígitos numéricos', trigger: 'blur' }
@@ -2130,8 +2137,12 @@ export default {
             return
           }
 
-          // Validación de cédula duplicada
+          // Validación de cédula
           if (this.atletaForm.cedula) {
+            if (this.atletaForm.cedula.length < 7 && this.atletaForm.cedula.toUpperCase() !== 'S/N') {
+              this.$message.error('La cédula del atleta debe tener al menos 7 dígitos (o "S/N").')
+              return
+            }
             try {
               const res = await request({
                 url: '/atletas',
@@ -2332,6 +2343,10 @@ export default {
           const rep = this.atletaForm.representante
           if (!rep.nombre || !rep.apellido || !rep.cedula || !rep.telefono || !rep.tipo_relacion) {
             this.$message.error('Por favor, complete todos los datos del representante, ya que el atleta es menor de edad.')
+            return
+          }
+          if (rep.cedula.length < 7) {
+            this.$message.error('La cédula del representante debe tener al menos 7 dígitos.')
             return
           }
           if (rep.telefono.length !== 11) {
@@ -2638,6 +2653,10 @@ export default {
     },
 
     async saveAtencion() {
+      if (!this.atencionForm.tipo_registro || !this.atencionForm.especialista_id || !this.atencionForm.descripcion || !this.atencionForm.fecha_suceso) {
+        this.$message.warning('Por favor complete todos los campos obligatorios: Tipo, Especialista, Descripción y Fecha.')
+        return
+      }
       this.loading = true
       try {
         const data = { ...this.atencionForm, atleta_id: this.currentAtletaId }
@@ -2652,7 +2671,6 @@ export default {
         await this.loadAtencionesMedicas(this.currentAtletaId)
       } catch (error) {
         console.error(error)
-        this.$message.error('Error al guardar la atención médica')
       } finally {
         this.loading = false
       }
@@ -2678,7 +2696,7 @@ export default {
       try {
         const data = { ...this.carnetForm, atleta_id: this.currentAtletaId }
         if (this.carnetDiscapacidad) {
-          await request({ url: `/carnet-discapacidad/${this.carnetDiscapacidad.carnet_id}`, method: 'put', data })
+          await request({ url: `/carnet-discapacidad/${this.carnetDiscapacidad.id}`, method: 'put', data })
           this.$message.success('Carnet de discapacidad actualizado')
         } else {
           await request({ url: '/carnet-discapacidad', method: 'post', data })

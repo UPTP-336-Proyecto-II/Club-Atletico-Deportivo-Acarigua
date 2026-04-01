@@ -7,27 +7,27 @@ const getPlantel = async (req, res) => {
     const { rol, sort, cedula, sin_cedula } = req.query;
 
     let query = `
-            SELECT pl.*, r.nombre_rol, pl.personal_id as plantel_id, pl.documento_identidad as cedula, pl.rol as rol_id,
+            SELECT pl.*, r.nombre_rol, pl.personal_id as plantel_id, pl.cedula as cedula, pl.rol_personal as rol_id,
                    ${addressService.getSelectColumns()}
             FROM personal pl
-            LEFT JOIN rol_usuarios r ON pl.rol = r.rol_id
+            LEFT JOIN rol_usuarios r ON pl.rol_personal = r.rol_id
             ${addressService.getJoins().replace('entity.direccion_id', 'pl.direccion_id')}
             WHERE 1=1`;
     const params = [];
 
     if (cedula) {
-      query += ' AND pl.documento_identidad LIKE ?';
+      query += ' AND pl.cedula LIKE ?';
       params.push(`%${cedula}%`);
     }
 
     if (sin_cedula === 'true') {
-      query += ' AND (pl.documento_identidad IS NULL OR pl.documento_identidad = \'\')';
+      query += ' AND (pl.cedula IS NULL OR pl.cedula = \'\')';
     }
 
     if (rol) {
       const rolId = parseInt(rol);
       if (!isNaN(rolId)) {
-        query += ' AND pl.rol = ?';
+        query += ' AND pl.rol_personal = ?';
         params.push(rolId);
       } else {
         query += ' AND UPPER(r.nombre_rol) = UPPER(?)';
@@ -36,7 +36,7 @@ const getPlantel = async (req, res) => {
     }
 
     // Ordenamiento
-    let orderBy = 'pl.rol ASC, pl.nombre ASC'; // Default
+    let orderBy = 'pl.rol_personal ASC, pl.nombre ASC'; // Default
 
     switch (sort) {
       case 'reciente':

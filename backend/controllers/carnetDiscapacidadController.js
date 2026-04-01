@@ -71,12 +71,16 @@ const updateCarnet = async (req, res) => {
     const { id } = req.params; // id de carnet_discapacidad
     const { tipo_discapacidad_id, nro_carnet, porcentaje_discapacidad, fecha_registro } = req.body;
 
-    await pool.execute(
+    const [result] = await pool.execute(
       `UPDATE carnet_discapacidad 
        SET tipo_discapacidad_id = ?, nro_carnet = ?, porcentaje_discapacidad = ?, fecha_registro = ?
        WHERE id = ?`,
       [tipo_discapacidad_id, nro_carnet || null, porcentaje_discapacidad || null, fecha_registro || null, id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Carnet de discapacidad no encontrado para actualizar' });
+    }
 
     res.json({ message: 'Carnet actualizado correctamente' });
   } catch (error) {
