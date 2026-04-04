@@ -1,7 +1,7 @@
 <template>
   <div class="user-profile-container">
     <!-- Header simIlar a Atletas -->
-    <div class="page-header">
+    <div class="premium-header">
       <div class="header-content">
         <div>
           <h1><i class="el-icon-user-solid" /> Mi Perfil</h1>
@@ -40,7 +40,7 @@
               </div>
               <div class="box-center info-section">
                 <div class="user-name text-center">{{ user.name }}</div>
-                <div class="user-role text-center text-muted">{{ user.role | uppercaseFirst }}</div>
+                <div class="user-role text-center text-muted">{{ uppercaseFirst(user.role) }}</div>
               </div>
             </div>
           </el-card>
@@ -51,7 +51,7 @@
           <el-card shadow="hover">
             <el-tabs v-model="activeTab">
               <el-tab-pane label="Datos de Cuenta" name="account">
-                <el-form ref="form" :model="form" :rules="rules" label-width="120px" label-position="top">
+                <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" label-position="top">
 
                   <div class="form-grid">
                     <!-- Sección Correo -->
@@ -118,175 +118,148 @@
   </div>
 </template>
 
-<script>
-import { mapGetters } from 'vuex'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
 import request from '@/utils/request'
-import SecurityQuestions from './components/SecurityQuestions'
+import SecurityQuestions from './components/SecurityQuestions.vue'
+import { ElMessage } from 'element-plus'
 
-export default {
-  name: 'Profile',
-  components: { SecurityQuestions },
-  data() {
-    const validateConfirm = (rule, value, callback) => {
-      if (this.form.newPassword && value !== this.form.newPassword) {
-        callback(new Error('Las contraseñas no coinciden'))
-      } else {
-        callback()
-      }
-    }
-    return {
-      user: {}, // Objeto local para manejar la UI inmediatamente
-      activeTab: 'account',
-      loading: false,
-      backendUrl: 'http://localhost:3000',
-      headers: {
-        Authorization: 'Bearer ' // Se completa en created
-      },
-      form: {
-        email: '',
-        newPassword: '',
-        confirmPassword: '',
-        password: '',
-        foto: ''
-      },
-      rules: {
-        email: [
-          { required: true, message: 'El correo es requerido', trigger: 'blur' },
-          { type: 'email', message: 'Ingrese un correo válido', trigger: 'blur' }
-        ],
-        password: [
-          { required: true, message: 'La contraseña actual es requerida', trigger: 'blur' }
-        ],
-        confirmPassword: [
-          { validator: validateConfirm, trigger: 'blur' }
-        ]
-      }
-    }
-  },
-  computed: {
-    ...mapGetters([
-      'name',
-      'avatar',
-      'roles',
-      'token'
-    ])
-  },
-  created() {
-    // Inicializar headers
-    this.headers.Authorization = 'Bearer ' + this.$store.getters.token
-    this.getUser()
-  },
-  methods: {
-    getUser() {
-      // Mapear datos del store a objeto local
-      this.user = {
-        name: this.name, // En este sistema name=email
-        role: this.roles.join(' | '),
-        email: this.name,
-        avatar: this.avatar || ''
-      }
+defineOptions({
+  name: 'Profile'
+})
 
-      // Si el avatar viene del backend con path relativo (ej: uploads/...), concatenar backendUrl
-      // PERO el componente el-upload devuelve solo el filename.
-      // Si ya es una URL completa (ej: blob:...), dejarla.
-      // Si es un filename simple, concatenar.
+const store = useStore()
 
-      this.form.email = this.user.email
-      this.form.foto = ''
-    },
-    async submit() {
-      this.$refs.form.validate(async valid => {
-        if (valid) {
-          this.loading = true
-          try {
-            await request({
-              url: '/usuarios/profile',
-              method: 'put',
-              data: this.form
-            })
+const user = ref({})
+const activeTab = ref('account')
+const loading = ref(false)
+const backendUrl = ref('http://localhost:3000')
 
-            this.$message({
-              message: 'Perfil actualizado exitosamente',
-              type: 'success',
-              duration: 3000
-            })
+const headers = ref({
+  Authorization: 'Bearer ' 
+})
 
-            // Limpiar campos sensibles
-            this.form.password = ''
-            this.form.newPassword = ''
-            this.form.confirmPassword = ''
+const formRef = ref(null)
 
-            // Aquí podrías disparar una acción para recargar info del usuario en vuex si fuera necesario
-          } catch (error) {
-            console.error(error)
-          } finally {
-            this.loading = false
-          }
-        }
-      })
-    },
-    handleAvatarSuccess(res, file) {
-      if (res.filename) {
-        // Guardamos el filename en el form para enviarlo al guardar perfil
-        this.form.foto = res.filename
+const form = ref({
+  email: '',
+  newPassword: '',
+  confirmPassword: '',
+  password: '',
+  foto: ''
+})
 
-        // Actualizamos visualmente el avatar INMEDIATAMENTE con el blob local para feedback rápido
-        this.user.avatar = URL.createObjectURL(file.raw)
+const uppercaseFirst = (string) => {
+  if (!string) return ''
+  return string.charAt(0).toUpperCase() + string.slice(1)
+}
 
-        this.$message.success('Foto cargada. Recuerda pulsar "Actualizar Perfil" para guardar permanentemente.')
-      }
-    },
-    beforeAvatarUpload(file) {
-      const isValidType = file.type === 'image/jpeg' || file.type === 'image/png'
-      const isLt2M = file.size / 1024 / 1024 < 2
-
-      if (!isValidType) {
-        this.$message.error('La imagen debe ser JPG o PNG!')
-      }
-      if (!isLt2M) {
-        this.$message.error('La imagen excede los 2MB!')
-      }
-      return isValidType && isLt2M
-    }
+const validateConfirm = (rule, value, callback) => {
+  if (form.value.newPassword && value !== form.value.newPassword) {
+    callback(new Error('Las contraseñas no coinciden'))
+  } else {
+    callback()
   }
 }
+
+const rules = {
+  email: [
+    { required: true, message: 'El correo es requerido', trigger: 'blur' },
+    { type: 'email', message: 'Ingrese un correo válido', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: 'La contraseña actual es requerida', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { validator: validateConfirm, trigger: 'blur' }
+  ]
+}
+
+const name = computed(() => store.getters.name)
+const avatar = computed(() => store.getters.avatar)
+const roles = computed(() => store.getters.roles)
+const token = computed(() => store.getters.token)
+
+const getUser = () => {
+  user.value = {
+    name: name.value,
+    role: roles.value.join(' | '),
+    email: name.value,
+    avatar: avatar.value || ''
+  }
+
+  form.value.email = user.value.email
+  form.value.foto = ''
+}
+
+const submit = async () => {
+  if (!formRef.value) return
+  
+  await formRef.value.validate(async valid => {
+    if (valid) {
+      loading.value = true
+      try {
+        await request({
+          url: '/usuarios/profile',
+          method: 'put',
+          data: form.value
+        })
+
+        ElMessage({
+          message: 'Perfil actualizado exitosamente',
+          type: 'success',
+          duration: 3000
+        })
+
+        form.value.password = ''
+        form.value.newPassword = ''
+        form.value.confirmPassword = ''
+
+      } catch (error) {
+        console.error(error)
+      } finally {
+        loading.value = false
+      }
+    }
+  })
+}
+
+const handleAvatarSuccess = (res, file) => {
+  if (res.filename) {
+    form.value.foto = res.filename
+    user.value.avatar = URL.createObjectURL(file.raw)
+    ElMessage.success('Foto cargada. Recuerda pulsar "Actualizar Perfil" para guardar permanentemente.')
+  }
+}
+
+const beforeAvatarUpload = (file) => {
+  const isValidType = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isValidType) {
+    ElMessage.error('La imagen debe ser JPG o PNG!')
+  }
+  if (!isLt2M) {
+    ElMessage.error('La imagen excede los 2MB!')
+  }
+  return isValidType && isLt2M
+}
+
+onMounted(() => {
+  headers.value.Authorization = 'Bearer ' + token.value
+  getUser()
+})
 </script>
 
 <style lang="scss" scoped>
 .user-profile-container {
   padding: 20px;
-  background-color: #f0f2f5;
-  min-height: calc(100vh - 84px);
 }
 
-.page-header {
-  background: #fff;
-  padding: 20px;
-  margin: -20px -20px 20px -20px;
-  box-shadow: 0 1px 4px rgba(0,21,41,.08);
-
-  .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    h1 {
-      margin: 0;
-      font-size: 20px;
-      color: #303133;
-
-      i {
-        margin-right: 10px;
-        color: #E51D22;
-      }
-    }
-
-    .subtitle {
-      margin: 5px 0 0 0;
-      color: #909399;
-      font-size: 14px;
-    }
-  }
+/* Local UI Adjustments */
+.header-content h1 {
+  margin: 0;
 }
 
 .profile-card {
@@ -299,7 +272,7 @@ export default {
 }
 
 .text-muted {
-  color: #777;
+  color: var(--color-text-muted);
 }
 
 .user-profile {
@@ -311,7 +284,8 @@ export default {
 
   .user-role {
     font-size: 14px;
-    background: #f4f4f5;
+    background: var(--color-bg-body);
+    color: var(--color-text-muted);
     padding: 2px 10px;
     border-radius: 12px;
     display: inline-block;
@@ -380,10 +354,10 @@ export default {
 .section-title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #303133;
+  color: var(--color-text-main);
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #EBEEF5;
+  border-bottom: 1px solid var(--color-border);
 }
 
 /* Form Grid Styling similar a Atletas */

@@ -1,14 +1,14 @@
 <template>
-  <div class="report-container">
+  <div class="report-container asistencia-report">
     <!-- Header -->
-    <div class="page-header">
+    <div class="premium-header">
       <div class="header-content">
         <div>
           <h1><i class="el-icon-date" /> Reporte de Asistencia</h1>
           <p class="subtitle">Análisis detallado por atleta y categoría</p>
         </div>
         <div class="no-print">
-          <el-button icon="el-icon-printer" plain class="header-action-btn" @click="handlePrint">
+          <el-button plain class="header-action-btn" :icon="Printer" @click="handlePrint">
             Imprimir Reporte
           </el-button>
         </div>
@@ -16,19 +16,21 @@
     </div>
 
     <!-- Filters / Control Panel -->
-    <el-card shadow="hover" class="control-panel no-print">
+    <el-card shadow="hover" class="premium-control-card no-print">
       <div class="control-content">
         <div class="filter-section">
 
           <div class="filter-item">
-            <span class="filter-label">Categoría</span>
+            <span class="premium-search-label">Categoría</span>
             <el-select
               v-model="filters.categoria_id"
-              placeholder="Seleccionar Categoría"
+              placeholder="Seleccionar..."
               clearable
               filterable
-              class="filter-input-select"
+              class="modern-search-input modern-filter-control"
+              popper-class="report-filter-popper"
               @change="handleFilterChange"
+              style="width: 100%"
             >
               <el-option
                 v-for="cat in categorias"
@@ -40,7 +42,7 @@
           </div>
 
           <div class="filter-item date-range-item">
-            <span class="filter-label">Rango de Fechas</span>
+            <span class="premium-search-label">Rango de Fechas</span>
             <el-date-picker
               v-model="filters.dateRange"
               type="daterange"
@@ -48,19 +50,19 @@
               start-placeholder="Inicio"
               end-placeholder="Fin"
               value-format="yyyy-MM-dd"
-              class="filter-date-picker"
+              class="filter-date-picker modern-filter-control"
+              popper-class="report-filter-popper"
               @change="handleFilterChange"
             />
           </div>
 
           <div class="filter-item search-item">
-            <span class="filter-label">Buscar Atleta</span>
+            <span class="premium-search-label">Buscar Atleta</span>
             <el-input
               v-model="filters.search"
               placeholder="Nombre o apellido..."
-              prefix-icon="el-icon-search"
               clearable
-              class="filter-input-search"
+              class="modern-search-input modern-filter-control"
             />
           </div>
 
@@ -81,16 +83,16 @@
           style="width: 100%"
           class="custom-table desktop-table"
           :header-cell-style="{
-            background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
-            color: '#1e293b',
+            background: 'linear-gradient(135deg, var(--color-bg-card), var(--color-bg-body))',
+            color: 'var(--color-text-main)',
             fontWeight: '700',
-            borderBottom: '3px solid #E51D22',
+            borderBottom: '3px solid var(--color-primary)',
             textTransform: 'uppercase',
             padding: '16px 12px'
           }"
         >
           <el-table-column label="Atleta" min-width="280">
-            <template slot-scope="scope">
+            <template #default="scope">
               <div class="athlete-cell">
                 <div class="athlete-photo-wrapper">
                   <img v-if="scope.row.foto" :src="getFotoUrl(scope.row.foto)" class="avatar-img" @error="handleImgError">
@@ -106,7 +108,7 @@
 
           <!-- New Explicit Category Column -->
           <el-table-column label="Categoría" min-width="120" align="center">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-tag size="medium" effect="plain" type="info" class="category-tag">
                 {{ scope.row.categoria_nombre }}
               </el-tag>
@@ -114,7 +116,7 @@
           </el-table-column>
 
           <el-table-column label="Estadísticas" min-width="320" align="center">
-            <template slot-scope="scope">
+            <template #default="scope">
               <div class="stats-mini-grid">
                 <div class="stat-box present" title="Asistencias">
                   <i class="el-icon-check" /> {{ scope.row.stats.presente }}
@@ -133,7 +135,7 @@
           </el-table-column>
 
           <el-table-column label="% Asistencia" width="180" align="center">
-            <template slot-scope="scope">
+            <template #default="scope">
               <div class="progress-col">
                 <el-progress
                   :percentage="scope.row.stats.percentage"
@@ -147,23 +149,31 @@
           </el-table-column>
 
           <el-table-column label="Acciones" width="140" align="center" class-name="no-print">
-            <template slot-scope="scope">
-              <el-button
-                size="small"
-                type="primary"
-                circle
-                icon="el-icon-view"
-                title="Ver Detalle"
-                @click="viewDetail(scope.row)"
-              />
-              <el-button
-                size="small"
-                type="danger"
-                circle
-                icon="el-icon-printer"
-                title="Imprimir Individual"
-                @click="printIndividual(scope.row)"
-              />
+            <template #default="scope">
+              <el-tooltip content="Ver detalle" placement="top">
+                <el-button
+                  size="small"
+                  type="primary"
+                  circle
+                  title="Ver detalle"
+                  aria-label="Ver detalle"
+                  @click="viewDetail(scope.row)"
+                >
+                  <el-icon><View /></el-icon>
+                </el-button>
+              </el-tooltip>
+              <el-tooltip content="Imprimir individual" placement="top">
+                <el-button
+                  size="small"
+                  type="danger"
+                  circle
+                  title="Imprimir individual"
+                  aria-label="Imprimir individual"
+                  @click="printIndividual(scope.row)"
+                >
+                  <el-icon><Printer /></el-icon>
+                </el-button>
+              </el-tooltip>
             </template>
           </el-table-column>
         </el-table>
@@ -224,10 +234,10 @@
 
             <!-- Acciones -->
             <div class="card-actions-section no-print">
-              <el-button size="small" type="primary" icon="el-icon-view" @click="viewDetail(atleta)">
+              <el-button size="small" type="primary" :icon="View" @click="viewDetail(atleta)">
                 Ver Detalle
               </el-button>
-              <el-button size="small" type="danger" icon="el-icon-printer" @click="printIndividual(atleta)">
+              <el-button size="small" type="danger" :icon="Printer" @click="printIndividual(atleta)">
                 Imprimir
               </el-button>
             </div>
@@ -247,17 +257,19 @@
 
     <!-- Detailed Modal -->
     <el-dialog
-      :visible.sync="showDetailModal"
+      v-model="showDetailModal"
       width="700px"
       append-to-body
       custom-class="detail-modal"
     >
-      <div slot="title" class="modal-header-custom">
-        <span class="modal-title">Historial de Asistencia</span>
-        <span v-if="selectedAthlete" class="modal-subtitle">
-          - {{ selectedAthlete.nombre }} {{ selectedAthlete.apellido }}
-        </span>
-      </div>
+      <template #title>
+        <div class="modal-header-custom">
+          <span class="modal-title">Historial de Asistencia</span>
+          <span v-if="selectedAthlete" class="modal-subtitle">
+            - {{ selectedAthlete.nombre }} {{ selectedAthlete.apellido }}
+          </span>
+        </div>
+      </template>
 
       <div v-if="selectedAthlete" class="modal-content">
 
@@ -285,13 +297,13 @@
           class="detail-table"
         >
           <el-table-column prop="fecha" label="Fecha" width="120">
-            <template slot-scope="scope">
+            <template #default="scope">
               {{ formatDate(scope.row.fecha) }}
             </template>
           </el-table-column>
           <el-table-column prop="tipo_evento" label="Evento" width="140" />
           <el-table-column prop="estatus" label="Estado" align="center">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-tag :type="getStatusType(scope.row.estatus)">
                 {{ getStatusLabel(scope.row.estatus) }}
               </el-tag>
@@ -302,289 +314,301 @@
 
       </div>
 
-      <div slot="footer" class="dialog-footer no-print">
+      <template #footer><div class="dialog-footer no-print">
         <el-button @click="showDetailModal = false">Cerrar</el-button>
-        <el-button type="primary" icon="el-icon-printer" @click="printModal">Imprimir</el-button>
-      </div>
+        <el-button type="primary" :icon="Printer" @click="printModal">Imprimir</el-button>
+      </div></template>
     </el-dialog>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { getCategorias } from '@/api/categorias'
 import { getAtletas } from '@/api/atletas'
 import { getAsistencias } from '@/api/asistencias'
+import { ElMessage } from 'element-plus'
+import { View, Printer } from '@element-plus/icons-vue'
+import { useServerDataRefresh } from '@/composables/useServerDataRefresh'
 
-export default {
-  name: 'AsistenciaReporte',
-  data() {
+const loading = ref(false)
+const categorias = ref([])
+const atletas = ref([])
+const asistencias = ref([])
+const filters = ref({
+  categoria_id: '',
+  dateRange: [],
+  search: ''
+})
+const showDetailModal = ref(false)
+const selectedAthlete = ref(null)
+const backendUrl = ref('http://localhost:3000')
+
+const selectedCategoryName = computed(() => {
+  if (!filters.value.categoria_id) return 'Todas las Categorías'
+  const cat = categorias.value.find(c => c.categoria_id === filters.value.categoria_id)
+  return cat ? cat.nombre_categoria : ''
+})
+
+const filteredAthletesStats = computed(() => {
+  let filtered = atletas.value
+
+  if (filters.value.categoria_id) {
+    filtered = filtered.filter(a => a.categoria_id === filters.value.categoria_id)
+  }
+
+  if (filters.value.search) {
+    const q = filters.value.search.toLowerCase()
+    filtered = filtered.filter(a =>
+      a.nombre.toLowerCase().includes(q) ||
+      a.apellido.toLowerCase().includes(q)
+    )
+  }
+
+  return filtered.map(atleta => {
+    const records = asistencias.value.filter(r => {
+      if (r.atleta_id !== atleta.atleta_id) return false
+
+      if (filters.value.dateRange && filters.value.dateRange.length === 2) {
+        const date = new Date(r.fecha)
+        const start = new Date(filters.value.dateRange[0])
+        const end = new Date(filters.value.dateRange[1])
+        date.setHours(0, 0, 0, 0)
+        start.setHours(0, 0, 0, 0)
+        end.setHours(0, 0, 0, 0)
+        return date >= start && date <= end
+      }
+      return true
+    })
+
+    const total = records.length
+    const presente = records.filter(r => r.estatus === 'presente').length
+    const ausente = records.filter(r => r.estatus === 'ausente').length
+    const justificado = records.filter(r => r.estatus === 'justificativo').length
+
+    const percentage = total > 0 ? Math.round((presente / total) * 100) : 0
+
+    const cat = categorias.value.find(c => c.categoria_id === atleta.categoria_id)
+
     return {
-      loading: false,
-      categorias: [],
-      atletas: [],
-      asistencias: [],
-      filters: {
-        categoria_id: '',
-        dateRange: [],
-        search: ''
-      },
-      showDetailModal: false,
-      selectedAthlete: null,
-      backendUrl: 'http://localhost:3000'
+      ...atleta,
+      categoria_nombre: cat ? cat.nombre_categoria : 'Sin asignar',
+      records,
+      stats: {
+        total,
+        presente,
+        ausente,
+        justificado,
+        percentage
+      }
     }
-  },
-  computed: {
-    selectedCategoryName() {
-      if (!this.filters.categoria_id) return 'Todas las Categorías'
-      const cat = this.categorias.find(c => c.categoria_id === this.filters.categoria_id)
-      return cat ? cat.nombre_categoria : ''
-    },
-    // Main aggregation logic
-    filteredAthletesStats() {
-      let filtered = this.atletas
+  })
+})
 
-      // 1. Filter by Category
-      if (this.filters.categoria_id) {
-        filtered = filtered.filter(a => a.categoria_id === this.filters.categoria_id)
-      }
+const selectedAthleteHistory = computed(() => {
+  if (!selectedAthlete.value) return []
+  return [...selectedAthlete.value.records].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+})
 
-      // 2. Filter by Search Text
-      if (this.filters.search) {
-        const q = this.filters.search.toLowerCase()
-        filtered = filtered.filter(a =>
-          a.nombre.toLowerCase().includes(q) ||
-          a.apellido.toLowerCase().includes(q)
-        )
-      }
+const fetchCategorias = async () => {
+  categorias.value = await getCategorias()
+}
 
-      // 3. Map aggregates
-      return filtered.map(atleta => {
-        // Get attendance records for this athlete within date range
-        const records = this.asistencias.filter(r => {
-          if (r.atleta_id !== atleta.atleta_id) return false
+const fetchAtletas = async () => {
+  atletas.value = await getAtletas()
+}
 
-          if (this.filters.dateRange && this.filters.dateRange.length === 2) {
-            const date = new Date(r.fecha)
-            const start = new Date(this.filters.dateRange[0])
-            const end = new Date(this.filters.dateRange[1])
-            // Normalize dates to ignore time
-            date.setHours(0, 0, 0, 0)
-            start.setHours(0, 0, 0, 0)
-            end.setHours(0, 0, 0, 0)
-            return date >= start && date <= end
-          }
-          return true
-        })
+const fetchAsistencias = async () => {
+  asistencias.value = await getAsistencias()
+}
 
-        const total = records.length
-        const presente = records.filter(r => r.estatus === 'presente').length
-        const ausente = records.filter(r => r.estatus === 'ausente').length
-        const justificado = records.filter(r => r.estatus === 'justificativo').length
-
-        const percentage = total > 0 ? Math.round((presente / total) * 100) : 0
-
-        // Find Category Name
-        const cat = this.categorias.find(c => c.categoria_id === atleta.categoria_id)
-
-        return {
-          ...atleta,
-          categoria_nombre: cat ? cat.nombre_categoria : 'Sin asignar',
-          records, // Store for detailed view
-          stats: {
-            total,
-            presente,
-            ausente,
-            justificado,
-            percentage
-          }
-        }
-      })
-    },
-    selectedAthleteHistory() {
-      if (!this.selectedAthlete) return []
-      // Sort by date desc
-      return [...this.selectedAthlete.records].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-    }
-  },
-  created() {
-    this.initialLoad()
-  },
-  methods: {
-    async initialLoad() {
-      this.loading = true
-      try {
-        await Promise.all([
-          this.fetchCategorias(),
-          this.fetchAtletas(),
-          this.fetchAsistencias()
-        ])
-      } catch (error) {
-        console.error('Error loading report data:', error)
-        this.$message.error('Error cargando datos del reporte')
-      } finally {
-        this.loading = false
-      }
-    },
-    async fetchCategorias() {
-      this.categorias = await getCategorias()
-    },
-    async fetchAtletas() {
-      this.atletas = await getAtletas()
-    },
-    async fetchAsistencias() {
-      this.asistencias = await getAsistencias()
-    },
-    handleFilterChange() {
-    },
-    viewDetail(row) {
-      this.selectedAthlete = row
-      this.showDetailModal = true
-    },
-    async printIndividual(row) {
-      if (!row) return
-      try {
-        const { PdfReportService } = await import('@/utils/pdfReportService')
-
-        // Find history with safety check
-        const dataStats = this.filteredAthletesStats || []
-        const records = dataStats.find(r => r.atleta_id === row.atleta_id)?.records || []
-        const sorted = [...records].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
-
-        PdfReportService.generateIndividualAttendanceReport(
-          `${row.nombre} ${row.apellido}`,
-          sorted
-        )
-      } catch (e) {
-        console.error(e)
-        this.$message.error('Error generando PDF')
-      }
-    },
-    async printModal() {
-      if (!this.selectedAthlete) return
-      this.printIndividual(this.selectedAthlete)
-    },
-    async handlePrint() {
-      try {
-        const { PdfReportService } = await import('@/utils/pdfReportService')
-
-        const dataForPdf = this.filteredAthletesStats.map(row => ({
-          athlete_name: `${row.nombre} ${row.apellido}`,
-          present_count: row.stats.presente,
-          absent_count: row.stats.ausente,
-          justified_count: row.stats.justificado,
-          percentage: row.stats.percentage
-        }))
-
-        PdfReportService.generateAttendanceReport(
-          dataForPdf,
-          this.selectedCategoryName,
-          this.filters.dateRange
-        )
-      } catch (e) {
-        console.error(e)
-        this.$message.error('Error generando PDF')
-      }
-    },
-    formatDate(date) {
-      if (!date) return '-'
-      return new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
-    },
-    getStatusType(estatus) {
-      const map = {
-        'presente': 'success',
-        'ausente': 'danger',
-        'justificativo': 'warning'
-      }
-      return map[estatus] || 'info'
-    },
-    getStatusLabel(estatus) {
-      const map = {
-        'presente': 'Presente',
-        'ausente': 'Ausente',
-        'justificativo': 'Justificado'
-      }
-      return map[estatus] || estatus
-    },
-    getProgressColor(per) {
-      if (per >= 80) return '#67C23A' // Success
-      if (per >= 50) return '#E6A23C' // Warning
-      return '#F56C6C' // Danger
-    },
-    getFotoUrl(filename) {
-      if (!filename) return ''
-      if (filename.startsWith('/uploads')) {
-        return `${this.backendUrl}${filename}`
-      }
-      return `${this.backendUrl}/uploads/atletas/${filename}`
-    },
-    handleImgError(e) {
-      e.target.style.display = 'none'
-      if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'
-    }
+const initialLoad = async () => {
+  loading.value = true
+  try {
+    await Promise.all([
+      fetchCategorias(),
+      fetchAtletas(),
+      fetchAsistencias()
+    ])
+  } catch (error) {
+    console.error('Error loading report data:', error)
+    ElMessage.error('Error cargando datos del reporte')
+  } finally {
+    loading.value = false
   }
 }
+
+const handleFilterChange = () => {
+}
+
+const viewDetail = (row) => {
+  selectedAthlete.value = row
+  showDetailModal.value = true
+}
+
+const printIndividual = async (row) => {
+  if (!row) return
+  try {
+    const { PdfReportService } = await import('@/utils/pdfReportService')
+
+    const dataStats = filteredAthletesStats.value || []
+    const records = dataStats.find(r => r.atleta_id === row.atleta_id)?.records || []
+    const sorted = [...records].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+
+    PdfReportService.generateIndividualAttendanceReport(
+      `${row.nombre} ${row.apellido}`,
+      sorted
+    )
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('Error generando PDF')
+  }
+}
+
+const printModal = async () => {
+  if (!selectedAthlete.value) return
+  printIndividual(selectedAthlete.value)
+}
+
+const handlePrint = async () => {
+  try {
+    const { PdfReportService } = await import('@/utils/pdfReportService')
+
+    const dataForPdf = filteredAthletesStats.value.map(row => ({
+      athlete_name: `${row.nombre} ${row.apellido}`,
+      present_count: row.stats.presente,
+      absent_count: row.stats.ausente,
+      justified_count: row.stats.justificado,
+      percentage: row.stats.percentage
+    }))
+
+    PdfReportService.generateAttendanceReport(
+      dataForPdf,
+      selectedCategoryName.value,
+      filters.value.dateRange
+    )
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('Error generando PDF')
+  }
+}
+
+const formatDate = (date) => {
+  if (!date) return '-'
+  return new Date(date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const getStatusType = (estatus) => {
+  const map = {
+    'presente': 'success',
+    'ausente': 'danger',
+    'justificativo': 'warning'
+  }
+  return map[estatus] || 'info'
+}
+
+const getStatusLabel = (estatus) => {
+  const map = {
+    'presente': 'Presente',
+    'ausente': 'Ausente',
+    'justificativo': 'Justificado'
+  }
+  return map[estatus] || estatus
+}
+
+const getProgressColor = (per) => {
+  if (per >= 80) return '#67C23A'
+  if (per >= 50) return '#E6A23C'
+  return '#F56C6C'
+}
+
+const getFotoUrl = (filename) => {
+  if (!filename) return ''
+  if (filename.startsWith('/uploads')) {
+    return `${backendUrl.value}${filename}`
+  }
+  return `${backendUrl.value}/uploads/atletas/${filename}`
+}
+
+const handleImgError = (e) => {
+  e.target.style.display = 'none'
+  if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex'
+}
+
+useServerDataRefresh(initialLoad, {
+  isBusy: () => loading.value || showDetailModal.value
+})
+
+onMounted(() => {
+  initialLoad()
+})
 </script>
 
 <style scoped>
 .report-container {
   padding: 20px;
-  background-color: #f0f2f5;
-  min-height: 100vh;
+  --filter-shell-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  --filter-shell-border: rgba(148, 163, 184, 0.34);
+  --filter-shell-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  --filter-control-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --filter-control-border: rgba(148, 163, 184, 0.42);
+  --filter-control-border-hover: rgba(255, 59, 48, 0.45);
+  --filter-control-focus: rgba(255, 59, 48, 0.28);
+  --filter-control-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  --filter-placeholder: #94a3b8;
 }
 
-/* Page Header - Red Gradient */
-.page-header {
-  background: linear-gradient(135deg, #E51D22 0%, #a3161a 100%);
-  color: white;
-  padding: 25px 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 10px rgba(229, 29, 34, 0.2);
-}
-
+/* Local UI Adjustments */
 .header-content {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .header-content h1 {
   margin: 0;
-  font-size: 1.8rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
-.subtitle {
-  margin: 5px 0 0 32px;
-  opacity: 0.9;
-  font-size: 0.95rem;
+.header-content .no-print {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Action Button in Header */
 .header-action-btn {
   background: rgba(255, 255, 255, 0.15) !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
   color: #fff !important;
   font-weight: 600;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(10px);
+  padding: 10px 20px;
+  min-height: 42px;
+  line-height: 1;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  white-space: nowrap;
 }
+
+.header-action-btn :deep(span),
+.header-action-btn :deep(i),
+.header-action-btn :deep([class*='el-icon']) {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
 .header-action-btn:hover {
   background: rgba(255, 255, 255, 0.25) !important;
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-/* Control Panel */
-.control-panel {
-  margin-bottom: 20px;
-  border-left: 5px solid #E51D22;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .control-content {
@@ -593,89 +617,121 @@ export default {
 }
 
 .filter-section {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(340px, 1.35fr) minmax(240px, 1fr);
+  gap: 16px;
   align-items: flex-end;
+  padding: 12px;
+  border-radius: 18px;
+  border: 1px solid var(--filter-shell-border);
+  background: var(--filter-shell-bg);
+  box-shadow: var(--filter-shell-shadow);
+  backdrop-filter: blur(8px);
 }
 
 .filter-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 200px;
+  gap: 9px;
+  min-width: 0;
 }
 
-.filter-label {
-  font-weight: 700;
-  color: #1e293b;
-  font-size: 0.85rem;
+.filter-item .premium-search-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  font-weight: 700;
+  color: var(--color-text-muted);
 }
 
-/* Inputs styling */
-.filter-input-select,
-.filter-date-picker,
-.filter-input-search {
+.filter-date-picker {
   width: 100%;
 }
 
-::v-deep .el-input__inner,
-::v-deep .el-range-input {
-  background: #fff !important;
-  border: 2px solid #64748b !important;
-  border-radius: 12px;
-  height: 44px;
-  font-size: 0.9rem;
+.filter-item :deep(.el-input__wrapper),
+.filter-item :deep(.el-range-editor.el-input__wrapper) {
+  min-height: 44px;
+  border-radius: 14px;
+  background: var(--filter-control-bg) !important;
+  box-shadow: 0 0 0 1px var(--filter-control-border), var(--filter-control-shadow) !important;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.filter-item :deep(.el-input__wrapper:hover),
+.filter-item :deep(.el-range-editor.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px var(--filter-control-border-hover), 0 10px 22px rgba(15, 23, 42, 0.14) !important;
+}
+
+.filter-item :deep(.el-input.is-focus .el-input__wrapper),
+.filter-item :deep(.el-range-editor.is-active) {
+  box-shadow: 0 0 0 2px var(--filter-control-focus), 0 12px 24px rgba(15, 23, 42, 0.16) !important;
+  transform: translateY(-1px);
+}
+
+.filter-item :deep(.el-input__inner),
+.filter-item :deep(.el-range-input),
+.filter-item :deep(.el-range-separator),
+.filter-item :deep(.el-input__icon),
+.filter-item :deep(.el-date-editor .el-range__icon) {
+  color: var(--color-text-main);
   font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
 }
 
-::v-deep .el-input__inner:hover,
-::v-deep .el-range-editor:hover .el-input__inner {
-  border-color: #E51D22 !important;
+.filter-item :deep(.el-input__inner),
+.filter-item :deep(.el-range-input) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-::v-deep .el-input__inner:focus,
-::v-deep .el-input.is-focus .el-input__inner,
-::v-deep .el-range-editor.is-active .el-input__inner {
-  border-color: #E51D22 !important;
-  box-shadow: 0 0 0 4px rgba(229, 29, 34, 0.12);
+.filter-item :deep(.el-input__inner::placeholder),
+.filter-item :deep(.el-range-input::placeholder) {
+  color: var(--filter-placeholder);
 }
 
-::v-deep .el-input__inner::placeholder,
-::v-deep .el-range-input::placeholder {
-  color: #64748b !important;
-  font-weight: 600;
-  opacity: 1;
+:deep(.report-filter-popper) {
+  background: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2) !important;
+  overflow: hidden;
 }
 
-/* Select placeholder styling */
-::v-deep .el-select .el-input .el-input__inner::placeholder {
-  color: #64748b !important;
-  font-weight: 600;
-  opacity: 1;
+:deep(.report-filter-popper .el-picker-panel),
+:deep(.report-filter-popper .el-date-range-picker),
+:deep(.report-filter-popper .el-select-dropdown__wrap) {
+  background: var(--color-bg-card) !important;
+  color: var(--color-text-main) !important;
 }
 
-::v-deep .el-select .el-input.is-focus .el-input__inner::placeholder {
-  color: #64748b !important;
+:deep(.report-filter-popper .el-select-dropdown__item) {
+  min-height: 38px;
+  line-height: 38px;
+  border-radius: 8px;
+  margin: 2px 6px;
 }
 
-::v-deep .el-range-separator {
-  line-height: 36px;
-  color: #64748b;
-  font-weight: 600;
+:deep(.report-filter-popper .el-select-dropdown__item.selected) {
+  background: rgba(255, 59, 48, 0.14);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+:deep(.report-filter-popper .el-date-table td.today .el-date-table-cell__text) {
+  color: var(--color-primary);
+}
+
+:deep(.report-filter-popper .el-date-table td.in-range .el-date-table-cell) {
+  background: rgba(255, 59, 48, 0.12);
 }
 
 /* Main Table Container */
 .table-container {
-  background: white;
+  background: var(--color-bg-card);
   padding: 24px;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-border);
 }
 
 .custom-table {
@@ -684,14 +740,14 @@ export default {
 }
 
 /* Table Body Styles */
-::v-deep .el-table__body tr td {
+:deep(.el-table__body tr td) {
   padding: 16px 12px !important;
-  border-bottom: 2px solid #94a3b8 !important;
+  border-bottom: 2px solid var(--color-border) !important;
 }
 
-::v-deep .el-table__body tr:hover > td {
-  background: linear-gradient(135deg, #fff5f5, #fff) !important;
-  border-bottom-color: #E51D22 !important;
+:deep(.el-table__body tr:hover > td) {
+  background: var(--color-bg-hover) !important;
+  border-bottom-color: var(--color-primary) !important;
 }
 
 /* Athlete Cell */
@@ -712,21 +768,21 @@ export default {
   height: 100%;
   border-radius: 12px;
   object-fit: cover;
-  border: 2px solid #E51D22;
-  box-shadow: 0 3px 8px rgba(229, 29, 34, 0.2);
+  border: 2px solid var(--color-primary);
+  box-shadow: 0 3px 8px rgba(30, 41, 59, 0.2);
 }
 
 .avatar-placeholder {
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-size: 20px;
-  box-shadow: 0 3px 8px rgba(229, 29, 34, 0.3);
+  box-shadow: 0 3px 8px rgba(30, 41, 59, 0.3);
 }
 
 .athlete-info {
@@ -736,13 +792,13 @@ export default {
 
 .name {
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-text-main);
   font-size: 0.95rem;
 }
 
 .sub-text {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-weight: 500;
 }
 
@@ -777,13 +833,13 @@ export default {
 .table-footer {
   margin-top: 20px;
   text-align: right;
-  color: #1e293b;
+  color: var(--color-text-main);
   font-size: 0.95rem;
   font-weight: 600;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  background: linear-gradient(135deg, var(--color-bg-card), var(--color-bg-body));
   border-radius: 10px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-border);
 }
 
 /* Modal Headers */
@@ -791,11 +847,11 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 10px;
 }
-.modal-title { font-size: 1.2rem; font-weight: bold; color: #E51D22; }
-.modal-subtitle { color: #666; font-size: 1.1rem; }
+.modal-title { font-size: 1.2rem; font-weight: bold; color: var(--color-primary); }
+.modal-subtitle { color: var(--color-text-muted); font-size: 1.1rem; }
 
 .modal-summary {
   display: grid;
@@ -805,23 +861,28 @@ export default {
 }
 
 .summary-item {
-  background: #f8fafc;
+  background: var(--color-bg-hover);
+  border: 1px solid var(--color-border);
   padding: 15px;
   border-radius: 8px;
   text-align: center;
   display: flex;
   flex-direction: column;
 }
-.summary-item.success { background: #f0f9eb; }
-.summary-item.danger { background: #fef0f0; }
+.summary-item.success { background: rgba(34, 197, 94, 0.15); }
+.summary-item.danger { background: rgba(239, 68, 68, 0.14); }
 
-.summary-item .label { font-size: 0.8rem; color: #606266; margin-bottom: 5px; }
-.summary-item .value { font-size: 1.5rem; font-weight: bold; color: #303133; }
+.summary-item .label { font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 5px; }
+.summary-item .value { font-size: 1.5rem; font-weight: bold; color: var(--color-text-main); }
 
 .loading-state, .empty-state {
   text-align: center;
   padding: 40px;
-  color: #909399;
+  color: var(--color-text-muted);
+}
+
+.detail-table :deep(.el-table__empty-text) {
+  color: var(--color-text-muted) !important;
 }
 
 /* ============================================
@@ -838,13 +899,13 @@ export default {
 }
 
 .athlete-card {
-  background: white;
+  background: var(--color-bg-card);
   border-radius: 12px;
   padding: 15px;
   margin-bottom: 15px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #E51D22;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
 }
 
 .card-header-section {
@@ -853,7 +914,7 @@ export default {
   gap: 12px;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-bg-body);
 }
 
 .card-header-section .athlete-photo-wrapper {
@@ -871,7 +932,7 @@ export default {
 .card-header-section .name {
   font-weight: 700;
   font-size: 1rem;
-  color: #1e293b;
+  color: var(--color-text-main);
 }
 
 .card-stats-section {
@@ -940,11 +1001,11 @@ export default {
 .progress-label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-main);
   white-space: nowrap;
 }
 
-.card-progress-section ::v-deep .el-progress {
+.card-progress-section :deep(.el-progress) {
   flex: 1;
 }
 
@@ -964,15 +1025,16 @@ export default {
 /* Tablets y laptops pequeños */
 @media (max-width: 1200px) {
   .filter-section {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
     gap: 15px;
   }
 
-  .filter-item {
-    min-width: 180px;
+  .search-item {
+    grid-column: 1 / -1;
   }
 
   /* Reducir anchuras de columnas */
-  ::v-deep .el-table-column {
+  :deep(.el-table-column) {
     min-width: auto !important;
   }
 }
@@ -1004,8 +1066,9 @@ export default {
   }
 
   .filter-section {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     align-items: stretch;
+    padding: 10px;
   }
 
   .filter-item {
@@ -1031,7 +1094,7 @@ export default {
   }
 
   /* Modal responsive */
-  ::v-deep .detail-modal {
+  :deep(.detail-modal) {
     width: 95% !important;
     max-width: 95vw !important;
   }
@@ -1085,7 +1148,7 @@ export default {
     border-radius: 10px;
   }
 
-  .control-panel ::v-deep .el-card__body {
+  .control-panel :deep(.el-card__body) {
     padding: 12px;
   }
 
@@ -1093,11 +1156,11 @@ export default {
     font-size: 0.75rem;
   }
 
-  .date-range-item ::v-deep .el-date-editor {
+  .date-range-item :deep(.el-date-editor) {
     width: 100% !important;
   }
 
-  .date-range-item ::v-deep .el-range-input {
+  .date-range-item :deep(.el-range-input) {
     font-size: 0.8rem;
   }
 
@@ -1111,26 +1174,26 @@ export default {
   }
 
   /* Forzar tabla a mostrar todas las columnas con scroll */
-  ::v-deep .el-table {
+  :deep(.el-table) {
     width: 100%;
     overflow: visible;
   }
 
-  ::v-deep .el-table__header-wrapper,
-  ::v-deep .el-table__body-wrapper {
+  :deep(.el-table__header-wrapper),
+  :deep(.el-table__body-wrapper) {
     overflow-x: auto;
     overflow-y: visible;
     -webkit-overflow-scrolling: touch;
   }
 
   /* Ancho mínimo de la tabla para forzar scroll */
-  ::v-deep .el-table__header,
-  ::v-deep .el-table__body {
+  :deep(.el-table__header),
+  :deep(.el-table__body) {
     min-width: 800px;
   }
 
   /* Celdas más compactas */
-  ::v-deep .el-table__body tr td {
+  :deep(.el-table__body tr td) {
     padding: 10px 8px !important;
   }
 
@@ -1167,16 +1230,16 @@ export default {
   }
 
   /* Progress bar más pequeño */
-  .progress-col ::v-deep .el-progress {
+  .progress-col :deep(.el-progress) {
     min-width: 80px;
   }
 
-  .progress-col ::v-deep .el-progress-bar__outer {
+  .progress-col :deep(.el-progress-bar__outer) {
     height: 12px !important;
   }
 
   /* Acciones */
-  ::v-deep .el-button--small.is-circle {
+  :deep(.el-button--small.is-circle) {
     width: 32px;
     height: 32px;
     padding: 6px;
@@ -1215,7 +1278,7 @@ export default {
     font-size: 0.9rem;
   }
 
-  ::v-deep .detail-modal .el-dialog__body {
+  :deep(.detail-modal .el-dialog__body) {
     padding: 15px;
   }
 }
@@ -1238,8 +1301,20 @@ export default {
     font-size: 0.7rem;
   }
 
-  .control-panel ::v-deep .el-card__body {
+  .control-panel :deep(.el-card__body) {
     padding: 10px;
+  }
+
+  .filter-section {
+    padding: 8px;
+    border-radius: 14px;
+    gap: 10px;
+  }
+
+  .filter-item :deep(.el-input__wrapper),
+  .filter-item :deep(.el-range-editor.el-input__wrapper) {
+    min-height: 40px;
+    border-radius: 12px;
   }
 
   .table-container {
@@ -1289,12 +1364,12 @@ export default {
     margin-right: 2px;
   }
 
-  .progress-col ::v-deep .el-progress {
+  .progress-col :deep(.el-progress) {
     min-width: 60px;
   }
 
   /* Ocultar columna acciones en móvil muy pequeño */
-  ::v-deep .el-table .no-print {
+  :deep(.el-table .no-print) {
     display: none;
   }
 
@@ -1338,12 +1413,84 @@ export default {
 
   .report-container {
     padding: 0;
-    background: white;
+    background: var(--color-bg-card);
   }
 
   .table-container {
     box-shadow: none;
     border: none;
   }
+}
+</style>
+
+<style lang="scss">
+[data-theme='dark'] .asistencia-report,
+html.dark .asistencia-report {
+  --filter-shell-bg: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.94));
+  --filter-shell-border: rgba(71, 85, 105, 0.78);
+  --filter-shell-shadow: 0 16px 34px rgba(2, 6, 23, 0.62);
+  --filter-control-bg: linear-gradient(180deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+  --filter-control-border: rgba(100, 116, 139, 0.84);
+  --filter-control-border-hover: rgba(96, 165, 250, 0.72);
+  --filter-control-focus: rgba(96, 165, 250, 0.34);
+  --filter-control-shadow: 0 10px 24px rgba(2, 6, 23, 0.64);
+  --filter-placeholder: #94a3b8;
+}
+
+[data-theme='dark'] .asistencia-report .premium-control-card,
+[data-theme='dark'] .asistencia-report .premium-control-card .el-card__body,
+html.dark .asistencia-report .premium-control-card,
+html.dark .asistencia-report .premium-control-card .el-card__body {
+  background: #0b1220 !important;
+  border-color: rgba(51, 65, 85, 0.85) !important;
+}
+
+[data-theme='dark'] .asistencia-report .filter-section,
+html.dark .asistencia-report .filter-section {
+  background: var(--filter-shell-bg) !important;
+  border-color: var(--filter-shell-border) !important;
+  box-shadow: var(--filter-shell-shadow) !important;
+}
+
+[data-theme='dark'] .asistencia-report .filter-item .premium-search-label,
+html.dark .asistencia-report .filter-item .premium-search-label {
+  color: #a8b7cc !important;
+}
+
+[data-theme='dark'] .asistencia-report .filter-item .el-input__wrapper,
+[data-theme='dark'] .asistencia-report .filter-item .el-range-editor.el-input__wrapper,
+html.dark .asistencia-report .filter-item .el-input__wrapper,
+html.dark .asistencia-report .filter-item .el-range-editor.el-input__wrapper {
+  background: var(--filter-control-bg) !important;
+  box-shadow: 0 0 0 1px var(--filter-control-border), var(--filter-control-shadow) !important;
+}
+
+[data-theme='dark'] .asistencia-report .filter-item .el-input.is-focus .el-input__wrapper,
+[data-theme='dark'] .asistencia-report .filter-item .el-range-editor.is-active,
+html.dark .asistencia-report .filter-item .el-input.is-focus .el-input__wrapper,
+html.dark .asistencia-report .filter-item .el-range-editor.is-active {
+  box-shadow: 0 0 0 2px var(--filter-control-focus), 0 12px 24px rgba(2, 6, 23, 0.68) !important;
+}
+
+[data-theme='dark'] .asistencia-report .filter-item .el-input__inner,
+[data-theme='dark'] .asistencia-report .filter-item .el-range-input,
+[data-theme='dark'] .asistencia-report .filter-item .el-range-separator,
+[data-theme='dark'] .asistencia-report .filter-item .el-input__icon,
+[data-theme='dark'] .asistencia-report .filter-item .el-date-editor .el-range__icon,
+html.dark .asistencia-report .filter-item .el-input__inner,
+html.dark .asistencia-report .filter-item .el-range-input,
+html.dark .asistencia-report .filter-item .el-range-separator,
+html.dark .asistencia-report .filter-item .el-input__icon,
+html.dark .asistencia-report .filter-item .el-date-editor .el-range__icon {
+  color: #e2e8f0 !important;
+  -webkit-text-fill-color: #e2e8f0 !important;
+}
+
+[data-theme='dark'] .asistencia-report .filter-item .el-input__inner::placeholder,
+[data-theme='dark'] .asistencia-report .filter-item .el-range-input::placeholder,
+html.dark .asistencia-report .filter-item .el-input__inner::placeholder,
+html.dark .asistencia-report .filter-item .el-range-input::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
 }
 </style>

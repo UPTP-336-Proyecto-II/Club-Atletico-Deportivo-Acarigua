@@ -1,7 +1,7 @@
 <template>
   <div class="asistencia-container">
     <!-- Header -->
-    <div class="page-header">
+    <div class="premium-header">
       <div class="header-content">
         <div>
           <h1><i class="el-icon-date" /> Control de Asistencia</h1>
@@ -14,6 +14,8 @@
             placeholder="Seleccionar Fecha"
             value-format="yyyy-MM-dd"
             :clearable="false"
+            :teleported="false"
+            popper-class="header-date-picker-popper"
             class="header-date-picker"
             @change="loadData"
           />
@@ -22,18 +24,21 @@
     </div>
 
     <!-- Controls & Filters -->
-    <el-card shadow="hover" class="control-card">
+    <el-card shadow="hover" class="premium-control-card">
       <div class="control-row">
         <div class="control-item category-select">
-          <label>Categoría</label>
+          <label class="premium-search-label">Categoría</label>
           <el-select
             v-model="categoria_id"
-            placeholder="Seleccionar Categoría"
+            placeholder="Seleccionar..."
             filterable
             @change="loadData"
+            popper-class="modern-filter-popper"
+            class="modern-filter-control"
+            style="width: 100%"
           >
             <el-option
-              v-for="cat in categorias"
+              v-for="cat in categoriasFiltradas"
               :key="cat.categoria_id"
               :label="cat.nombre_categoria"
               :value="cat.categoria_id"
@@ -42,11 +47,16 @@
         </div>
 
         <div class="control-item category-select">
-          <label>Entrenador Resp.</label>
+          <label class="premium-search-label">Entrenador Resp.</label>
           <el-select
             v-model="entrenador_id"
             placeholder="Responsable"
             filterable
+            clearable
+            @change="handleEntrenadorChange"
+            popper-class="modern-filter-popper"
+            class="modern-filter-control"
+            style="width: 100%"
           >
             <el-option
               v-for="entr in entrenadores"
@@ -58,8 +68,15 @@
         </div>
 
         <div class="control-item event-select">
-          <label>Tipo de Evento</label>
-          <el-select v-model="tipo_evento" placeholder="Tipo">
+          <label class="premium-search-label">Tipo de Evento</label>
+          <el-select
+            v-model="tipo_evento"
+            placeholder="Tipo"
+            @change="handleTipoEventoChange"
+            popper-class="modern-filter-popper"
+            class="modern-filter-control"
+            style="width: 100%"
+          >
             <el-option label="Entrenamiento" value="Entrenamiento" />
             <el-option label="Partido" value="Partido" />
             <el-option label="Evento Especial" value="Evento especial" />
@@ -67,13 +84,16 @@
         </div>
 
         <div class="control-item search-box">
-          <label>Buscar Atleta</label>
+          <label class="premium-search-label">Buscar Atleta</label>
           <el-input
             v-model="searchQuery"
             placeholder="Nombre..."
             clearable
+            class="modern-filter-input"
           />
         </div>
+
+
 
         <div class="control-item actions">
           <el-button
@@ -82,6 +102,7 @@
             :loading="saving"
             :disabled="!categoria_id || listaAtletas.length === 0"
             @click="performSave"
+            class="premium-save-btn"
           >
             Guardar Asistencia
           </el-button>
@@ -124,7 +145,7 @@
           empty-text="No hay atletas registrados en esta categoría"
         >
           <el-table-column label="Atleta" min-width="250">
-            <template slot-scope="scope">
+            <template #default="scope">
               <div class="athlete-cell">
                 <div class="athlete-photo">
                   <div v-if="scope.row.foto" class="avatar-img-wrapper">
@@ -141,7 +162,7 @@
           </el-table-column>
 
           <el-table-column label="Asistencia" min-width="320" align="center">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-radio-group v-model="scope.row.status" size="small" class="status-group" @change="scope.row.isSaved = false">
                 <el-radio-button label="presente">
                   <i class="el-icon-check" /> Presente
@@ -157,7 +178,7 @@
           </el-table-column>
 
           <el-table-column label="Observaciones" min-width="200">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-input
                 v-model="scope.row.observaciones"
                 size="small"
@@ -168,7 +189,7 @@
           </el-table-column>
 
           <el-table-column label="Estado" width="100" align="center">
-            <template slot-scope="scope">
+            <template #default="scope">
               <el-tag v-if="scope.row.isSaved" type="success" size="mini" effect="dark"><i class="el-icon-check" /> Guardado</el-tag>
               <el-tag v-else type="info" size="mini" effect="plain">Pendiente</el-tag>
             </template>
@@ -234,266 +255,519 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { getCategorias } from '@/api/categorias'
 import { getAtletas } from '@/api/atletas'
 import { getAsistencias, createAsistencia, updateAsistencia } from '@/api/asistencias'
 import { getPlantel } from '@/api/plantel'
+import { ElMessage } from 'element-plus'
+import { useServerDataRefresh } from '@/composables/useServerDataRefresh'
 
-export default {
-  name: 'RegistroAsistenciaBulk',
-  data() {
-    return {
-      loading: false,
-      saving: false,
-      categorias: [],
-      entrenadores: [],
-      categoria_id: '',
-      entrenador_id: '',
-      fecha: '',
-      tipo_evento: 'Entrenamiento',
-      listaAtletas: [],
-      searchQuery: '',
-      backendUrl: 'http://localhost:3000'
-    }
-  },
-  computed: {
-    filteredAtletas() {
-      if (!this.searchQuery) return this.listaAtletas
-      const q = this.searchQuery.toLowerCase()
-      return this.listaAtletas.filter(a =>
-        a.nombre.toLowerCase().includes(q) ||
-        a.apellido.toLowerCase().includes(q)
-      )
-    },
-    countPresentes() {
-      return this.listaAtletas.filter(a => a.status === 'presente').length
-    }
-  },
-  created() {
-    this.fecha = this.getTodayDate()
-    this.fetchCategorias()
-    this.fetchEntrenadores()
-  },
-  methods: {
-    getTodayDate() {
-      const today = new Date()
-      const year = today.getFullYear()
-      const month = String(today.getMonth() + 1).padStart(2, '0')
-      const day = String(today.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    },
-    async fetchCategorias() {
-      try {
-        this.categorias = await getCategorias()
-      } catch (error) {
-        this.$message.error('Error cargando categorías')
-      }
-    },
-    async fetchEntrenadores() {
-      try {
-        let entrenadores = await getPlantel({ rol: 'ENTRENADOR' })
-        if (!Array.isArray(entrenadores) || entrenadores.length === 0) {
-          entrenadores = await getPlantel()
-        }
-        this.entrenadores = Array.isArray(entrenadores) ? entrenadores : []
-        if (this.entrenadores.length > 0 && !this.entrenador_id) {
-          this.entrenador_id = this.entrenadores[0].plantel_id
-        }
-      } catch (error) {
-        console.error(error)
-        this.entrenadores = []
-      }
-    },
-    async loadData() {
-      if (!this.categoria_id) return
+const loading = ref(false)
+const saving = ref(false)
+const categorias = ref([])
+const entrenadores = ref([])
+const categoria_id = ref('')
+const entrenador_id = ref('')
+const fecha = ref('')
+const tipo_evento = ref('Entrenamiento')
+const listaAtletas = ref([])
+const searchQuery = ref('')
+const backendUrl = 'http://localhost:3000'
 
-      this.loading = true
-      this.listaAtletas = []
+const normalizeText = (value) => {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+}
 
-      try {
-        const atletasCategoria = await getAtletas({ categoria_id: this.categoria_id })
+const categoriasFiltradas = computed(() => {
+  if (!entrenador_id.value) return categorias.value
 
-        const asistencias = await getAsistencias({
-          categoria_id: this.categoria_id,
-          fecha: this.fecha
-        })
+  const entrenadorActual = String(entrenador_id.value)
+  const matches = categorias.value.filter(cat => String(cat.entrenador_id || '') === entrenadorActual)
 
-        this.listaAtletas = atletasCategoria.map(atleta => {
-          // Check match
-          const record = asistencias.find(r =>
-            r.atleta_id === atleta.atleta_id &&
-             r.fecha.includes(this.fecha)
-          )
+  return matches.length > 0 ? matches : categorias.value
+})
 
-          return {
-            ...atleta,
-            status: record ? record.estatus : 'presente',
-            observaciones: record ? record.observaciones : '',
-            asistencia_id: record ? record.asistencia_id : null,
-            isSaved: !!record
-          }
-        })
+const filteredAtletas = computed(() => {
+  if (!searchQuery.value) return listaAtletas.value
+  const q = normalizeText(searchQuery.value)
+  return listaAtletas.value.filter(a =>
+    normalizeText(a.nombre).includes(q) ||
+    normalizeText(a.apellido).includes(q) ||
+    normalizeText(a.cedula).includes(q)
+  )
+})
 
-        this.listaAtletas.sort((a, b) => a.nombre.localeCompare(b.nombre))
-      } catch (error) {
-        console.error(error)
-        this.$message.error('Error cargando datos')
-      } finally {
-        this.loading = false
-      }
-    },
-    setAllStatus(status) {
-      this.listaAtletas.forEach(a => {
-        a.status = status
-        a.isSaved = false
-      })
-    },
-    async performSave() {
-      if (this.entrenadores.length > 0 && !this.entrenador_id) {
-        this.$message.warning('Seleccione un entrenador responsable')
-        return
-      }
+const countPresentes = computed(() => {
+  return listaAtletas.value.filter(a => a.status === 'presente').length
+})
 
-      this.saving = true
-      let errors = 0
+const getTodayDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
-      // Use sequential loop to avoid 'require-atomic-updates' lint error
-      for (const atleta of this.listaAtletas) {
-        if (atleta.isSaved) continue
-
-        const payload = {
-          atleta_id: atleta.atleta_id,
-          categoria_id: this.categoria_id,
-          fecha: this.fecha,
-          tipo_evento: this.tipo_evento,
-          estatus: atleta.status,
-          observaciones: atleta.observaciones,
-          entrenador_id: this.entrenador_id || null
-        }
-
-        try {
-          if (atleta.asistencia_id) {
-            await updateAsistencia(atleta.asistencia_id, payload)
-          } else {
-            const res = await createAsistencia(payload)
-            // API create returns { message, id }
-            if (res && res.id) {
-              atleta.asistencia_id = res.id
-            }
-          }
-          atleta.isSaved = true
-        } catch (e) {
-          console.error('Error saving athlete ' + atleta.atleta_id, e)
-          errors++
-        }
-      }
-
-      this.saving = false
-      if (errors > 0) {
-        this.$message.warning(`Guardado con ${errors} errores.`)
-      } else {
-        this.$message.success('Asistencia actualizada correctamente')
-      }
-    },
-    getFotoUrl(filename) {
-      if (!filename) return ''
-      if (filename.startsWith('/uploads')) {
-        return `${this.backendUrl}${filename}`
-      }
-      return `${this.backendUrl}/uploads/atletas/${filename}`
-    },
-    tableRowClassName({ row }) {
-      if (row.status === 'ausente') return 'row-ausente'
-      if (row.status === 'justificativo') return 'row-justificado'
-      return ''
-    }
+const fetchCategorias = async () => {
+  try {
+    categorias.value = await getCategorias()
+  } catch (error) {
+    ElMessage.error('Error cargando categorías')
   }
 }
+
+const fetchEntrenadores = async () => {
+  try {
+    let list = await getPlantel({ rol: 'ENTRENADOR' })
+    if (!Array.isArray(list) || list.length === 0) {
+      list = await getPlantel()
+    }
+    entrenadores.value = Array.isArray(list) ? list : []
+  } catch (error) {
+    console.error(error)
+    entrenadores.value = []
+  }
+}
+
+const handleEntrenadorChange = async () => {
+  if (!categoria_id.value) return
+
+  const categoriaSigueDisponible = categoriasFiltradas.value.some(
+    cat => String(cat.categoria_id) === String(categoria_id.value)
+  )
+
+  if (!categoriaSigueDisponible) {
+    categoria_id.value = ''
+    listaAtletas.value = []
+    return
+  }
+
+  await loadData()
+}
+
+const handleTipoEventoChange = async () => {
+  if (!categoria_id.value) return
+  await loadData()
+}
+
+const loadData = async () => {
+  if (!categoria_id.value) return
+
+  loading.value = true
+  listaAtletas.value = []
+
+  try {
+    const atletasCategoria = await getAtletas({ categoria_id: categoria_id.value })
+
+    const asistencias = await getAsistencias({
+      categoria_id: categoria_id.value,
+      fecha: fecha.value
+    })
+
+    const tipoEventoActual = normalizeText(tipo_evento.value)
+    const asistenciasFiltradas = Array.isArray(asistencias)
+      ? asistencias.filter(record => {
+          const mismaFecha = String(record.fecha || '').includes(fecha.value)
+          if (!mismaFecha) return false
+          if (!record.tipo_evento) return true
+          return normalizeText(record.tipo_evento) === tipoEventoActual
+        })
+      : []
+
+    listaAtletas.value = atletasCategoria.map(atleta => {
+      const record = asistenciasFiltradas.find(r => r.atleta_id === atleta.atleta_id)
+
+      return {
+        ...atleta,
+        status: record ? record.estatus : 'presente',
+        observaciones: record ? record.observaciones : '',
+        asistencia_id: record ? record.asistencia_id : null,
+        isSaved: !!record
+      }
+    })
+
+    listaAtletas.value.sort((a, b) => a.nombre.localeCompare(b.nombre))
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('Error cargando datos')
+  } finally {
+    loading.value = false
+  }
+}
+
+const setAllStatus = (status) => {
+  listaAtletas.value.forEach(a => {
+    a.status = status
+    a.isSaved = false
+  })
+}
+
+const performSave = async () => {
+  if (entrenadores.value.length > 0 && !entrenador_id.value) {
+    ElMessage.warning('Seleccione un entrenador responsable')
+    return
+  }
+
+  saving.value = true
+  let errors = 0
+
+  for (const atleta of listaAtletas.value) {
+    if (atleta.isSaved) continue
+
+    const payload = {
+      atleta_id: atleta.atleta_id,
+      categoria_id: categoria_id.value,
+      fecha: fecha.value,
+      tipo_evento: tipo_evento.value,
+      estatus: atleta.status,
+      observaciones: atleta.observaciones,
+      entrenador_id: entrenador_id.value || null
+    }
+
+    try {
+      if (atleta.asistencia_id) {
+        await updateAsistencia(atleta.asistencia_id, payload)
+      } else {
+        const res = await createAsistencia(payload)
+        if (res && res.id) {
+          atleta.asistencia_id = res.id
+        }
+      }
+      atleta.isSaved = true
+    } catch (e) {
+      console.error('Error saving athlete ' + atleta.atleta_id, e)
+      errors++
+    }
+  }
+
+  saving.value = false
+  if (errors > 0) {
+    ElMessage.warning(`Guardado con ${errors} errores.`)
+  } else {
+    ElMessage.success('Asistencia actualizada correctamente')
+  }
+}
+
+const getFotoUrl = (filename) => {
+  if (!filename) return ''
+  if (filename.startsWith('/uploads')) {
+    return `${backendUrl}${filename}`
+  }
+  return `${backendUrl}/uploads/atletas/${filename}`
+}
+
+const tableRowClassName = ({ row }) => {
+  if (row.status === 'ausente') return 'row-ausente'
+  if (row.status === 'justificativo') return 'row-justificado'
+  return ''
+}
+
+useServerDataRefresh(async () => {
+  await Promise.all([
+    fetchCategorias(),
+    fetchEntrenadores()
+  ])
+
+  if (categoria_id.value) {
+    await loadData()
+  }
+}, {
+  isBusy: () => loading.value || saving.value
+})
+
+onMounted(() => {
+  fecha.value = getTodayDate()
+  fetchCategorias()
+  fetchEntrenadores()
+})
 </script>
 
 <style scoped>
 .asistencia-container {
-  padding: 20px;
-  background-color: #f0f2f5;
-  min-height: calc(100vh - 84px);
+  padding: 24px;
+  min-height: 100vh;
+  background-color: var(--color-bg-body);
 }
 
-.page-header {
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
+.premium-header {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   color: white;
-  padding: 24px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px 30px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px -5px var(--color-shadow);
 }
 
 .header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
-.header-content h1 {
-  font-size: 1.5rem;
+.premium-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
   margin: 0 0 5px 0;
-  font-weight: 600;
 }
 
 .subtitle {
-  font-size: 0.9rem;
-  margin: 0;
+  font-size: 1rem;
   opacity: 0.9;
+  margin: 0;
 }
 
-/* Header Date Picker - Modern Executive Style */
+/* Date Picker - Modern, Rounded and Glass */
 .header-actions {
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
-.header-date-picker ::v-deep .el-input__inner {
-  background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: #fff;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 12px 20px 12px 45px;
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+.header-date-picker {
+  width: 270px;
 }
 
-.header-date-picker ::v-deep .el-input__inner:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+.header-date-picker :deep(.el-date-editor.el-input),
+.header-date-picker :deep(.el-input) {
+  border-radius: 16px !important;
+}
+
+.header-date-picker :deep(.el-input__wrapper) {
+  min-height: 52px;
+  border-radius: 16px !important;
+  border: 1px solid rgba(203, 213, 225, 0.46) !important;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.52), rgba(30, 64, 175, 0.34)) !important;
+  backdrop-filter: blur(12px) saturate(145%);
+  -webkit-backdrop-filter: blur(12px) saturate(145%);
+  box-shadow:
+    0 12px 26px rgba(2, 6, 23, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  padding: 0 14px !important;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.2s ease, background 0.25s ease !important;
+  cursor: pointer !important;
+}
+
+.header-date-picker :deep(.el-input__wrapper:hover) {
   transform: translateY(-1px);
+  border-color: rgba(226, 232, 240, 0.72) !important;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.62), rgba(255, 59, 48, 0.42)) !important;
+  box-shadow:
+    0 16px 30px rgba(2, 6, 23, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
 }
 
-.header-date-picker ::v-deep .el-input__inner:focus {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: #fff;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+.header-date-picker :deep(.el-input__wrapper.is-focus),
+.header-date-picker :deep(.el-input__wrapper:focus-within) {
+  transform: translateY(-1px);
+  border-color: rgba(248, 113, 113, 0.92) !important;
+  box-shadow:
+    0 0 0 3px rgba(239, 68, 68, 0.2),
+    0 16px 32px rgba(2, 6, 23, 0.5) !important;
 }
 
-.header-date-picker ::v-deep .el-input__prefix {
-  left: 15px;
+.header-date-picker :deep(.el-input__wrapper:active) {
+  transform: translateY(0) scale(0.985);
+}
+
+.header-date-picker :deep(.el-input__inner) {
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+  font-size: 1.02rem !important;
+  height: 52px !important;
+  line-height: 52px !important;
+  text-align: left !important;
+  letter-spacing: 0.02em;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+.header-date-picker :deep(.el-input__inner:hover),
+.header-date-picker :deep(.el-input__inner:focus),
+.header-date-picker :deep(.el-input.is-focus .el-input__inner) {
+  border: none !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+.header-date-picker :deep(.el-input__wrapper::before),
+.header-date-picker :deep(.el-input__wrapper::after),
+.header-date-picker :deep(.el-input__inner::before),
+.header-date-picker :deep(.el-input__inner::after) {
+  display: none !important;
+}
+
+.header-date-picker :deep(.el-input__prefix),
+.header-date-picker :deep(.el-input__prefix-inner),
+.header-date-picker :deep(.el-input__prefix-inner i) {
+  color: #dbeafe !important;
+  font-size: 1.15rem !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.header-date-picker :deep(.el-input__suffix),
+.header-date-picker :deep(.el-input__suffix-inner),
+.header-date-picker :deep(.el-input__suffix-inner i) {
+  color: #dbeafe !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.header-date-picker :deep(.el-input__prefix-inner),
+.header-date-picker :deep(.el-input__suffix-inner) {
+  background: transparent !important;
+}
+
+.header-date-picker :deep(.el-input__wrapper.is-focus .el-input__prefix-inner i),
+.header-date-picker :deep(.el-input__wrapper:focus-within .el-input__prefix-inner i) {
+  color: #fff1f2 !important;
+  transform: scale(1.08);
+}
+
+:deep(.header-date-picker-popper.el-picker__popper) {
+  border-radius: 18px !important;
+  border: 1px solid rgba(148, 163, 184, 0.34) !important;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
+  backdrop-filter: blur(14px) saturate(132%);
+  -webkit-backdrop-filter: blur(14px) saturate(132%);
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.6) !important;
+  overflow: hidden;
+  animation: modernDatePanelIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: top center;
+}
+
+:deep(.header-date-picker-popper .el-popper__arrow),
+:deep(.header-date-picker-popper .el-popper__arrow::before) {
+  display: none !important;
+}
+
+:deep(.header-date-picker-popper .el-picker-panel) {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border: none !important;
+  border-radius: 18px !important;
+}
+
+:deep(.header-date-picker-popper .el-date-picker__header) {
+  margin: 12px 14px 8px;
+}
+
+:deep(.header-date-picker-popper .el-date-picker__header-label) {
+  color: #e2e8f0 !important;
+  font-weight: 700 !important;
+}
+
+:deep(.header-date-picker-popper .el-picker-panel__icon-btn) {
+  color: #cbd5e1 !important;
+  font-size: 15px !important;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+:deep(.header-date-picker-popper .el-picker-panel__icon-btn:hover) {
+  color: #fff1f2 !important;
+  transform: scale(1.08);
+}
+
+:deep(.header-date-picker-popper .el-date-table th) {
+  color: #bfdbfe !important;
+  font-weight: 600 !important;
+}
+
+:deep(.header-date-picker-popper .el-date-table td .el-date-table-cell) {
+  height: 36px;
+  padding: 2px 0;
+}
+
+:deep(.header-date-picker-popper .el-date-table td .el-date-table-cell__text) {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 999px;
+  color: #e2e8f0;
+  transition: transform 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+:deep(.header-date-picker-popper .el-date-table td.available:hover .el-date-table-cell__text) {
+  background: rgba(148, 163, 184, 0.28);
   color: #fff;
-  font-size: 1.1rem;
+  transform: scale(1.06);
 }
 
-.header-date-picker ::v-deep .el-input__inner::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+:deep(.header-date-picker-popper .el-date-table td.today .el-date-table-cell__text) {
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.72) inset;
+  color: #ffe4e6 !important;
 }
 
-/* Controls */
-.control-card {
-  margin-bottom: 20px;
-  border: none;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+:deep(.header-date-picker-popper .el-date-table td.current:not(.disabled) .el-date-table-cell__text) {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.42);
+}
+
+:deep(.header-date-picker-popper .el-date-table td.prev-month .el-date-table-cell__text),
+:deep(.header-date-picker-popper .el-date-table td.next-month .el-date-table-cell__text) {
+  color: rgba(148, 163, 184, 0.6) !important;
+}
+
+@keyframes modernDatePanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.97);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.premium-save-btn {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.2) !important;
+  width: 100%;
+}
+
+.premium-save-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 59, 48, 0.3) !important;
+}
+
+.premium-control-card {
+  margin-bottom: 24px;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 10px 15px -3px var(--color-shadow);
   border-radius: 16px;
+  background-color: var(--color-bg-card);
 }
 
 .control-row {
@@ -513,82 +787,181 @@ export default {
   min-width: auto;
 }
 
-.control-item label {
+.premium-search-label {
   display: block;
-  font-size: 0.85rem;
-  color: #1e293b;
+  font-size: 0.75rem;
   font-weight: 700;
-  margin-bottom: 8px;
+  color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  padding-left: 4px;
 }
 
-/* Modern Input & Select Styles */
-.control-item ::v-deep .el-input__inner,
-.control-item ::v-deep .el-select .el-input__inner {
-  background: #ffffff !important;
-  border: 2px solid #64748b !important;
-  border-radius: 12px;
-  padding: 14px 16px;
-  height: 48px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+/* Modern Filter Controls */
+.modern-filter-control :deep(.el-input__wrapper),
+.modern-filter-input :deep(.el-input__wrapper) {
+  min-height: 48px;
+  border-radius: 14px !important;
+  border: 1px solid rgba(203, 213, 225, 0.48) !important;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(30, 64, 175, 0.22)) !important;
+  backdrop-filter: blur(10px) saturate(138%);
+  -webkit-backdrop-filter: blur(10px) saturate(138%);
+  box-shadow:
+    0 10px 24px rgba(2, 6, 23, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+  padding: 0 14px !important;
+  transition: transform 0.2s ease, box-shadow 0.22s ease, border-color 0.2s ease, background 0.22s ease !important;
 }
 
-.control-item ::v-deep .el-input__inner:hover,
-.control-item ::v-deep .el-select .el-input__inner:hover {
-  border-color: #E51D22 !important;
-  background: #fff !important;
+.modern-filter-control :deep(.el-input__wrapper:hover),
+.modern-filter-input :deep(.el-input__wrapper:hover) {
+  transform: translateY(-1px);
+  border-color: rgba(226, 232, 240, 0.75) !important;
+  box-shadow:
+    0 14px 28px rgba(2, 6, 23, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
 }
 
-.control-item ::v-deep .el-input__inner:focus,
-.control-item ::v-deep .el-select .el-input.is-focus .el-input__inner {
-  border-color: #E51D22 !important;
-  background: #fff !important;
-  box-shadow: 0 0 0 4px rgba(229, 29, 34, 0.15);
-  outline: none;
+.modern-filter-control :deep(.el-input__wrapper.is-focus),
+.modern-filter-control :deep(.el-input__wrapper:focus-within),
+.modern-filter-input :deep(.el-input__wrapper.is-focus),
+.modern-filter-input :deep(.el-input__wrapper:focus-within) {
+  transform: translateY(-1px);
+  border-color: rgba(248, 113, 113, 0.9) !important;
+  box-shadow:
+    0 0 0 3px rgba(239, 68, 68, 0.16),
+    0 16px 30px rgba(2, 6, 23, 0.24) !important;
 }
 
-.control-item ::v-deep .el-input__inner::placeholder {
-  color: #475569 !important;
-  font-weight: 500;
-  font-style: normal;
+.modern-filter-control :deep(.el-input__inner),
+.modern-filter-input :deep(.el-input__inner) {
+  height: 48px !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: #f1f5f9 !important;
+  font-size: 0.95rem !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.modern-filter-control :deep(.el-input__inner::placeholder),
+.modern-filter-input :deep(.el-input__inner::placeholder) {
+  color: #cbd5e1 !important;
   opacity: 1 !important;
 }
 
-.control-item ::v-deep .el-input__prefix {
-  left: 12px;
-  color: #64748b;
-  font-size: 1.1rem;
+.modern-filter-control :deep(.el-select__caret),
+.modern-filter-control :deep(.el-input__suffix-inner i) {
+  color: #dbeafe !important;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
 
-.control-item ::v-deep .el-select .el-input__suffix {
-  right: 12px;
+.modern-filter-control :deep(.is-focus .el-select__caret) {
+  color: #fff1f2 !important;
 }
 
-.control-item ::v-deep .el-select .el-input__icon {
-  color: #64748b;
-  font-size: 1rem;
-  transition: transform 0.3s ease;
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill),
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill:hover),
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill:focus),
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill:active) {
+  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  background-color: transparent !important;
+  transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+}
+
+/* Search input: remove gray inner fill and keep clean style */
+.modern-filter-input :deep(.el-input__wrapper) {
+  background: var(--color-bg-card) !important;
+  border-color: rgba(148, 163, 184, 0.45) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.modern-filter-input :deep(.el-input__wrapper:hover) {
+  background: var(--color-bg-card) !important;
+  border-color: rgba(100, 116, 139, 0.62) !important;
+  box-shadow: none !important;
+}
+
+.modern-filter-input :deep(.el-input__wrapper.is-focus),
+.modern-filter-input :deep(.el-input__wrapper:focus-within) {
+  background: var(--color-bg-card) !important;
+  border-color: rgba(15, 23, 42, 0.78) !important;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.12) !important;
+}
+
+.modern-filter-input :deep(.el-input__inner) {
+  color: var(--color-text-main) !important;
+}
+
+.modern-filter-input :deep(.el-input__inner::placeholder) {
+  color: var(--color-text-placeholder) !important;
+}
+
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill),
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill:hover),
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill:focus),
+.modern-filter-input :deep(.el-input__inner:-webkit-autofill:active) {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-card) inset !important;
+  -webkit-text-fill-color: var(--color-text-main) !important;
+}
+
+:deep(.modern-filter-popper.el-select__popper) {
+  border-radius: 16px !important;
+  border: 1px solid rgba(148, 163, 184, 0.34) !important;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.92), rgba(15, 23, 42, 0.92)) !important;
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+  box-shadow: 0 22px 44px rgba(2, 6, 23, 0.55) !important;
+  overflow: hidden;
+  animation: modernDatePanelIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:deep(.modern-filter-popper .el-popper__arrow),
+:deep(.modern-filter-popper .el-popper__arrow::before) {
+  display: none !important;
+}
+
+:deep(.modern-filter-popper .el-select-dropdown__item) {
+  color: #e2e8f0 !important;
+  height: 38px;
+  line-height: 38px;
+  border-radius: 10px;
+  margin: 2px 8px;
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+:deep(.modern-filter-popper .el-select-dropdown__item.hover),
+:deep(.modern-filter-popper .el-select-dropdown__item:hover) {
+  background: rgba(148, 163, 184, 0.2) !important;
+  color: #fff !important;
+  transform: translateX(1px);
+}
+
+:deep(.modern-filter-popper .el-select-dropdown__item.selected) {
+  color: #fff1f2 !important;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.24) !important;
 }
 
 /* Primary Button Style */
-.control-item.actions ::v-deep .el-button--primary {
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
+.control-item.actions :deep(.el-button--primary) {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   border: none;
   border-radius: 12px;
   padding: 14px 28px;
   height: 48px;
   font-size: 0.95rem;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(229, 29, 34, 0.3);
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3);
   transition: all 0.3s ease;
 }
 
-.control-item.actions ::v-deep .el-button--primary:hover {
+.control-item.actions :deep(.el-button--primary:hover) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(229, 29, 34, 0.4);
 }
@@ -604,13 +977,13 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 15px;
 }
 
 .summary-text {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-weight: 600;
 }
 
@@ -625,13 +998,13 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #f1f5f9;
+  background-color: var(--color-bg-body);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
-  color: #94a3b8;
+  border: 1px solid var(--color-border);
+  color: var(--color-border);
 }
 
 .avatar-img-wrapper {
@@ -652,50 +1025,50 @@ export default {
 
 .athlete-info .name {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-main);
   font-size: 0.95rem;
 }
 
 .athlete-info .cedula {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--color-border);
 }
 
 /* Status Radio */
-.status-group ::v-deep .el-radio-button__inner {
+.status-group :deep(.el-radio-button__inner) {
   padding: 8px 15px;
   font-size: 13px;
 }
 
-.status-group ::v-deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-  background-color: #E51D22;
-  border-color: #E51D22;
-  box-shadow: -1px 0 0 0 #E51D22;
+.status-group :deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: -1px 0 0 0 var(--color-primary);
 }
 
 /* Custom Overrides */
-::v-deep .el-button--primary {
-  background-color: #E51D22;
-  border-color: #E51D22;
+:deep(.el-button--primary) {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
-::v-deep .el-button--primary:hover {
+:deep(.el-button--primary:hover) {
   background-color: #cf1a1e;
   border-color: #cf1a1e;
 }
 
-::v-deep .row-ausente {
-  background-color: #fef2f2 !important;
+:deep(.row-ausente) {
+  background-color: rgba(239, 68, 68, 0.1) !important;
 }
 
-::v-deep .row-justificado {
-  background-color: #fffbeb !important;
+:deep(.row-justificado) {
+  background-color: rgba(255, 59, 48, 0.1) !important;
 }
 
 .empty-state {
   text-align: center;
   padding: 60px;
-  color: #94a3b8;
+  color: var(--color-border);
 }
 
 .empty-state i {
@@ -766,7 +1139,7 @@ export default {
     border-radius: 10px;
   }
 
-  .control-card ::v-deep .el-card__body {
+  .control-card :deep(.el-card__body) {
     padding: 12px;
   }
 
@@ -775,36 +1148,36 @@ export default {
     margin-bottom: 5px;
   }
 
-  .control-item ::v-deep .el-input__inner,
-  .control-item ::v-deep .el-select .el-input__inner {
+  .control-item :deep(.el-input__inner),
+  .control-item :deep(.el-select .el-input__inner) {
     height: 44px;
     padding: 10px 12px;
     font-size: 0.9rem;
   }
 
-  .control-item.actions ::v-deep .el-button--primary {
+  .control-item.actions :deep(.el-button--primary) {
     width: 100%;
     height: 44px;
     padding: 10px 16px;
   }
 
   /* Tabla scrollable en móvil */
-  .main-card ::v-deep .el-table {
+  .main-card :deep(.el-table) {
     overflow-x: auto;
   }
 
-  .main-card ::v-deep .el-table__body-wrapper {
+  .main-card :deep(.el-table__body-wrapper) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   /* Radio buttons más compactos */
-  .status-group ::v-deep .el-radio-button__inner {
+  .status-group :deep(.el-radio-button__inner) {
     padding: 6px 10px;
     font-size: 11px;
   }
 
-  .status-group ::v-deep .el-radio-button__inner i {
+  .status-group :deep(.el-radio-button__inner i) {
     margin-right: 2px;
   }
 
@@ -844,7 +1217,7 @@ export default {
     font-size: 1rem;
   }
 
-  .header-date-picker ::v-deep .el-input__inner {
+  .header-date-picker :deep(.el-input__inner) {
     padding: 10px 12px 10px 35px;
     font-size: 0.85rem;
   }
@@ -853,7 +1226,7 @@ export default {
     font-size: 0.8rem;
   }
 
-  .bulk-actions ::v-deep .el-button {
+  .bulk-actions :deep(.el-button) {
     padding: 8px 12px;
     font-size: 0.75rem;
   }
@@ -865,11 +1238,11 @@ export default {
     width: 100%;
   }
 
-  .status-group ::v-deep .el-radio-button {
+  .status-group :deep(.el-radio-button) {
     width: 100%;
   }
 
-  .status-group ::v-deep .el-radio-button__inner {
+  .status-group :deep(.el-radio-button__inner) {
     width: 100%;
     border-radius: 6px !important;
     border: 1px solid #dcdfe6 !important;
@@ -890,13 +1263,13 @@ export default {
 }
 
 .attendance-card {
-  background: white;
+  background: var(--color-bg-card);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #94a3b8;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-border);
   transition: all 0.3s ease;
 }
 
@@ -923,7 +1296,7 @@ export default {
   gap: 12px;
   margin-bottom: 14px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-bg-body);
 }
 
 .attendance-card .athlete-photo {
@@ -940,13 +1313,13 @@ export default {
 .attendance-card .athlete-info .name {
   font-weight: 700;
   font-size: 1rem;
-  color: #1e293b;
+  color: var(--color-text-main);
   display: block;
 }
 
 .attendance-card .athlete-info .cedula {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .attendance-card .status-tag {
@@ -961,7 +1334,7 @@ export default {
 .card-observations-section .section-label {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   font-weight: 600;
   margin-bottom: 8px;
@@ -973,27 +1346,27 @@ export default {
   gap: 6px;
 }
 
-.status-group-mobile ::v-deep .el-radio-button {
+.status-group-mobile :deep(.el-radio-button) {
   flex: 1;
 }
 
-.status-group-mobile ::v-deep .el-radio-button__inner {
+.status-group-mobile :deep(.el-radio-button__inner) {
   width: 100%;
   padding: 10px 8px;
   font-size: 0.85rem;
   border-radius: 8px !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid var(--color-border) !important;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
 }
 
-.status-group-mobile ::v-deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+.status-group-mobile :deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
   box-shadow: none;
 }
 
-.card-observations-section ::v-deep .el-input__inner {
+.card-observations-section :deep(.el-input__inner) {
   border-radius: 8px;
   padding: 10px 12px;
 }

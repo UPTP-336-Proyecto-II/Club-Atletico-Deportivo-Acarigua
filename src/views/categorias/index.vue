@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <!-- Header -->
-    <div class="page-header">
+    <div class="premium-header">
       <div class="header-content">
         <div>
           <h1><i class="el-icon-trophy" /> Gestión de Categorías</h1>
@@ -11,16 +11,17 @@
     </div>
 
     <!-- Controls & Filters -->
-    <el-card shadow="hover" class="control-card">
+    <el-card shadow="hover" class="premium-control-card">
       <div class="control-row">
         <div class="control-item search-box">
-          <label>Buscar</label>
+          <label class="premium-search-label">Buscar Categoría</label>
           <el-select
             v-model="filtroCategoria"
             placeholder="Seleccionar categoría..."
             clearable
             :filterable="false"
             style="width: 100%"
+            class="modern-search-input"
           >
             <el-option
               v-for="cat in categorias"
@@ -32,8 +33,8 @@
         </div>
 
         <div class="control-item filter-box">
-          <label>Filtrar por Entrenador</label>
-          <el-select v-model="filtroEntrenador" placeholder="Todos los entrenadores" clearable filterable>
+          <label class="premium-search-label">Entrenador</label>
+          <el-select v-model="filtroEntrenador" placeholder="Todos" clearable filterable style="width: 100%" class="modern-search-input">
             <el-option
               v-for="ent in entrenadores"
               :key="ent.plantel_id"
@@ -44,8 +45,8 @@
         </div>
 
         <div class="control-item filter-box">
-          <label>Filtrar por Estado</label>
-          <el-select v-model="filtroEstatus" placeholder="Todos los estados" clearable>
+          <label class="premium-search-label">Estatus</label>
+          <el-select v-model="filtroEstatus" placeholder="Todos" clearable style="width: 100%" class="modern-search-input">
             <el-option label="Activas" value="Activa" />
             <el-option label="Inactivas" value="Inactiva" />
           </el-select>
@@ -112,7 +113,7 @@
 
           <div class="progress-section">
             <div class="progress-label">Ocupación</div>
-            <el-progress :percentage="getOcupacion(cat)" :format="() => ''" :color="'#E51D22'" />
+            <el-progress :percentage="getOcupacion(cat)" :format="() => ''" :color="'var(--color-text-main)'" />
           </div>
         </div>
       </el-card>
@@ -121,7 +122,7 @@
     <!-- Modal Form (Solo editar entrenador y estatus) -->
     <el-dialog
       title="Editar Categoría"
-      :visible.sync="mostrarModal"
+      v-model="mostrarModal"
       width="450px"
       custom-class="category-dialog"
       :close-on-click-modal="false"
@@ -155,188 +156,151 @@
         </el-form-item>
       </el-form>
 
-      <span slot="footer" class="dialog-footer">
+      <template #footer>
+        <span class="dialog-footer">
         <el-button @click="mostrarModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="guardando" class="red-btn" @click="guardarCategoria">
           Guardar Cambios
         </el-button>
-      </span>
+        </span>
+      </template>
     </el-dialog>
 
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import request from '@/utils/request'
 import { canEdit } from '@/utils/permission'
+import { ElMessage } from 'element-plus'
+import { useServerDataRefresh } from '@/composables/useServerDataRefresh'
 
-export default {
-  name: 'CategoriasIndex',
-  data() {
-    return {
-      loading: false,
-      guardando: false,
-      categorias: [],
-      entrenadores: [],
-      searchQuery: '',
-      filtroCategoria: '',
-      filtroEntrenador: '',
-      filtroEstatus: '',
+const loading = ref(false)
+const guardando = ref(false)
+const categorias = ref([])
+const entrenadores = ref([])
+const searchQuery = ref('')
+const filtroCategoria = ref('')
+const filtroEntrenador = ref('')
+const filtroEstatus = ref('')
 
-      // Modal state
-      mostrarModal: false,
-      formulario: {
-        id: null,
-        nombre_categoria: '',
-        edad_min: 0,
-        edad_max: 0,
-        entrenador_id: null,
-        estatus: 'Activa'
-      }
-    }
-  },
-  computed: {
-    canUserEdit() {
-      return canEdit()
-    },
-    categoriasFiltradas() {
-      let result = this.categorias
+const mostrarModal = ref(false)
+const formulario = ref({
+  id: null,
+  nombre_categoria: '',
+  edad_min: 0,
+  edad_max: 0,
+  entrenador_id: null,
+  estatus: 'Activa'
+})
 
-      if (this.filtroCategoria) {
-        result = result.filter(c => c.categoria_id === this.filtroCategoria)
-      }
+const canUserEdit = computed(() => canEdit())
 
-      if (this.searchQuery) {
-        const q = this.searchQuery.toLowerCase()
-        result = result.filter(c => c.nombre_categoria.toLowerCase().includes(q))
-      }
+const categoriasFiltradas = computed(() => {
+  let result = categorias.value
 
-      if (this.filtroEntrenador) {
-        result = result.filter(c => c.entrenador_id === this.filtroEntrenador)
-      }
+  if (filtroCategoria.value) {
+    result = result.filter(c => c.categoria_id === filtroCategoria.value)
+  }
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(c => c.nombre_categoria.toLowerCase().includes(q))
+  }
+  if (filtroEntrenador.value) {
+    result = result.filter(c => c.entrenador_id === filtroEntrenador.value)
+  }
+  if (filtroEstatus.value) {
+    result = result.filter(c => c.estatus === filtroEstatus.value)
+  }
+  return result
+})
 
-      if (this.filtroEstatus) {
-        result = result.filter(c => c.estatus === this.filtroEstatus)
-      }
+const cargarDatos = async () => {
+  loading.value = true
+  try {
+    const [catResponse, entResponse] = await Promise.all([
+      request({ url: '/categoria', method: 'get' }),
+      request({ url: '/plantel', method: 'get', params: { rol: 'ENTRENADOR' }})
+    ])
 
-      return result
-    }
-  },
-  created() {
-    this.cargarDatos()
-  },
-  methods: {
-    async cargarDatos() {
-      this.loading = true
-      try {
-        const [catResponse, entResponse] = await Promise.all([
-          request({ url: '/categoria', method: 'get' }),
-          request({ url: '/plantel', method: 'get', params: { rol: 'ENTRENADOR' }})
-        ])
-
-        this.categorias = Array.isArray(catResponse) ? catResponse : []
-        this.entrenadores = Array.isArray(entResponse) ? entResponse : []
-      } catch (error) {
-        console.error(error)
-        this.$message.error('Error cargando datos')
-      } finally {
-        this.loading = false
-      }
-    },
-    getInitials(name) {
-      if (!name) return 'C'
-      return name.substring(0, 2).toUpperCase()
-    },
-    getEntrenadorName(id) {
-      if (!id) return 'No Asignado'
-      const ent = this.entrenadores.find(e => e.plantel_id === id)
-      return ent ? `${ent.nombre} ${ent.apellido}` : 'No Encontrado'
-    },
-    getOcupacion(cat) {
-      // Calcular porcentaje de ocupación (máximo 25 atletas por categoría)
-      const maxAtletas = 25
-      const total = cat.total_atletas || 0
-      return Math.min(Math.round((total / maxAtletas) * 100), 100)
-    },
-    editarCategoria(categoria) {
-      this.formulario = {
-        id: categoria.categoria_id,
-        nombre_categoria: categoria.nombre_categoria,
-        edad_min: categoria.edad_min,
-        edad_max: categoria.edad_max,
-        entrenador_id: categoria.entrenador_id,
-        estatus: categoria.estatus || 'Activa'
-      }
-      this.mostrarModal = true
-    },
-    async guardarCategoria() {
-      this.guardando = true
-      try {
-        await request({
-          url: `/categoria/${this.formulario.id}`,
-          method: 'put',
-          data: {
-            entrenador_id: this.formulario.entrenador_id,
-            estatus: this.formulario.estatus
-          }
-        })
-        this.$message.success('Categoría actualizada')
-        this.mostrarModal = false
-        this.cargarDatos()
-      } catch (error) {
-        console.error(error)
-        this.$message.error('Error al guardar')
-      } finally {
-        this.guardando = false
-      }
-    }
+    categorias.value = Array.isArray(catResponse) ? catResponse : []
+    entrenadores.value = Array.isArray(entResponse) ? entResponse : []
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('Error cargando datos')
+  } finally {
+    loading.value = false
   }
 }
+
+const getInitials = (name) => {
+  if (!name) return 'C'
+  return name.substring(0, 2).toUpperCase()
+}
+
+const getEntrenadorName = (id) => {
+  if (!id) return 'No Asignado'
+  const ent = entrenadores.value.find(e => e.plantel_id === id)
+  return ent ? `${ent.nombre} ${ent.apellido}` : 'No Encontrado'
+}
+
+const getOcupacion = (cat) => {
+  const maxAtletas = 25
+  const total = cat.total_atletas || 0
+  return Math.min(Math.round((total / maxAtletas) * 100), 100)
+}
+
+const editarCategoria = (categoria) => {
+  formulario.value = {
+    id: categoria.categoria_id,
+    nombre_categoria: categoria.nombre_categoria,
+    edad_min: categoria.edad_min,
+    edad_max: categoria.edad_max,
+    entrenador_id: categoria.entrenador_id,
+    estatus: categoria.estatus || 'Activa'
+  }
+  mostrarModal.value = true
+}
+
+const guardarCategoria = async () => {
+  guardando.value = true
+  try {
+    await request({
+      url: `/categoria/${formulario.value.id}`,
+      method: 'put',
+      data: {
+        entrenador_id: formulario.value.entrenador_id,
+        estatus: formulario.value.estatus
+      }
+    })
+    ElMessage.success('Categoría actualizada')
+    mostrarModal.value = false
+    cargarDatos()
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('Error al guardar')
+  } finally {
+    guardando.value = false
+  }
+}
+
+useServerDataRefresh(cargarDatos, {
+  isBusy: () => loading.value || guardando.value || mostrarModal.value
+})
+
+onMounted(() => {
+  cargarDatos()
+})
 </script>
 
 <style scoped>
 .app-container {
   padding: 20px;
-  background-color: #f0f2f5;
   min-height: calc(100vh - 84px);
 }
 
-/* Header Red Style */
-.page-header {
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
-  color: white;
-  padding: 24px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-content h1 {
-  font-size: 1.5rem;
-  margin: 0 0 5px 0;
-  font-weight: 600;
-}
-
-.subtitle {
-  font-size: 0.9rem;
-  margin: 0;
-  opacity: 0.9;
-}
-
-/* Controls */
-.control-card {
-  margin-bottom: 25px;
-  border: none;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
+/* Local Styles */
 .control-row {
   display: flex;
   gap: 24px;
@@ -348,46 +312,6 @@ export default {
   min-width: 200px;
 }
 
-.control-item label {
-  display: block;
-  font-size: 0.85rem;
-  color: #1e293b;
-  font-weight: 700;
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Modern Input & Select Styles for Controls */
-.control-item ::v-deep .el-input__inner,
-.control-item ::v-deep .el-select .el-input__inner {
-  background: #fff !important;
-  border: 2px solid #64748b !important;
-  border-radius: 12px;
-  padding: 14px 16px;
-  height: 48px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.control-item ::v-deep .el-input__inner:hover,
-.control-item ::v-deep .el-select .el-input__inner:hover {
-  border-color: #E51D22 !important;
-}
-
-.control-item ::v-deep .el-input__inner:focus,
-.control-item ::v-deep .el-select .el-input.is-focus .el-input__inner {
-  border-color: #E51D22 !important;
-  box-shadow: 0 0 0 4px rgba(229, 29, 34, 0.12);
-}
-
-.control-item ::v-deep .el-input__inner::placeholder {
-  color: #64748b !important;
-  font-weight: 500;
-}
 
 /* Grid */
 .categories-grid {
@@ -402,30 +326,30 @@ export default {
   transition: all 0.3s ease;
   overflow: hidden;
   height: 100%;
-  background: #fff;
+  background: var(--color-bg-card);
 }
 
 .category-card:hover {
-  border-color: #E51D22;
+  border-color: var(--color-primary);
   transform: translateY(-6px);
-  box-shadow: 0 12px 24px rgba(229, 29, 34, 0.15);
+  box-shadow: 0 12px 24px rgba(30, 41, 59, 0.15);
 }
 
 .category-card.inactive-card {
   opacity: 0.7;
-  border-color: #94a3b8;
+  border-color: var(--color-border);
 }
 
 .category-card.inactive-card:hover {
-  border-color: #64748b;
+  border-color: var(--color-text-muted);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
 .card-header {
   position: relative;
   padding: 20px;
-  background-color: #fff;
-  border-bottom: 1px solid #f1f5f9;
+  background-color: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-bg-body);
   display: flex;
   align-items: center;
   gap: 15px;
@@ -435,25 +359,25 @@ export default {
   width: 50px;
   height: 50px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #E51D22 0%, #ff4d4f 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: bold;
   font-size: 1.2rem;
-  box-shadow: 0 4px 6px rgba(229, 29, 34, 0.2);
+  box-shadow: 0 4px 6px rgba(30, 41, 59, 0.2);
 }
 
 .inactive-card .category-icon {
-  background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+  background: linear-gradient(135deg, #64748b 0%, var(--color-border) 100%);
   box-shadow: 0 4px 6px rgba(100, 116, 139, 0.2);
 }
 
 .category-title h3 {
   margin: 0 0 5px 0;
   font-size: 1.1rem;
-  color: #1e293b;
+  color: var(--color-text-main);
 }
 
 .tags-row {
@@ -468,11 +392,11 @@ export default {
 
 .card-actions .el-button {
   font-size: 1.2rem;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .card-actions .el-button:hover {
-  color: #E51D22;
+  color: var(--color-primary);
 }
 
 .card-body {
@@ -487,7 +411,7 @@ export default {
 }
 
 .info-row .label {
-  color: #64748b;
+  color: var(--color-text-muted);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -495,26 +419,35 @@ export default {
 
 .info-row .value {
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-main);
 }
 
 .progress-section {
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--color-bg-body);
 }
 
 .progress-label {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--color-text-muted);
+  font-weight: 600;
   margin-bottom: 8px;
+}
+
+.progress-section :deep(.el-progress-bar__outer) {
+  background-color: var(--color-bg-hover);
+}
+
+.progress-section :deep(.el-progress-bar__inner) {
+  background-color: var(--color-primary);
 }
 
 /* Modal Styles */
 .categoria-info {
   text-align: center;
   padding: 20px;
-  background: #f8fafc;
+  background: var(--color-bg-card);
   border-radius: 12px;
   margin-bottom: 20px;
 }
@@ -522,24 +455,24 @@ export default {
 .categoria-info h3 {
   margin: 0 0 10px 0;
   font-size: 1.3rem;
-  color: #1e293b;
+  color: var(--color-text-main);
 }
 
 /* Utilities */
 .red-btn {
-  background-color: #E51D22 !important;
-  border-color: #E51D22 !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
 }
 
 .red-btn:hover {
-  background-color: #cf1a1e !important;
-  border-color: #cf1a1e !important;
+  background-color: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
 }
 
 .empty-state {
   text-align: center;
   padding: 60px;
-  color: #94a3b8;
+  color: var(--color-border);
 }
 
 .empty-state i {
@@ -624,8 +557,8 @@ export default {
     margin-bottom: 6px;
   }
 
-  .control-item ::v-deep .el-input__inner,
-  .control-item ::v-deep .el-select .el-input__inner {
+  .control-item :deep(.el-input__inner),
+  .control-item :deep(.el-select .el-input__inner) {
     height: 42px;
     padding: 10px 12px;
     font-size: 0.9rem;
@@ -664,7 +597,7 @@ export default {
   }
 
   /* Modal responsive */
-  ::v-deep .category-dialog {
+  :deep(.category-dialog) {
     width: 95% !important;
     max-width: 95vw !important;
     margin: 5vh auto !important;
@@ -705,7 +638,7 @@ export default {
     font-size: 0.75rem;
   }
 
-  .control-card ::v-deep .el-card__body {
+  .control-card :deep(.el-card__body) {
     padding: 10px;
   }
 
@@ -757,11 +690,11 @@ export default {
 
   .info-row .label {
     font-weight: 600;
-    color: #64748b;
+    color: var(--color-text-muted);
   }
 
   .info-row .value {
-    color: #1e293b;
+    color: var(--color-text-main);
   }
 }
 

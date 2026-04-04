@@ -9,27 +9,25 @@
       </div>
       <div class="bullshit">
         <div class="bullshit__oops">OOPS!</div>
-        <div class="bullshit__info">All rights reserved
-          <a style="color:#20a0ff" href="https://wallstreetcn.com" target="_blank">wallstreetcn</a>
+        <div class="bullshit__info">Todos los derechos reservados
+          <span class="club-link">Club Atlético Deportivo Acarigua</span>
         </div>
         <div class="bullshit__headline">{{ message }}</div>
-        <div class="bullshit__info">Please check that the URL you entered is correct, or click the button below to return to the homepage.</div>
-        <a href="" class="bullshit__return-home">Back to home</a>
+        <div class="bullshit__info">Por favor revisa que la URL ingresada sea correcta, o haz clic en el botón para volver al inicio.</div>
+        <a href="#/dashboard" class="bullshit__return-home">Volver al Inicio</a>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 
-export default {
-  name: 'Page404',
-  computed: {
-    message() {
-      return 'The webmaster said that you can not enter this page...'
-    }
-  }
-}
+defineOptions({
+  name: 'Page404'
+})
+
+const message = computed(() => 'The webmaster said that you can not enter this page...')
 </script>
 
 <style lang="scss" scoped>
@@ -165,7 +163,7 @@ export default {
       font-size: 32px;
       font-weight: bold;
       line-height: 40px;
-      color: #1482f0;
+      color: var(--color-primary);
       opacity: 0;
       margin-bottom: 20px;
       animation-name: slideUp;
@@ -175,7 +173,7 @@ export default {
     &__headline {
       font-size: 20px;
       line-height: 24px;
-      color: #222;
+      color: var(--color-text-main);
       font-weight: bold;
       opacity: 0;
       margin-bottom: 10px;
@@ -187,7 +185,7 @@ export default {
     &__info {
       font-size: 13px;
       line-height: 21px;
-      color: grey;
+      color: var(--color-text-muted);
       opacity: 0;
       margin-bottom: 30px;
       animation-name: slideUp;
@@ -198,20 +196,28 @@ export default {
     &__return-home {
       display: block;
       float: left;
-      width: 110px;
-      height: 36px;
-      background: #1482f0;
+      width: 160px;
+      height: 44px;
+      background: var(--color-primary);
       border-radius: 100px;
       text-align: center;
       color: #ffffff;
       opacity: 0;
-      font-size: 14px;
-      line-height: 36px;
+      font-size: 15px;
+      line-height: 44px;
+      font-weight: 700;
       cursor: pointer;
       animation-name: slideUp;
       animation-duration: 0.5s;
       animation-delay: 0.3s;
       animation-fill-mode: forwards;
+      box-shadow: 0 4px 14px 0 var(--color-shadow);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: var(--color-primary-hover);
+        transform: translateY(-2px);
+      }
     }
     @keyframes slideUp {
       0% {

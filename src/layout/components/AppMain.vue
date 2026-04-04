@@ -1,23 +1,26 @@
 <template>
   <section class="app-main">
-    <transition name="fade-transform" mode="out-in">
-      <keep-alive :include="cachedViews">
-        <router-view :key="key" />
-      </keep-alive>
-    </transition>
+    <router-view v-slot="{ Component, route }">
+      <transition name="fade-transform" mode="out-in">
+        <keep-alive :include="cachedViews">
+          <component :is="Component" :key="route.path" />
+        </keep-alive>
+      </transition>
+    </router-view>
   </section>
 </template>
 
 <script>
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+
 export default {
   name: 'AppMain',
-  computed: {
-    cachedViews() {
-      return this.$store.state.tagsView.cachedViews
-    },
-    key() {
-      return this.$route.path
-    }
+  setup() {
+    const store = useStore()
+    const cachedViews = computed(() => store.state.tagsView.cachedViews)
+
+    return { cachedViews }
   }
 }
 </script>
@@ -29,7 +32,7 @@ export default {
   width: 100%;
   position: relative;
   overflow: hidden;
-  background-color: #f0f2f5;
+  background-color: var(--color-bg-body);
 }
 
 .fixed-header+.app-main {

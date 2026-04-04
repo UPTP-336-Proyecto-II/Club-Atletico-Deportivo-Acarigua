@@ -2,6 +2,8 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const pool = require('./config/database');
+const { syncVersionMiddleware } = require('./middleware/syncVersion');
+const { getSyncState } = require('./services/syncVersionService');
 
 const { dbConfig, testConnection } = pool;
 
@@ -36,6 +38,11 @@ function createApp() {
   }));
   app.use(express.json());
   app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+  app.use('/api', syncVersionMiddleware);
+
+  app.get('/api/sync/version', (req, res) => {
+    res.json(getSyncState());
+  });
 
   app.use('/api/usuarios', usuariosRoutes);
   app.use('/api/atletas', atletasRoutes);
@@ -77,7 +84,8 @@ function createApp() {
         tutor: '/api/tutor',
         roles: '/api/roles',
         preguntasSeguridad: '/api/preguntas-seguridad',
-        posiciones: '/api/posiciones'
+        posiciones: '/api/posiciones',
+        syncVersion: '/api/sync/version'
       }
     });
   });
@@ -122,6 +130,7 @@ function logStartup(port) {
   console.log('   - Roles: /api/roles');
   console.log('   - Preguntas Seguridad: /api/preguntas-seguridad');
   console.log('   - Posiciones: /api/posiciones');
+  console.log('   - Sincronizacion: /api/sync/version');
 }
 
 function startServer(options = {}) {

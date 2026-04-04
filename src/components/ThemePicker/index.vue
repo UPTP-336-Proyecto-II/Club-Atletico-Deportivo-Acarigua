@@ -1,15 +1,15 @@
 <template>
   <el-color-picker
     v-model="theme"
-    :predefine="['#409EFF', '#1890ff', '#304156','#212121','#11a983', '#13c2c2', '#6959CD', '#f5222d', ]"
+    :predefine="['#ff3b30', '#ff5a4f', '#304156','#212121','#11a983', '#13c2c2', '#6959CD', '#f5222d', ]"
     class="theme-picker"
     popper-class="theme-picker-dropdown"
   />
 </template>
 
 <script>
-const version = require('element-ui/package.json').version // element-ui version from node_modules
-const ORIGINAL_THEME = '#409EFF' // default color
+const version = '2.15.14' // Mock version for element-ui
+const ORIGINAL_THEME = '#ff3b30' // default color
 
 export default {
   data() {

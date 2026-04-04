@@ -1,7 +1,7 @@
 <template>
   <div class="progress-container">
     <!-- Header -->
-    <div class="page-header">
+    <div class="premium-header">
       <div class="header-content">
         <div>
           <h1><i class="el-icon-data-line" /> Evolución de Atletas</h1>
@@ -11,52 +11,94 @@
     </div>
 
     <!-- Barra de Control Compacta -->
-    <el-card class="control-panel" shadow="hover">
+    <el-card class="premium-control-card" shadow="hover">
       <div class="control-content">
         <div class="search-section">
-          <label class="control-label"><i class="el-icon-search" /> Buscar Atleta:</label>
-          <el-select
-            :key="searchKey"
-            v-model="selectedAtletaId"
-            filterable
-            remote
-            :remote-method="filterAtletas"
-            no-data-text="No se encontraron atletas"
-            placeholder="Nombre o Apellido..."
-            class="compact-search"
-            @change="handleAtletaChange"
-          >
-            <el-option
-              v-for="item in filteredAtletas"
-              :key="item.atleta_id"
-              :label="item.nombre + ' ' + item.apellido"
-              :value="item.atleta_id"
+          <label class="premium-search-label">Buscar Atleta</label>
+          <div class="filter-control-row">
+            <el-select
+              :key="searchKey"
+              v-model="selectedAtletaId"
+              filterable
+              remote
+              clearable
+              :remote-method="filterAtletas"
+              no-data-text="No se encontraron atletas"
+              placeholder="Nombre o Apellido..."
+              class="modern-search-input modern-filter-control"
+              popper-class="modern-filter-popper"
+              @change="handleAtletaChange"
+              @clear="clearSelectedAtleta"
+              style="width: 100%"
             >
-              <div class="atleta-option">
-                <img v-if="item.foto" :src="getFotoUrl(item.foto)" class="option-avatar">
-                <div v-else class="option-avatar-placeholder"><i class="el-icon-user" /></div>
-                <span>{{ item.nombre }} {{ item.apellido }}</span>
-                <el-tag size="mini" type="info" class="option-tag">{{ item.categoria_nombre }}</el-tag>
-              </div>
-            </el-option>
-          </el-select>
+              <el-option
+                v-for="item in filteredAtletas"
+                :key="item.atleta_id"
+                :label="item.nombre + ' ' + item.apellido"
+                :value="item.atleta_id"
+              >
+                <div class="atleta-option">
+                  <img v-if="item.foto" :src="getFotoUrl(item.foto)" class="option-avatar">
+                  <div v-else class="option-avatar-placeholder"><i class="el-icon-user" /></div>
+                  <span>{{ item.nombre }} {{ item.apellido }}</span>
+                </div>
+              </el-option>
+            </el-select>
+            <button
+              v-if="hasSelectedAtleta"
+              type="button"
+              class="quick-clear-btn"
+              title="Limpiar selección de atleta"
+              @click="clearSelectedAtleta"
+            >
+              <el-icon class="quick-clear-icon"><CloseBold /></el-icon>
+              <span class="quick-clear-text">Limpiar atleta</span>
+            </button>
+          </div>
         </div>
 
         <div class="filter-section">
-          <label class="control-label"><i class="el-icon-medal" /> Categoría:</label>
-          <el-select v-model="selectedCategoriaId" placeholder="Todas" clearable class="compact-select" @change="handleCategoriaChange">
-            <el-option
-              v-for="cat in categorias"
-              :key="cat.categoria_id"
-              :label="cat.nombre_categoria"
-              :value="cat.categoria_id"
-            />
-          </el-select>
+          <label class="premium-search-label">Categoría</label>
+          <div class="filter-control-row">
+            <el-select
+              v-model="selectedCategoriaId"
+              placeholder="Todas"
+              clearable
+              class="modern-search-input modern-filter-control"
+              popper-class="modern-filter-popper"
+              @change="handleCategoriaChange"
+              @clear="clearSelectedCategoria"
+              style="width: 100%"
+            >
+              <el-option
+                v-for="cat in categorias"
+                :key="cat.categoria_id"
+                :label="cat.nombre_categoria"
+                :value="cat.categoria_id"
+              />
+            </el-select>
+            <button
+              v-if="hasSelectedCategoria"
+              type="button"
+              class="quick-clear-btn"
+              title="Limpiar selección de categoría"
+              @click="clearSelectedCategoria"
+            >
+              <el-icon class="quick-clear-icon"><CloseBold /></el-icon>
+              <span class="quick-clear-text">Limpiar categoría</span>
+            </button>
+          </div>
         </div>
 
         <div class="actions-section">
-          <el-button type="danger" icon="el-icon-printer" :disabled="!selectedAtletaId" @click="printCurrentReport">Imprimir Atleta</el-button>
-          <el-button type="primary" icon="el-icon-document-copy" :disabled="!selectedCategoriaId" @click="printCategoryReports">Reportes Categoría</el-button>
+          <el-button type="danger" class="report-action-btn" :disabled="!selectedAtletaId" @click="printCurrentReport">
+            <el-icon><Printer /></el-icon>
+            <span>Imprimir Atleta</span>
+          </el-button>
+          <el-button type="primary" class="report-action-btn" :disabled="!selectedCategoriaId" @click="printCategoryReports">
+            <el-icon><DocumentCopy /></el-icon>
+            <span>Reporte Categoría</span>
+          </el-button>
         </div>
       </div>
     </el-card>
@@ -125,17 +167,17 @@
       <el-row :gutter="20">
         <el-col :span="16" class="performance-evolution-column">
           <el-card shadow="hover" class="chart-card">
-            <div slot="header">
+            <template #header><div>
               <span><i class="el-icon-line-chart" /> Evolución de Rendimiento</span>
-            </div>
+            </div></template>
             <div id="performance-chart" style="height: 400px;" />
           </el-card>
         </el-col>
         <el-col :span="8" class="radar-card-container">
           <el-card shadow="hover" class="chart-card">
-            <div slot="header">
+            <template #header><div>
               <span><i class="el-icon-aim" /> Perfil Competitivo (Radar)</span>
-            </div>
+            </div></template>
             <div id="radar-chart" style="height: 400px;" />
           </el-card>
         </el-col>
@@ -144,9 +186,9 @@
       <el-row :gutter="20" style="margin-top: 20px;">
         <el-col :span="24">
           <el-card shadow="hover" class="chart-card">
-            <div slot="header">
+            <template #header><div>
               <span><i class="el-icon-receiving" /> Histórico de Medidas Corporales</span>
-            </div>
+            </div></template>
             <div id="anthropometric-chart" style="height: 350px;" />
           </el-card>
         </el-col>
@@ -155,488 +197,596 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, nextTick, onMounted, onActivated, onBeforeUnmount } from 'vue'
+import { useRoute } from 'vue-router'
 import request from '@/utils/request'
 import * as echarts from 'echarts'
-export default {
-  name: 'EvolucionAtletas',
-  data() {
-    return {
-      selectedAtletaId: null,
-      selectedCategoriaId: '',
-      atletas: [],
-      filteredAtletas: [],
-      categorias: [],
-      atleta: {},
-      tests: [],
-      mediciones: [],
-      loading: false,
-      backendUrl: 'http://localhost:3000',
-      searchKey: 0, // Clave para forzar re-render del buscador
-      charts: {
-        performance: null,
-        radar: null,
-        anthropometric: null
-      }
-    }
-  },
-  computed: {
-    latestMedicion() {
-      return this.mediciones.length > 0 ? this.mediciones[0] : null
-    },
-    trends() {
-      if (this.tests.length < 2) return []
-      const first = this.tests[this.tests.length - 1]
-      const latest = this.tests[0]
+import { ElMessage } from 'element-plus'
+import { CloseBold, Printer, DocumentCopy } from '@element-plus/icons-vue'
+import { useServerDataRefresh } from '@/composables/useServerDataRefresh'
 
-      const calculate = (val1, val2) => {
-        if (!val1) return 0
-        return (((val2 - val1) / val1) * 100).toFixed(1)
-      }
+const route = useRoute()
 
-      return [
-        { label: 'Fuerza', value: latest.test_de_fuerza, unit: '', diff: calculate(first.test_de_fuerza, latest.test_de_fuerza), status: (latest.test_de_fuerza >= first.test_de_fuerza ? 'up' : 'down') },
-        { label: 'Velocidad', value: latest.test_velocidad, unit: '', diff: calculate(first.test_velocidad, latest.test_velocidad), status: (latest.test_velocidad >= first.test_velocidad ? 'up' : 'down') },
-        { label: 'Resistencia', value: latest.test_resistencia, unit: '', diff: calculate(first.test_resistencia, latest.test_resistencia), status: (latest.test_resistencia >= first.test_resistencia ? 'up' : 'down') },
-        { label: 'Coordinación', value: latest.test_coordinacion, unit: '', diff: calculate(first.test_coordinacion, latest.test_coordinacion), status: (latest.test_coordinacion >= first.test_coordinacion ? 'up' : 'down') }
-      ]
-    }
-  },
-  async created() {
-    await Promise.all([this.loadAtletas(), this.loadCategorias()])
-    const queryId = this.$route.query.atleta_id
-    if (queryId) {
-      this.selectedAtletaId = parseInt(queryId)
-      this.handleAtletaChange(this.selectedAtletaId)
-    }
-  },
-  async activated() {
-    // 1. Refrescamos la lista de atletas desde el servidor
-    await this.loadAtletas()
+const selectedAtletaId = ref(null)
+const selectedCategoriaId = ref('')
+const atletas = ref([])
+const filteredAtletas = ref([])
+const categorias = ref([])
+const atleta = ref({})
+const tests = ref([])
+const mediciones = ref([])
+const loading = ref(false)
+const backendUrl = ref('http://localhost:3000')
+const searchKey = ref(0)
+const athleteQuery = ref('')
+const charts = {
+  performance: null,
+  radar: null,
+  anthropometric: null
+}
 
-    // 2. Incrementamos la clave para forzar al Buscador (el-select) a re-renderizarse
-    this.searchKey++
+const latestMedicion = computed(() => {
+  return mediciones.value.length > 0 ? mediciones.value[0] : null
+})
 
-    // 3. Verificar si hay un ID en la URL (al navegar desde la lista de atletas)
-    const queryId = this.$route.query.atleta_id
-    if (queryId && parseInt(queryId) !== this.selectedAtletaId) {
-      this.selectedAtletaId = parseInt(queryId)
-      await this.handleAtletaChange(this.selectedAtletaId)
-    } else if (this.selectedAtletaId) {
-      // Si no cambiamos de atleta, solo refrescar los datos del actual
-      this.handleAtletaChange(this.selectedAtletaId)
-    }
-  },
-  beforeDestroy() {
-    Object.values(this.charts).forEach(chart => {
-      if (chart) chart.dispose()
-    })
-  },
-  methods: {
-    async loadAtletas() {
-      try {
-        const response = await request({ url: '/atletas', method: 'get' })
-        this.atletas = response || []
-        this.filteredAtletas = [...this.atletas].slice(0, 50)
-      } catch (error) {
-        console.error('Error cargando atletas:', error)
-      }
-    },
-    async loadCategorias() {
-      try {
-        const response = await request({ url: '/categoria', method: 'get' })
-        this.categorias = response || []
-      } catch (error) {
-        console.error('Error cargando categorías:', error)
-      }
-    },
-    filterAtletas(query) {
-      if (query !== '') {
-        this.filteredAtletas = this.atletas.filter(item => {
-          const fullName = (item.nombre + ' ' + item.apellido).toLowerCase()
-          return fullName.indexOf(query.toLowerCase()) > -1
-        }).slice(0, 20)
-      } else {
-        this.filteredAtletas = (this.selectedCategoriaId
-          ? this.atletas.filter(a => a.categoria_id === this.selectedCategoriaId)
-          : this.atletas
-        ).slice(0, 50)
-      }
-    },
-    handleCategoriaChange(val) {
-      this.selectedAtletaId = null
-      if (val) {
-        this.filteredAtletas = this.atletas.filter(a => a.categoria_id === val).slice(0, 50)
-      } else {
-        this.filteredAtletas = [...this.atletas].slice(0, 50)
-      }
-    },
-    async handleAtletaChange(id) {
-      if (!id) return
-      this.loading = true
+const trends = computed(() => {
+  if (tests.value.length < 2) return []
+  const first = tests.value[tests.value.length - 1]
+  const latest = tests.value[0]
 
-      try {
-        // Re-sincronizar datos básicos del atleta para asegurar que cambios recientes (foto/nombre) se vean
-        const currentAtleta = await request({ url: `/atletas?atleta_id=${id}`, method: 'get' })
-        if (currentAtleta) {
-          // Si el servidor devuelve un array (común en este backend), tomamos el primero
-          const updatedInfo = Array.isArray(currentAtleta) ? currentAtleta.find(a => a.atleta_id === id) : currentAtleta
-          if (updatedInfo) {
-            this.atleta = updatedInfo
-            // También actualizar en la lista local para el buscador
-            const idx = this.atletas.findIndex(a => a.atleta_id === id)
-            if (idx !== -1) this.$set(this.atletas, idx, updatedInfo)
-          }
-        }
+  const calculate = (val1, val2) => {
+    if (!val1) return 0
+    return (((val2 - val1) / val1) * 100).toFixed(1)
+  }
 
-        const [tests, mediciones] = await Promise.all([
-          request({ url: `/tests?atleta_id=${id}`, method: 'get' }),
-          request({ url: `/mediciones?atleta_id=${id}`, method: 'get' })
-        ])
-        this.tests = tests || []
-        this.mediciones = mediciones || []
+  return [
+    { label: 'Fuerza', value: latest.test_de_fuerza, unit: '', diff: calculate(first.test_de_fuerza, latest.test_de_fuerza), status: (latest.test_de_fuerza >= first.test_de_fuerza ? 'up' : 'down') },
+    { label: 'Velocidad', value: latest.test_velocidad, unit: '', diff: calculate(first.test_velocidad, latest.test_velocidad), status: (latest.test_velocidad >= first.test_velocidad ? 'up' : 'down') },
+    { label: 'Resistencia', value: latest.test_resistencia, unit: '', diff: calculate(first.test_resistencia, latest.test_resistencia), status: (latest.test_resistencia >= first.test_resistencia ? 'up' : 'down') },
+    { label: 'Coordinación', value: latest.test_coordinacion, unit: '', diff: calculate(first.test_coordinacion, latest.test_coordinacion), status: (latest.test_coordinacion >= first.test_coordinacion ? 'up' : 'down') }
+  ]
+})
 
-        this.$nextTick(() => {
-          this.initCharts()
-        })
-      } catch (error) {
-        console.error('Error sincronizando:', error)
-        this.$message.error('Error cargando datos actualizados')
-      } finally {
-        this.loading = false
-      }
-    },
-    getFotoUrl(filename) {
-      return `${this.backendUrl}/uploads/atletas/${filename}`
-    },
-    initCharts() {
-      this.initPerformanceChart()
-      this.initRadarChart()
-      this.initAnthropometricChart()
-    },
-    initPerformanceChart() {
-      const chartDom = document.getElementById('performance-chart')
-      if (!chartDom) return
-      if (this.charts.performance) this.charts.performance.dispose()
-      this.charts.performance = echarts.init(chartDom)
+const hasSelectedAtleta = computed(() => selectedAtletaId.value !== null && selectedAtletaId.value !== undefined && selectedAtletaId.value !== '')
+const hasSelectedCategoria = computed(() => selectedCategoriaId.value !== null && selectedCategoriaId.value !== undefined && selectedCategoriaId.value !== '')
 
-      const revertedTests = [...this.tests].reverse()
-      const dates = revertedTests.map(t => {
-        const d = new Date(t.fecha_test)
-        return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString()
-      })
-
-      const option = {
-        tooltip: { trigger: 'axis' },
-        legend: { data: ['Fuerza', 'Velocidad', 'Resistencia', 'Coordinación'] },
-        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-        xAxis: { type: 'category', boundaryGap: false, data: dates },
-        yAxis: { type: 'value' },
-        series: [
-          { name: 'Fuerza', type: 'line', smooth: true, data: revertedTests.map(t => t.test_de_fuerza) },
-          { name: 'Velocidad', type: 'line', smooth: true, data: revertedTests.map(t => t.test_velocidad) },
-          { name: 'Resistencia', type: 'line', smooth: true, data: revertedTests.map(t => t.test_resistencia) },
-          { name: 'Coordinación', type: 'line', smooth: true, data: revertedTests.map(t => t.test_coordinacion) }
-        ],
-        color: ['#E51D22', '#1a3a5f', '#4CAF50', '#f39c12']
-      }
-      this.charts.performance.setOption(option)
-    },
-    initRadarChart() {
-      const chartDom = document.getElementById('radar-chart')
-      if (!chartDom) return
-      if (this.charts.radar) this.charts.radar.dispose()
-      this.charts.radar = echarts.init(chartDom)
-
-      if (this.tests.length === 0) return
-
-      const latest = this.tests[0]
-      const first = this.tests[this.tests.length - 1]
-
-      const option = {
-        tooltip: {
-          trigger: 'item'
-        },
-        legend: {
-          data: ['Estado Actual', 'Estado Inicial'],
-          bottom: 0,
-          textStyle: { color: '#1a3a5f' }
-        },
-        radar: {
-          center: ['50%', '45%'],
-          radius: '60%',
-          nameGap: 15,
-          indicator: [
-            { name: 'Fuerza', max: 100 },
-            { name: 'Velocidad', max: 100 },
-            { name: 'Resistencia', max: 100 },
-            { name: 'Coordinación', max: 100 },
-            { name: 'Reacción', max: 100 }
-          ],
-          name: {
-            textStyle: {
-              color: '#1a3a5f',
-              fontSize: 11,
-              padding: [5, 10]
-            }
-          },
-          splitArea: { show: false }
-        },
-        series: [{
-          type: 'radar',
-          data: [
-            {
-              value: [
-                latest.test_de_fuerza,
-                latest.test_velocidad,
-                latest.test_resistencia,
-                latest.test_coordinacion,
-                latest.test_de_reaccion
-              ],
-              name: 'Estado Actual',
-              areaStyle: { color: 'rgba(229, 29, 34, 0.3)' },
-              itemStyle: { color: '#E51D22' }
-            },
-            {
-              value: [
-                first.test_de_fuerza,
-                first.test_velocidad,
-                first.test_resistencia,
-                first.test_coordinacion,
-                first.test_de_reaccion
-              ],
-              name: 'Estado Inicial',
-              areaStyle: { color: 'rgba(26, 58, 95, 0.1)' },
-              itemStyle: { color: '#1a3a5f' },
-              lineStyle: { type: 'dashed' }
-            }
-          ]
-        }]
-      }
-      this.charts.radar.setOption(option)
-    },
-    initAnthropometricChart() {
-      const chartDom = document.getElementById('anthropometric-chart')
-      if (!chartDom) return
-      if (this.charts.anthropometric) this.charts.anthropometric.dispose()
-      this.charts.anthropometric = echarts.init(chartDom)
-
-      const revertedMediciones = [...this.mediciones].reverse()
-      const dates = revertedMediciones.map(m => {
-        const d = new Date(m.fecha_medicion)
-        return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString()
-      })
-
-      const option = {
-        tooltip: { trigger: 'axis' },
-        legend: { data: ['Peso (kg)', 'Altura (cm)', 'IMC'] },
-        grid: {
-          left: '10%', /* Márgenes equilibrados para centrar */
-          right: '10%',
-          bottom: '15%',
-          containLabel: true
-        },
-        xAxis: {
-          type: 'category',
-          data: dates,
-          axisLabel: { rotate: 30 }
-        },
-        yAxis: [
-          { type: 'value', name: 'Kg/Cm', axisLine: { show: true }},
-          { type: 'value', name: 'IMC', position: 'right', axisLine: { show: true }}
-        ],
-        series: [
-          { name: 'Peso (kg)', type: 'bar', data: revertedMediciones.map(m => m.peso) },
-          { name: 'Altura (cm)', type: 'line', data: revertedMediciones.map(m => m.altura) },
-          { name: 'IMC', type: 'line', yAxisIndex: 1, data: revertedMediciones.map(m => m.indice_de_masa) }
-        ],
-        color: ['#f39c12', '#1a3a5f', '#4CAF50']
-      }
-      this.charts.anthropometric.setOption(option)
-    },
-    async printCurrentReport() {
-      try {
-        this.loading = true
-
-        // 1. Capture Charts as Base64 Images
-        const chartsImages = {}
-
-        if (this.charts.performance) {
-          chartsImages.performance = this.charts.performance.getDataURL({
-            type: 'png',
-            pixelRatio: 2, // Higher resolution
-            backgroundColor: '#fff'
-          })
-        }
-
-        if (this.charts.radar) {
-          chartsImages.radar = this.charts.radar.getDataURL({
-            type: 'png',
-            pixelRatio: 2,
-            backgroundColor: '#fff'
-          })
-        }
-
-        if (this.charts.anthropometric) {
-          chartsImages.anthropometric = this.charts.anthropometric.getDataURL({
-            type: 'png',
-            pixelRatio: 2,
-            backgroundColor: '#fff'
-          })
-        }
-
-        // Convert Profile Photo to Base64
-        let photoBase64 = null
-        if (this.atleta.foto) {
-          try {
-            const url = this.getFotoUrl(this.atleta.foto)
-            photoBase64 = await this.toDataURL(url)
-          } catch (e) {
-            console.warn('Could not load profile photo for PDF', e)
-          }
-        }
-
-        // 2. Import and Use Service
-        const { PdfReportService } = await import('@/utils/pdfReportService')
-
-        // 3. Generate PDF
-        PdfReportService.generatePerformanceReport(this.atleta, chartsImages, this.trends, photoBase64)
-
-        this.$message.success('Generando PDF...')
-      } catch (error) {
-        console.error('Error generando PDF:', error)
-        this.$message.error('Error al generar el PDF')
-      } finally {
-        this.loading = false
-      }
-    },
-    toDataURL(url) {
-      return new Promise((resolve, reject) => {
-        const img = new Image()
-        img.crossOrigin = 'Anonymous'
-        img.onload = () => {
-          const canvas = document.createElement('canvas')
-          canvas.width = img.width
-          canvas.height = img.height
-          const ctx = canvas.getContext('2d')
-          ctx.drawImage(img, 0, 0)
-          resolve(canvas.toDataURL('image/png'))
-        }
-        img.onerror = reject
-        img.src = url
-      })
-    },
-    async printCategoryReports() {
-      if (!this.selectedCategoriaId) return
-
-      this.loading = true
-      try {
-        const categoria = this.categorias.find(c => c.categoria_id === this.selectedCategoriaId)
-        const athletes = this.atletas.filter(a => a.categoria_id === this.selectedCategoriaId)
-
-        if (athletes.length === 0) {
-          this.$message.warning('No hay atletas en esta categoría')
-          return
-        }
-
-        // Obtener datos resumidos de todos los atletas de la categoría
-        const allData = await Promise.all(athletes.map(async(atleta) => {
-          const [tests, mediciones] = await Promise.all([
-            request({ url: `/tests?atleta_id=${atleta.atleta_id}`, method: 'get' }),
-            request({ url: `/mediciones?atleta_id=${atleta.atleta_id}`, method: 'get' })
-          ])
-          const latestTest = tests && tests.length > 0 ? tests[0] : {}
-          const latestMed = mediciones && mediciones.length > 0 ? mediciones[0] : {}
-
-          return {
-            cedula: atleta.cedula || `ID: ${atleta.atleta_id}`,
-            nombre: `${atleta.nombre} ${atleta.apellido}`,
-            posicion: atleta.posicion_de_juego_nombre || 'N/A',
-            peso: latestMed.peso || '-',
-            altura: latestMed.altura || '-',
-            imc: latestMed.indice_de_masa || '-',
-            fuerza: latestTest.test_de_fuerza || '-',
-            velocidad: latestTest.test_velocidad || '-',
-            resistencia: latestTest.test_resistencia || '-',
-            coordinacion: latestTest.test_coordinacion || '-',
-            reaccion: latestTest.test_de_reaccion || '-'
-          }
-        }))
-
-        // Generar PDF en vez de Excel
-        const { PdfReportService } = await import('@/utils/pdfReportService')
-        PdfReportService.generateCategoryPerformanceReport(allData, categoria.nombre_categoria, categoria.entrenador_nombre)
-        this.$message.success('Generando PDF...')
-      } catch (error) {
-        console.error('Error generando reporte de categoría:', error)
-        this.$message.error('Error al generar reporte de categoría')
-      } finally {
-        this.loading = false
-      }
-    },
-    formatJson(filterVal, jsonData) {
-      return jsonData.map(v => filterVal.map(j => v[j]))
-    }
+const loadAtletas = async () => {
+  try {
+    const response = await request({ url: '/atletas', method: 'get' })
+    atletas.value = Array.isArray(response) ? response : []
+    applyAtletaFilters(athleteQuery.value)
+  } catch (error) {
+    console.error('Error cargando atletas:', error)
   }
 }
+
+const loadCategorias = async () => {
+  try {
+    const response = await request({ url: '/categoria', method: 'get' })
+    categorias.value = Array.isArray(response) ? response : []
+  } catch (error) {
+    console.error('Error cargando categorías:', error)
+  }
+}
+
+const isSameId = (left, right) => String(left) === String(right)
+const normalizeRouteAtletaId = (value) => {
+  if (value === undefined || value === null || value === '') return null
+  const parsed = Number(value)
+  return Number.isNaN(parsed) ? value : parsed
+}
+
+const applyAtletaFilters = (query = '') => {
+  const normalizedQuery = String(query || '').trim().toLowerCase()
+
+  const listByCategory = selectedCategoriaId.value
+    ? atletas.value.filter(a => isSameId(a.categoria_id, selectedCategoriaId.value))
+    : atletas.value
+
+  const filteredByQuery = normalizedQuery
+    ? listByCategory.filter(item => {
+      const fullName = `${item.nombre || ''} ${item.apellido || ''}`.toLowerCase()
+      const cedula = String(item.cedula || '').toLowerCase()
+      return fullName.includes(normalizedQuery) || cedula.includes(normalizedQuery)
+    })
+    : listByCategory
+
+  filteredAtletas.value = filteredByQuery.slice(0, normalizedQuery ? 20 : 50)
+}
+
+const resetSelectedAtleta = () => {
+  selectedAtletaId.value = null
+  atleta.value = {}
+  tests.value = []
+  mediciones.value = []
+}
+
+const clearSelectedAtleta = () => {
+  athleteQuery.value = ''
+  resetSelectedAtleta()
+  applyAtletaFilters('')
+}
+
+const clearSelectedCategoria = () => {
+  selectedCategoriaId.value = ''
+  applyAtletaFilters(athleteQuery.value)
+}
+
+const filterAtletas = (query) => {
+  athleteQuery.value = String(query || '')
+  applyAtletaFilters(athleteQuery.value)
+}
+
+const handleCategoriaChange = (val) => {
+  applyAtletaFilters(athleteQuery.value)
+
+  if (!selectedAtletaId.value) return
+
+  const selectedCurrent = atletas.value.find(a => isSameId(a.atleta_id, selectedAtletaId.value))
+  if (!selectedCurrent) {
+    resetSelectedAtleta()
+    return
+  }
+
+  if (val && !isSameId(selectedCurrent.categoria_id, val)) {
+    resetSelectedAtleta()
+  }
+}
+
+const handleAtletaChange = async (id) => {
+  if (id === null || id === undefined || id === '') {
+    resetSelectedAtleta()
+    return
+  }
+  loading.value = true
+
+  try {
+    const currentAtleta = await request({ url: `/atletas?atleta_id=${id}`, method: 'get' })
+    if (currentAtleta) {
+      const updatedInfo = Array.isArray(currentAtleta) ? currentAtleta.find(a => isSameId(a.atleta_id, id)) : currentAtleta
+      if (updatedInfo) {
+        atleta.value = updatedInfo
+        const idx = atletas.value.findIndex(a => isSameId(a.atleta_id, id))
+        if (idx !== -1) {
+          atletas.value[idx] = updatedInfo 
+        }
+      }
+    }
+
+    const [t, m] = await Promise.all([
+      request({ url: `/tests?atleta_id=${id}`, method: 'get' }),
+      request({ url: `/mediciones?atleta_id=${id}`, method: 'get' })
+    ])
+    tests.value = t || []
+    mediciones.value = m || []
+
+    nextTick(() => {
+      initCharts()
+    })
+  } catch (error) {
+    console.error('Error sincronizando:', error)
+    ElMessage.error('Error cargando datos actualizados')
+  } finally {
+    loading.value = false
+  }
+}
+
+const getFotoUrl = (filename) => {
+  return `${backendUrl.value}/uploads/atletas/${filename}`
+}
+
+const initPerformanceChart = () => {
+  const chartDom = document.getElementById('performance-chart')
+  if (!chartDom) return
+  if (charts.performance) charts.performance.dispose()
+  charts.performance = echarts.init(chartDom)
+
+  const revertedTests = [...tests.value].reverse()
+  const dates = revertedTests.map(t => {
+    const d = new Date(t.fecha_test)
+    return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString()
+  })
+
+  const option = {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['Fuerza', 'Velocidad', 'Resistencia', 'Coordinación'] },
+    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'category', boundaryGap: false, data: dates },
+    yAxis: { type: 'value' },
+    series: [
+      { name: 'Fuerza', type: 'line', smooth: true, data: revertedTests.map(t => t.test_de_fuerza) },
+      { name: 'Velocidad', type: 'line', smooth: true, data: revertedTests.map(t => t.test_velocidad) },
+      { name: 'Resistencia', type: 'line', smooth: true, data: revertedTests.map(t => t.test_resistencia) },
+      { name: 'Coordinación', type: 'line', smooth: true, data: revertedTests.map(t => t.test_coordinacion) }
+    ],
+    color: ['var(--color-text-main)', 'var(--color-text-main)', '#4CAF50', '#f39c12']
+  }
+  charts.performance.setOption(option)
+}
+
+const initRadarChart = () => {
+  const chartDom = document.getElementById('radar-chart')
+  if (!chartDom) return
+  if (charts.radar) charts.radar.dispose()
+  charts.radar = echarts.init(chartDom)
+
+  if (tests.value.length === 0) return
+
+  const latest = tests.value[0]
+  const first = tests.value[tests.value.length - 1]
+
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      data: ['Estado Actual', 'Estado Inicial'],
+      bottom: 0,
+      textStyle: { color: 'var(--color-text-main)' }
+    },
+    radar: {
+      center: ['50%', '45%'],
+      radius: '60%',
+      nameGap: 15,
+      indicator: [
+        { name: 'Fuerza', max: 100 },
+        { name: 'Velocidad', max: 100 },
+        { name: 'Resistencia', max: 100 },
+        { name: 'Coordinación', max: 100 },
+        { name: 'Reacción', max: 100 }
+      ],
+      axisName: {
+        color: 'var(--color-text-main)',
+        fontSize: 11,
+        padding: [5, 10]
+      },
+      splitArea: { show: false }
+    },
+    series: [{
+      type: 'radar',
+      data: [
+        {
+          value: [
+            latest.test_de_fuerza,
+            latest.test_velocidad,
+            latest.test_resistencia,
+            latest.test_coordinacion,
+            latest.test_de_reaccion
+          ],
+          name: 'Estado Actual',
+          areaStyle: { color: 'rgba(30, 41, 59, 0.3)' },
+          itemStyle: { color: 'var(--color-text-main)' }
+        },
+        {
+          value: [
+            first.test_de_fuerza,
+            first.test_velocidad,
+            first.test_resistencia,
+            first.test_coordinacion,
+            first.test_de_reaccion
+          ],
+          name: 'Estado Inicial',
+          areaStyle: { color: 'rgba(26, 58, 95, 0.1)' },
+          itemStyle: { color: 'var(--color-text-main)' },
+          lineStyle: { type: 'dashed' }
+        }
+      ]
+    }]
+  }
+  charts.radar.setOption(option)
+}
+
+const initAnthropometricChart = () => {
+  const chartDom = document.getElementById('anthropometric-chart')
+  if (!chartDom) return
+  if (charts.anthropometric) charts.anthropometric.dispose()
+  charts.anthropometric = echarts.init(chartDom)
+
+  const revertedMediciones = [...mediciones.value].reverse()
+  const dates = revertedMediciones.map(m => {
+    const d = new Date(m.fecha_medicion)
+    return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString()
+  })
+
+  const option = {
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['Peso (kg)', 'Altura (cm)', 'IMC'] },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: { rotate: 30 }
+    },
+    yAxis: [
+      { type: 'value', name: 'Kg/Cm', axisLine: { show: true }},
+      { type: 'value', name: 'IMC', position: 'right', axisLine: { show: true }}
+    ],
+    series: [
+      { name: 'Peso (kg)', type: 'bar', data: revertedMediciones.map(m => m.peso) },
+      { name: 'Altura (cm)', type: 'line', data: revertedMediciones.map(m => m.altura) },
+      { name: 'IMC', type: 'line', yAxisIndex: 1, data: revertedMediciones.map(m => m.indice_de_masa) }
+    ],
+    color: ['#f39c12', 'var(--color-text-main)', '#4CAF50']
+  }
+  charts.anthropometric.setOption(option)
+}
+
+const initCharts = () => {
+  initPerformanceChart()
+  initRadarChart()
+  initAnthropometricChart()
+}
+
+const toDataURL = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.crossOrigin = 'Anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = reject
+    img.src = url
+  })
+}
+
+const printCurrentReport = async () => {
+  try {
+    loading.value = true
+
+    const chartsImages = {}
+
+    if (charts.performance) {
+      chartsImages.performance = charts.performance.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+      })
+    }
+
+    if (charts.radar) {
+      chartsImages.radar = charts.radar.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+      })
+    }
+
+    if (charts.anthropometric) {
+      chartsImages.anthropometric = charts.anthropometric.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+      })
+    }
+
+    let photoBase64 = null
+    if (atleta.value.foto) {
+      try {
+        const url = getFotoUrl(atleta.value.foto)
+        photoBase64 = await toDataURL(url)
+      } catch (e) {
+        console.warn('Could not load profile photo for PDF', e)
+      }
+    }
+
+    const { PdfReportService } = await import('@/utils/pdfReportService')
+
+    PdfReportService.generatePerformanceReport(atleta.value, chartsImages, trends.value, photoBase64)
+
+    ElMessage.success('Generando PDF...')
+  } catch (error) {
+    console.error('Error generando PDF:', error)
+    ElMessage.error('Error al generar el PDF')
+  } finally {
+    loading.value = false
+  }
+}
+
+const printCategoryReports = async () => {
+  if (!selectedCategoriaId.value) return
+
+  loading.value = true
+  try {
+    const categoria = categorias.value.find(c => isSameId(c.categoria_id, selectedCategoriaId.value))
+    const athletes = atletas.value.filter(a => isSameId(a.categoria_id, selectedCategoriaId.value))
+
+    if (athletes.length === 0) {
+      ElMessage.warning('No hay atletas en esta categoría')
+      return
+    }
+
+    const allData = await Promise.all(athletes.map(async (atletaItem) => {
+      const [t, m] = await Promise.all([
+        request({ url: `/tests?atleta_id=${atletaItem.atleta_id}`, method: 'get' }),
+        request({ url: `/mediciones?atleta_id=${atletaItem.atleta_id}`, method: 'get' })
+      ])
+      const latestTest = t && t.length > 0 ? t[0] : {}
+      const latestMed = m && m.length > 0 ? m[0] : {}
+
+      return {
+        cedula: atletaItem.cedula || `ID: ${atletaItem.atleta_id}`,
+        nombre: `${atletaItem.nombre} ${atletaItem.apellido}`,
+        posicion: atletaItem.posicion_de_juego_nombre || 'N/A',
+        peso: latestMed.peso || '-',
+        altura: latestMed.altura || '-',
+        imc: latestMed.indice_de_masa || '-',
+        fuerza: latestTest.test_de_fuerza || '-',
+        velocidad: latestTest.test_velocidad || '-',
+        resistencia: latestTest.test_resistencia || '-',
+        coordinacion: latestTest.test_coordinacion || '-',
+        reaccion: latestTest.test_de_reaccion || '-'
+      }
+    }))
+
+    const { PdfReportService } = await import('@/utils/pdfReportService')
+    PdfReportService.generateCategoryPerformanceReport(allData, categoria?.nombre_categoria || 'Categoria', categoria?.entrenador_nombre || '')
+    ElMessage.success('Generando PDF...')
+  } catch (error) {
+    console.error('Error generando reporte de categoría:', error)
+    ElMessage.error('Error al generar reporte de categoría')
+  } finally {
+    loading.value = false
+  }
+}
+
+useServerDataRefresh(async () => {
+  await Promise.all([loadAtletas(), loadCategorias()])
+  if (selectedAtletaId.value) {
+    await handleAtletaChange(selectedAtletaId.value)
+  }
+}, {
+  isBusy: () => loading.value
+})
+
+onMounted(async () => {
+  await Promise.all([loadAtletas(), loadCategorias()])
+  const queryId = normalizeRouteAtletaId(route.query.atleta_id)
+  if (queryId !== null) {
+    selectedAtletaId.value = queryId
+    handleAtletaChange(selectedAtletaId.value)
+  }
+})
+
+onActivated(async () => {
+  await loadAtletas()
+  searchKey.value++
+  
+  const queryId = normalizeRouteAtletaId(route.query.atleta_id)
+  if (queryId !== null && !isSameId(queryId, selectedAtletaId.value)) {
+    selectedAtletaId.value = queryId
+    await handleAtletaChange(selectedAtletaId.value)
+  } else if (selectedAtletaId.value) {
+    handleAtletaChange(selectedAtletaId.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  Object.values(charts).forEach(chart => {
+    if (chart) chart.dispose()
+  })
+})
 </script>
 
 <style scoped>
 .progress-container {
   padding: 20px;
-  min-height: 100vh;
 }
 
-.page-header {
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(229, 29, 34, 0.2);
-}
-
+/* Local UI Adjustments */
 .header-content h1 {
-  font-size: 1.8rem;
   margin: 0;
-  font-weight: 700;
-}
-
-.subtitle {
-  opacity: 0.9;
-  margin: 5px 0 0;
-}
-
-.control-panel {
-  margin-bottom: 30px;
-  border-radius: 10px;
-  border-bottom: 3px solid #E51D22;
 }
 
 .control-content {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(220px, 300px) auto;
+  align-items: end;
   justify-content: space-between;
   gap: 20px;
-  flex-wrap: wrap;
-}
-
-.control-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-right: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.control-label i {
-  display: none;
 }
 
 .search-section, .filter-section {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+
+.search-section {
+  min-width: 280px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.filter-section {
+  min-width: 220px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.search-section .premium-search-label,
+.filter-section .premium-search-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.actions-section {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.report-action-btn {
+  min-height: 44px;
+  border-radius: 12px;
+  font-weight: 700;
+  padding: 0 16px;
+  display: inline-flex;
   align-items: center;
+  gap: 8px;
+}
+
+.report-action-btn .el-icon {
+  font-size: 1rem;
+}
+
+.filter-control-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-control-row .modern-filter-control {
+  flex: 1;
+}
+
+.quick-clear-btn {
+  min-width: 126px;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid #d4dde9;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px #d6dee8 inset;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.quick-clear-btn:hover {
+  color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px #c5d0dc inset, 0 6px 14px rgba(15, 23, 42, 0.12);
+}
+
+.quick-clear-btn:active {
+  transform: translateY(0);
+}
+
+.quick-clear-icon {
+  font-size: 0.9rem;
 }
 
 .compact-search {
@@ -648,35 +798,82 @@ export default {
 }
 
 /* Modern Input & Select Styles */
-.search-section ::v-deep .el-input__inner,
-.filter-section ::v-deep .el-input__inner {
-  background: #fff !important;
-  border: 2px solid #64748b !important;
-  border-radius: 12px;
-  padding: 12px 16px;
-  height: 46px;
-  font-size: 0.95rem;
+.modern-filter-control :deep(.el-input__wrapper) {
+  min-height: 48px;
+  border-radius: 14px;
+  padding: 0 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+  box-shadow: 0 0 0 1px #d1d9e6 inset, 0 8px 18px rgba(15, 23, 42, 0.08) !important;
+  transition: box-shadow 0.25s ease, transform 0.25s ease, background-color 0.25s ease;
+}
+
+.modern-filter-control :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #9fb3c8 inset, 0 10px 24px rgba(15, 23, 42, 0.12) !important;
+}
+
+.modern-filter-control :deep(.el-input.is-focus .el-input__wrapper) {
+  box-shadow: 0 0 0 2px rgba(30, 41, 59, 0.22), 0 12px 28px rgba(15, 23, 42, 0.16) !important;
+  transform: translateY(-1px);
+}
+
+.modern-filter-control :deep(.el-input__inner) {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.modern-filter-control :deep(.el-input__inner::placeholder) {
+  color: var(--color-text-placeholder);
   font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
-.search-section ::v-deep .el-input__inner:hover,
-.filter-section ::v-deep .el-input__inner:hover {
-  border-color: #E51D22 !important;
+.modern-filter-control :deep(.el-select__caret) {
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), color 0.28s ease;
 }
 
-.search-section ::v-deep .el-input.is-focus .el-input__inner,
-.filter-section ::v-deep .el-input.is-focus .el-input__inner {
-  border-color: #E51D22 !important;
-  box-shadow: 0 0 0 4px rgba(229, 29, 34, 0.12);
+.modern-filter-control :deep(.el-input.is-focus .el-select__caret) {
+  color: var(--color-primary);
 }
 
-.search-section ::v-deep .el-input__inner::placeholder,
-.filter-section ::v-deep .el-input__inner::placeholder {
-  color: #64748b !important;
-  font-weight: 500;
+:deep(.modern-filter-popper.el-select-dropdown) {
+  border: 1px solid #d9e2ec !important;
+  border-radius: 14px !important;
+  padding: 6px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.18) !important;
+  animation: filter-dropdown-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+}
+
+:deep(.modern-filter-popper .el-select-dropdown__item) {
+  min-height: 38px;
+  line-height: 38px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+:deep(.modern-filter-popper .el-select-dropdown__item.hover),
+:deep(.modern-filter-popper .el-select-dropdown__item:hover) {
+  background: #eef4ff;
+  color: #1f3a5f;
+  transform: translateX(2px);
+}
+
+:deep(.modern-filter-popper .el-select-dropdown__item.selected) {
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
+@keyframes filter-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .atleta-option {
@@ -703,10 +900,6 @@ export default {
   font-size: 12px;
 }
 
-.option-tag {
-  margin-left: auto;
-}
-
 .empty-layout {
   padding: 40px 0;
 }
@@ -724,7 +917,7 @@ export default {
 
 .athlete-summary-card {
   margin-bottom: 20px;
-  border-left: 5px solid #E51D22;
+  border-left: 5px solid var(--color-primary);
 }
 
 .summary-content {
@@ -755,7 +948,7 @@ export default {
 .athlete-details h2 {
   margin: 0 0 8px 0;
   font-size: 1.6rem;
-  color: #1a3a5f;
+  color: var(--color-text-main);
 }
 
 .tags {
@@ -776,7 +969,7 @@ export default {
 
 .stat-mini .label {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -784,7 +977,7 @@ export default {
 .stat-mini .value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #E51D22;
+  color: var(--color-primary);
 }
 
 .stat-cards {
@@ -799,19 +992,19 @@ export default {
 
 .trend-card:hover {
   transform: translateY(-5px);
-  border-color: #E51D22;
+  border-color: var(--color-primary);
 }
 
 .trend-label {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   margin-bottom: 5px;
 }
 
 .trend-value {
   font-size: 2rem;
   font-weight: 700;
-  color: #1a3a5f;
+  color: var(--color-text-main);
   margin-bottom: 5px;
 }
 
@@ -835,7 +1028,7 @@ export default {
 
 .chart-card [slot="header"] {
   font-weight: 600;
-  color: #1a3a5f;
+  color: var(--color-text-main);
   font-size: 1.1rem;
 }
 
@@ -846,7 +1039,12 @@ export default {
 /* Tablets y laptops pequeños */
 @media (max-width: 1200px) {
   .control-content {
+    grid-template-columns: minmax(260px, 1fr) minmax(220px, 320px);
     gap: 15px;
+  }
+
+  .actions-section {
+    grid-column: 1 / -1;
   }
 
   .compact-search {
@@ -862,12 +1060,12 @@ export default {
   }
 
   /* Cambiar grid de columnas */
-  ::v-deep .el-col-16 {
+  :deep(.el-col-16) {
     width: 100% !important;
     margin-bottom: 20px;
   }
 
-  ::v-deep .el-col-8 {
+  :deep(.el-col-8) {
     width: 100% !important;
   }
 }
@@ -883,6 +1081,7 @@ export default {
   }
 
   .control-content {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 15px;
@@ -890,10 +1089,10 @@ export default {
 
   .search-section,
   .filter-section {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: stretch;
     width: 100%;
+    min-width: auto;
+    max-width: none;
   }
 
   .compact-search,
@@ -913,6 +1112,17 @@ export default {
     min-width: 140px;
   }
 
+  .quick-clear-btn {
+    min-width: 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+
+  .quick-clear-text {
+    display: none;
+  }
+
   .summary-content {
     flex-wrap: wrap;
     gap: 15px;
@@ -926,14 +1136,14 @@ export default {
   }
 
   /* Trend cards en 2 columnas */
-  ::v-deep .stat-cards .el-col-6 {
+  :deep(.stat-cards .el-col-6) {
     width: 50% !important;
     margin-bottom: 15px;
   }
 
   /* Charts apilados */
-  ::v-deep .el-col-16,
-  ::v-deep .el-col-8 {
+  :deep(.el-col-16),
+  :deep(.el-col-8) {
     width: 100% !important;
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -965,7 +1175,7 @@ export default {
     border-radius: 10px;
   }
 
-  .control-panel ::v-deep .el-card__body {
+  .control-panel :deep(.el-card__body) {
     padding: 12px;
   }
 
@@ -991,7 +1201,7 @@ export default {
     margin-bottom: 15px;
   }
 
-  .athlete-summary-card ::v-deep .el-card__body {
+  .athlete-summary-card :deep(.el-card__body) {
     padding: 12px;
   }
 
@@ -1041,7 +1251,7 @@ export default {
   }
 
   /* Trend cards en 2 columnas */
-  ::v-deep .stat-cards .el-col-6 {
+  :deep(.stat-cards .el-col-6) {
     width: 50% !important;
     padding: 5px !important;
   }
@@ -1063,11 +1273,11 @@ export default {
     border-radius: 10px;
   }
 
-  .chart-card ::v-deep .el-card__header {
+  .chart-card :deep(.el-card__header) {
     padding: 12px 15px;
   }
 
-  .chart-card ::v-deep .el-card__header span {
+  .chart-card :deep(.el-card__header span) {
     font-size: 0.9rem;
   }
 
@@ -1112,14 +1322,25 @@ export default {
     font-size: 0.75rem;
   }
 
-  .control-panel ::v-deep .el-card__body {
+  .control-panel :deep(.el-card__body) {
     padding: 10px;
   }
 
-  .search-section ::v-deep .el-input__inner,
-  .filter-section ::v-deep .el-input__inner {
-    height: 42px;
+  .modern-filter-control :deep(.el-input__wrapper) {
+    min-height: 42px;
+    border-radius: 12px;
+    padding: 0 12px;
+  }
+
+  .modern-filter-control :deep(.el-input__inner) {
     font-size: 0.9rem;
+  }
+
+  .quick-clear-btn {
+    min-width: 38px;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
   }
 
   .athlete-avatar {
@@ -1145,7 +1366,7 @@ export default {
   }
 
   /* Trend cards apiladas */
-  ::v-deep .stat-cards .el-col-6 {
+  :deep(.stat-cards .el-col-6) {
     width: 100% !important;
     margin-bottom: 10px;
   }
@@ -1221,7 +1442,7 @@ export default {
     min-width: 100% !important;
     float: none !important;
     display: block !important;
-    background: white !important;
+    background: var(--color-bg-card) !important;
   }
 
   /* Allow global margin-top to apply or set it explicitly here */
@@ -1308,7 +1529,7 @@ export default {
 
   .el-card__header {
     background-color: #f8f9fa !important;
-    border-bottom: 2px solid #E51D22 !important;
+    border-bottom: 2px solid var(--color-primary) !important;
   }
 
   /* Centrado forzado de gráficas mediante tamaño fijo y margen auto */

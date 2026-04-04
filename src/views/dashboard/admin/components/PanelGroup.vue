@@ -55,18 +55,13 @@
   </el-row>
 </template>
 
-<script>
-import CountTo from 'vue-count-to'
+<script setup>
+import { CountTo } from 'vue3-count-to'
 
-export default {
-  components: {
-    CountTo
-  },
-  methods: {
-    handleSetLineChartData(type) {
-      this.$emit('handleSetLineChartData', type)
-    }
-  }
+const emit = defineEmits(['handleSetLineChartData'])
+
+const handleSetLineChartData = (type) => {
+  emit('handleSetLineChartData', type)
 }
 </script>
 
@@ -84,10 +79,10 @@ export default {
     font-size: 12px;
     position: relative;
     overflow: hidden;
-    color: #666;
-    background: #fff;
-    box-shadow: 4px 4px 40px rgba(0, 0, 0, .05);
-    border-color: rgba(0, 0, 0, .05);
+    color: var(--color-text-main);
+    background: var(--color-bg-card);
+    box-shadow: 0 4px 12px var(--color-shadow);
+    border: 1px solid var(--color-border);
 
     &:hover {
       .card-panel-icon-wrapper {
@@ -148,7 +143,7 @@ export default {
 
       .card-panel-text {
         line-height: 18px;
-        color: rgba(0, 0, 0, 0.45);
+        color: var(--color-text-muted);
         font-size: 16px;
         margin-bottom: 12px;
       }

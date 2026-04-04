@@ -37,7 +37,7 @@ export default {
   props: {
     color: {
       type: String,
-      default: '#1890ff'
+      default: '#ff3b30'
     }
   },
   data() {
@@ -104,7 +104,7 @@ export default {
 <style lang="scss" scoped>
 .editor-slide-upload {
   margin-bottom: 20px;
-  ::v-deep .el-upload--picture-card {
+  :deep(.el-upload--picture-card) {
     width: 100%;
   }
 }

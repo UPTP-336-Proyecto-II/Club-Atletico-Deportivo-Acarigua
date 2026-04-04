@@ -1,167 +1,209 @@
-<template>
+﻿<template>
   <div class="atletas-container">
     <!-- Header -->
-    <div class="page-header">
+    <div class="premium-header">
       <div class="header-content">
-        <div>
-          <h1>
-            <i class="el-icon-user" /> Gestión de Atletas
+        <div class="header-info">
+          <h1>Gesti├│n de Atletas
             <el-tag v-if="!canUserEdit && !isUserMedico" type="info" size="small" style="margin-left: 10px;">
               Solo Lectura
             </el-tag>
             <el-tag v-if="isUserMedico" type="warning" size="small" style="margin-left: 10px;">
-              Acceso Médico
+              Acceso M├®dico
             </el-tag>
           </h1>
-          <p class="subtitle">
-            Club Atlético Deportivo Acarigua
-            <span v-if="atletas.length" class="total-count">(Cantidad: {{ atletas.length }})</span>
-          </p>
+          <p class="subtitle">Club Atl├®tico Deportivo Acarigua</p>
         </div>
-        <el-button v-if="canUserEdit" type="primary" icon="el-icon-plus" @click="openAtletaModal(false)">
-          Agregar Atleta
-        </el-button>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
       <!-- Sidebar con lista de atletas -->
-      <aside class="sidebar">
-        <el-card shadow="hover">
-          <div slot="header" class="sidebar-header">
-            <span><i class="el-icon-user" /> Lista de Atletas</span>
-            <el-popover
-              placement="bottom-end"
-              width="250"
-              trigger="click"
-            >
-              <div class="filter-popover">
-                <h4>Filtros Avanzados</h4>
-                <div class="filter-item">
-                  <label>Ordenar por</label>
-                  <el-select v-model="filterOrder" placeholder="Seleccionar" size="small" style="width: 100%">
-                    <el-option label="Más Recientes" value="recent" />
-                    <el-option label="Más Antiguos" value="oldest" />
-                    <el-option label="Nombre (A-Z)" value="name_asc" />
-                    <el-option label="Nombre (Z-A)" value="name_desc" />
-                  </el-select>
+      <aside class="sidebar premium-sidebar">
+        <el-card v-loading="loadingAtletas" shadow="hover">
+          <div class="sidebar-header">
+            <span class="sidebar-title">
+              <el-icon class="sidebar-title-icon"><Collection /></el-icon>
+              <span>Lista de Atletas</span>
+            </span>
+            <div class="sidebar-actions">
+              <button v-if="canUserEdit" class="mini-add-btn" title="Agregar Atleta" @click="openAtletaModal(false)">
+                <el-icon><Plus /></el-icon>
+              </button>
+              <el-popover placement="bottom-end" width="280" trigger="click" popper-class="athletes-filter-popper">
+                <div class="filter-popover">
+                  <div class="filter-popover-header">
+                    <span class="filter-popover-kicker">Panel r├ípido</span>
+                    <h4>Filtros avanzados</h4>
+                    <p>Refina la lista por orden, categor├¡a o estatus.</p>
+                  </div>
+                  <div class="filter-item">
+                    <label>Ordenar por</label>
+                    <el-select
+                      v-model="filterOrder"
+                      placeholder="Elige el orden"
+                      class="modern-filter-select"
+                      popper-class="athletes-filter-select-dropdown"
+                      style="width: 100%"
+                    >
+                      <el-option label="M├ís Recientes" value="recent" />
+                      <el-option label="M├ís Antiguos" value="oldest" />
+                      <el-option label="Nombre (A-Z)" value="name_asc" />
+                      <el-option label="Nombre (Z-A)" value="name_desc" />
+                    </el-select>
+                  </div>
+                  <div class="filter-item">
+                    <label>Categor├¡a</label>
+                    <el-select
+                      v-model="filterCategoria"
+                      placeholder="Todas las categor├¡as"
+                      clearable
+                      class="modern-filter-select"
+                      popper-class="athletes-filter-select-dropdown"
+                      style="width: 100%"
+                    >
+                      <el-option v-for="cat in categorias" :key="cat.categoria_id" :label="cat.nombre_categoria" :value="cat.categoria_id" />
+                    </el-select>
+                  </div>
+                  <div class="filter-item">
+                    <label>Estatus</label>
+                    <el-select
+                      v-model="filterEstatus"
+                      placeholder="Activos por defecto"
+                      clearable
+                      class="modern-filter-select"
+                      popper-class="athletes-filter-select-dropdown"
+                      style="width: 100%"
+                    >
+                      <el-option label="Activos / Lesionados" value="" />
+                      <el-option label="Activo" value="ACTIVO" />
+                      <el-option label="Inactivo" value="INACTIVO" />
+                      <el-option label="Lesionado" value="LESIONADO" />
+                      <el-option label="Suspendido" value="SUSPENDIDO" />
+                      <el-option label="Ver Todos" value="TODOS" />
+                    </el-select>
+                  </div>
                 </div>
-                <div class="filter-item">
-                  <label>Categoría</label>
-                  <el-select v-model="filterCategoria" placeholder="Todas" clearable size="small" style="width: 100%">
-                    <el-option
-                      v-for="cat in categorias"
-                      :key="cat.categoria_id"
-                      :label="cat.nombre_categoria"
-                      :value="cat.categoria_id"
-                    />
-                  </el-select>
-                </div>
-                <div class="filter-item">
-                  <label>Estatus</label>
-                  <el-select v-model="filterEstatus" placeholder="Predeterminado" clearable size="small" style="width: 100%">
-                    <el-option label="Activos / Lesionados" value="" />
-                    <el-option label="Activo" value="ACTIVO" />
-                    <el-option label="Inactivo" value="INACTIVO" />
-                    <el-option label="Lesionado" value="LESIONADO" />
-                    <el-option label="Suspendido" value="SUSPENDIDO" />
-                    <el-option label="Ver Todos" value="TODOS" />
-                  </el-select>
-                </div>
-                <div class="filter-item">
-                  <label>Buscar por Cédula</label>
-                  <el-select v-model="filterCedula" placeholder="Todos" size="small" style="width: 100%">
-                    <el-option label="Todos los Atletas" value="todos" />
-                    <el-option label="Con Cédula" value="con_cedula" />
-                    <el-option label="Sin Cédula" value="sin_cedula" />
-                  </el-select>
-                </div>
-                <div v-if="filterCedula === 'con_cedula'" class="filter-item">
-                  <label>Número de Cédula</label>
-                  <el-input
-                    v-model="searchCedula"
-                    placeholder="Ej: 123456789"
-                    size="small"
-                    clearable
-                    maxlength="9"
-                    @input="v => searchCedula = v.replace(/\D/g, '')"
-                  />
-                </div>
-              </div>
-              <el-button slot="reference" type="text" icon="el-icon-s-operation" class="filter-btn" />
-            </el-popover>
+                <template #reference>
+                  <button class="filter-toggle-btn" title="Abrir filtros avanzados">
+                    <el-icon><Setting /></el-icon>
+                  </button>
+                </template>
+              </el-popover>
+            </div>
           </div>
           <div class="search-container">
-            <el-input
-              v-model="searchQuery"
-              placeholder="Buscar por nombre..."
-              prefix-icon="el-icon-search"
-              size="small"
-              clearable
-            />
+            <div class="search-intro">
+              <span class="search-intro-badge">B├║squeda r├ípida</span>
+              <p>Encuentra atletas por nombre o filtra por c├®dula en segundos.</p>
+            </div>
+            <div class="search-field">
+              <label class="premium-search-label">Buscar Atleta</label>
+              <el-input v-model="searchQuery" placeholder="Busca por nombre o apellido" clearable class="modern-search-input modern-sidebar-control" />
+            </div>
+            <div class="cedula-filter">
+              <label class="premium-search-label">Filtro de C├®dula</label>
+              <div class="modern-toggle-group">
+                <button class="toggle-btn" :class="{ active: filterCedula === 'todos' }" @click="filterCedula = 'todos'">Todos</button>
+                <button class="toggle-btn" :class="{ active: filterCedula === 'con_cedula' }" @click="filterCedula = 'con_cedula'">Con C├®dula</button>
+                <button class="toggle-btn" :class="{ active: filterCedula === 'sin_cedula' }" @click="filterCedula = 'sin_cedula'">Sin C├®dula</button>
+              </div>
+              <el-input v-if="filterCedula === 'con_cedula'" v-model="searchCedula" placeholder="Escribe la c├®dula sin puntos" clearable maxlength="9" class="modern-cedula-input modern-sidebar-control" @input="v => searchCedula = v.replace(/\D/g, '')" />
+              <p v-if="filterCedula === 'con_cedula'" class="field-caption">Usa solo n├║meros para encontrar coincidencias exactas.</p>
+            </div>
           </div>
           <div class="athlete-list">
-            <div
-              v-for="atleta in atletas"
-              :key="atleta.atleta_id"
-              class="athlete-item"
-              :class="{ active: currentAtletaId === atleta.atleta_id }"
-              @click="selectAtleta(atleta.atleta_id)"
-            >
-              <div class="athlete-photo">
+            <div v-for="atleta in atletas" :key="atleta.atleta_id" class="premium-list-item" :class="{ active: currentAtletaId === atleta.atleta_id }" @click="selectAtleta(atleta.atleta_id)">
+              <div class="item-photo">
                 <img v-if="atleta.foto" :src="getFotoUrl(atleta.foto)" class="avatar-img">
-                <i v-else class="el-icon-user" />
+                <span v-else class="avatar-initials">{{ (atleta.nombre || '?').charAt(0) }}{{ (atleta.apellido || '').charAt(0) }}</span>
               </div>
-              <div class="athlete-info-compact">
-                <div class="athlete-header-compact">
-                  <h3 class="athlete-name-compact">{{ atleta.nombre }} {{ atleta.apellido }}</h3>
-                </div>
-                <div class="athlete-meta-compact">
-                  <span class="athlete-cat-compact" style="margin-right: 10px;">{{ atleta.categoria_nombre || 'Sin categoría' }}</span>
-                  <el-tag :type="getStatusType(atleta.estatus)" size="mini" effect="dark" class="athlete-status-compact">{{ atleta.estatus }}</el-tag>
-                </div>
+              <div class="item-info">
+                <h3>{{ atleta.nombre }} {{ atleta.apellido }}</h3>
+                <p>{{ formatEnum(atleta.posicion_de_juego_nombre) || 'Sin posici├│n' }}</p>
+                <p class="athlete-category">{{ atleta.categoria_nombre || 'Sin categor├¡a' }}</p>
               </div>
+              <span class="athlete-status-dot" :class="'status-' + (atleta.estatus || '').toLowerCase()" :title="atleta.estatus" />
             </div>
-            <div v-if="atletas.length === 0" class="empty-state">
-              <p>No hay atletas registrados</p>
+            <div v-if="atletas.length === 0" class="empty-list">
+              <span class="empty-list-icon">
+                <el-icon><Collection /></el-icon>
+              </span>
+              <p class="empty-list-title">Sin atletas</p>
+              <p class="empty-list-hint">Agrega tu primer atleta con el bot├│n de arriba</p>
             </div>
           </div>
         </el-card>
       </aside>
 
-      <!-- Área de contenido -->
+      <!-- ├ürea de contenido -->
       <main class="content-area">
-        <el-card v-if="!currentAtletaId" shadow="hover">
-          <div class="empty-state">
-            <i class="el-icon-user-solid" style="font-size: 4rem; color: #ddd;" />
+        <div v-if="!currentAtletaId" class="empty-main">
+          <div class="empty-main-content">
+            <span class="empty-main-icon">
+              <el-icon><UserFilled /></el-icon>
+            </span>
             <h3>No hay atleta seleccionado</h3>
             <p>Selecciona un atleta de la lista o agrega uno nuevo.</p>
           </div>
-        </el-card>
+        </div>
 
-        <el-card v-else shadow="hover">
+        <el-card v-else v-loading="loading" shadow="hover" class="detail-card">
           <!-- Encabezado del atleta -->
           <div class="athlete-details-header">
             <div class="athlete-details-photo">
               <img v-if="currentAtleta.foto" :src="getFotoUrl(currentAtleta.foto)" class="avatar-img-large">
-              <i v-else class="el-icon-user" />
+              <span v-else class="avatar-initials-large">{{ (currentAtleta.nombre || '?').charAt(0) }}{{ (currentAtleta.apellido || '').charAt(0) }}</span>
             </div>
             <div class="athlete-details-info">
               <h2>{{ currentAtleta.nombre }} {{ currentAtleta.apellido }}</h2>
-              <div style="display: flex; gap: 15px; margin-top: 5px; align-items: center;">
-                <p style="margin: 0;">Categoría: {{ currentAtleta.categoria_nombre || 'No asignada' }}</p>
-                <p style="margin: 0;">Edad: {{ calculateAge(currentAtleta.fecha_nacimiento) }} años</p>
-                <el-tag :type="getStatusType(currentAtleta.estatus)">{{ currentAtleta.estatus }}</el-tag>
+              <div class="athlete-meta">
+                <div class="athlete-meta-item">
+                  <span class="athlete-meta-icon">
+                    <el-icon><CollectionTag /></el-icon>
+                  </span>
+                  <span class="athlete-meta-copy">
+                    <span class="athlete-meta-label">Categor├¡a</span>
+                    <span class="athlete-meta-value">{{ currentAtleta.categoria_nombre || 'No asignada' }}</span>
+                  </span>
+                </div>
+                <div class="athlete-meta-item">
+                  <span class="athlete-meta-icon">
+                    <el-icon><Calendar /></el-icon>
+                  </span>
+                  <span class="athlete-meta-copy">
+                    <span class="athlete-meta-label">Edad</span>
+                    <span class="athlete-meta-value">{{ calculateAge(currentAtleta.fecha_nacimiento) }} a├▒os</span>
+                  </span>
+                </div>
               </div>
-              <div class="athlete-actions-header" style="margin-top: 15px;">
-                <el-button type="info" size="small" icon="el-icon-data-line" @click="goToProgress">
-                  Análisis de Rendimiento
-                </el-button>
-              </div>
+              <el-tag :type="getStatusType(currentAtleta.estatus)" size="small">{{ currentAtleta.estatus }}</el-tag>
+            </div>
+            <div class="athlete-actions">
+              <button v-if="!isUserMedico" class="action-btn action-btn-info" @click="goToProgress" title="An├ílisis">
+                <el-icon class="action-btn-icon"><DataAnalysis /></el-icon>
+                <span>An├ílisis</span>
+              </button>
+              <button v-if="canUserEdit && !isUserMedico" class="action-btn action-btn-danger" @click="deleteAtleta" title="Eliminar">
+                <el-icon class="action-btn-icon"><Delete /></el-icon>
+                <span>Eliminar</span>
+              </button>
+              <button
+                v-if="canUserEdit || (isUserEntrenador && (activeTab === 'anthropometric' || activeTab === 'performance'))"
+                class="action-btn action-btn-primary"
+                @click="handleEdit"
+                title="Editar"
+              >
+                <el-icon class="action-btn-icon"><Edit /></el-icon>
+                <span>Editar</span>
+              </button>
             </div>
           </div>
 
+          <!-- Tabs -->
+
+          <!-- Tabs -->
           <!-- Tabs -->
           <el-tabs v-model="activeTab" type="border-card">
             <el-tab-pane v-if="isTabVisible('datos-personales')" label="Datos Personales" name="personal">
@@ -188,22 +230,22 @@
                 </div>
                 <div class="form-item">
                   <label>Edad</label>
-                  <p>{{ calculateAge(currentAtleta.fecha_nacimiento) }} años</p>
+                  <p>{{ calculateAge(currentAtleta.fecha_nacimiento) }} a├▒os</p>
                 </div>
                 <div class="form-item">
                   <label>Estatus</label>
                   <el-tag :type="getStatusType(currentAtleta.estatus)">{{ currentAtleta.estatus }}</el-tag>
                 </div>
                 <div class="form-item">
-                  <label>Cédula</label>
+                  <label>C├®dula</label>
                   <p>{{ currentAtleta.cedula || 'No registrada' }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Teléfono</label>
+                  <label>Tel├®fono</label>
                   <p>{{ currentAtleta.telefono || 'No registrado' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Dirección</label>
+                  <label>Direcci├│n</label>
                   <p>
                     {{ [currentAtleta.estado, currentAtleta.municipio, currentAtleta.parroquia, currentAtleta.descripcion_descriptiva].filter(Boolean).join(', ') || 'No registrada' }}
                   </p>
@@ -218,11 +260,11 @@
               </div>
               <div class="form-grid">
                 <div class="form-item">
-                  <label>Posición de Juego</label>
+                  <label>Posici├│n de Juego</label>
                   <p>{{ formatEnum(currentAtleta.posicion_de_juego_nombre) || 'No especificada' }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Categoría</label>
+                  <label>Categor├¡a</label>
                   <p>{{ currentAtleta.categoria_nombre || 'No asignada' }}</p>
                 </div>
                 <div class="form-item">
@@ -236,8 +278,8 @@
               </div>
             </el-tab-pane>
 
-            <!-- Tab 3: Medidas Antropométricas -->
-            <el-tab-pane v-if="isTabVisible('medidas-antropometricas')" label="Medidas Antropométricas" name="anthropometric">
+            <!-- Tab 3: Medidas Antropom├®tricas -->
+            <el-tab-pane v-if="isTabVisible('medidas-antropometricas')" label="Medidas Antropom├®tricas" name="anthropometric">
               <div class="tab-header-actions">
                 <el-button v-if="canUserEdit || isUserEntrenador" type="primary" size="small" icon="el-icon-plus" @click="openAnthropometricModal">
                   Agregar Medidas
@@ -252,14 +294,14 @@
                   size="small"
                 >
                   <el-table-column prop="fecha_medicion" label="Fecha" width="150" align="center">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ formatDateTime(scope.row.fecha_medicion) }}
                     </template>
                   </el-table-column>
                   <el-table-column prop="peso" label="Peso (kg)" width="90" align="center" />
                   <el-table-column prop="altura" label="Altura (cm)" width="95" align="center" />
                   <el-table-column label="IMC" width="90" align="center">
-                    <template slot-scope="{ row }">
+                    <template #default="{ row }">
                       {{ row.indice_de_masa ? Number(row.indice_de_masa).toFixed(1) : '-' }}
                     </template>
                   </el-table-column>
@@ -269,7 +311,7 @@
                   <el-table-column prop="largo_de_pierna" label="L. Pierna" width="95" align="center" />
                   <el-table-column prop="largo_de_torso" label="L. Torso" width="90" align="center" />
                   <el-table-column label="Acciones" width="120" align="center">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-button type="text" size="small" @click="openAnthropometricModal(scope.row)">Editar</el-button>
                       <el-button type="text" size="small" style="color: red" @click="deleteMedida(scope.row.medidas_id)">Eliminar</el-button>
                     </template>
@@ -278,7 +320,7 @@
 
                 <div v-if="!medidas || medidas.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-data-line" />
-                  <p>No hay medidas antropométricas registradas</p>
+                  <p>No hay medidas antropom├®tricas registradas</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -299,17 +341,17 @@
                   size="small"
                 >
                   <el-table-column prop="fecha_test" label="Fecha" width="150" align="center">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ formatDateTime(scope.row.fecha_test) }}
                     </template>
                   </el-table-column>
                   <el-table-column prop="test_de_fuerza" label="Fuerza" />
                   <el-table-column prop="test_resistencia" label="Resistencia" />
                   <el-table-column prop="test_velocidad" label="Velocidad" />
-                  <el-table-column prop="test_coordinacion" label="Coordinación" />
-                  <el-table-column prop="test_de_reaccion" label="Reacción" />
+                  <el-table-column prop="test_coordinacion" label="Coordinaci├│n" />
+                  <el-table-column prop="test_de_reaccion" label="Reacci├│n" />
                   <el-table-column label="Acciones" width="120" align="center">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-button type="text" size="small" @click="openPerformanceModal(scope.row)">Editar</el-button>
                       <el-button type="text" size="small" style="color: red" @click="deletePerformanceTest(scope.row.test_id)">Eliminar</el-button>
                     </template>
@@ -339,19 +381,19 @@
                   <p>{{ tutor.nombre_completo }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Cédula</label>
+                  <label>C├®dula</label>
                   <p>{{ tutor.cedula || 'No registrada' }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Tipo de Relación</label>
+                  <label>Tipo de Relaci├│n</label>
                   <el-tag>{{ tutor.tipo_relacion }}</el-tag>
                 </div>
                 <div class="form-item">
-                  <label>Teléfono</label>
+                  <label>Tel├®fono</label>
                   <p>{{ tutor.telefono || 'No especificado' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Dirección</label>
+                  <label>Direcci├│n</label>
                   <p>
                     {{ [tutor.estado, tutor.municipio, tutor.parroquia, tutor.descripcion_descriptiva].filter(Boolean).join(', ') || 'No registrada' }}
                   </p>
@@ -361,20 +403,20 @@
                 <i class="el-icon-user-solid" />
                 <p>No hay representante asignado</p>
                 <p v-if="!isSelfRepresented" class="hint">Haz clic en "Asignar Representante" para asignar un representante</p>
-                <p v-else class="hint">El atleta se representa a sí mismo. Haz clic en "Editar Representante" si deseas asignar un tercero.</p>
+                <p v-else class="hint">El atleta se representa a s├¡ mismo. Haz clic en "Editar Representante" si deseas asignar un tercero.</p>
               </div>
             </el-tab-pane>
 
-            <!-- Tab: Ficha Médica (Movido) -->
-            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Ficha Médica" name="medical">
+            <!-- Tab: Ficha M├®dica (Movido) -->
+            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Ficha M├®dica" name="medical">
               <div class="tab-header-actions">
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-edit" @click="openMedicalModal">
-                  {{ fichaMedica ? 'Editar Ficha Médica' : 'Agregar Ficha Médica' }}
+                  {{ fichaMedica ? 'Editar Ficha M├®dica' : 'Agregar Ficha M├®dica' }}
                 </el-button>
               </div>
               <div v-if="fichaMedica" class="form-grid">
                 <div class="form-item">
-                  <label>Grupo Sanguíneo</label>
+                  <label>Grupo Sangu├¡neo</label>
                   <p>{{ fichaMedica.grupo_sanguineo || 'No especificado' }}</p>
                 </div>
                 <div class="form-item">
@@ -386,30 +428,30 @@
                   <p>{{ fichaMedica.antecedentes_familiares || 'Ninguno' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Antecedentes Quirúrgicos / Lesiones</label>
+                  <label>Antecedentes Quir├║rgicos / Lesiones</label>
                   <p>{{ fichaMedica.antecedentes_quirurgicos || 'Ninguno' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Condiciones Crónicas</label>
+                  <label>Condiciones Cr├│nicas</label>
                   <p>{{ fichaMedica.condicion_cronica || 'Ninguna' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Medicación Actual</label>
+                  <label>Medicaci├│n Actual</label>
                   <p>{{ fichaMedica.medicacion_actual || 'Ninguna' }}</p>
                 </div>
               </div>
               <div v-else class="empty-tab">
                 <i class="el-icon-document" />
-                <p>No hay ficha médica registrada</p>
-                <p v-if="canUserEdit || isUserMedico" class="hint">Haz clic en "Agregar Ficha Médica" para crear la ficha médica</p>
+                <p>No hay ficha m├®dica registrada</p>
+                <p v-if="canUserEdit || isUserMedico" class="hint">Haz clic en "Agregar Ficha M├®dica" para crear la ficha m├®dica</p>
               </div>
             </el-tab-pane>
 
-            <!-- Tab 6: Atención Médica -->
-            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Atención Médica" name="atencion_medica">
+            <!-- Tab 6: Atenci├│n M├®dica -->
+            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Atenci├│n M├®dica" name="atencion_medica">
               <div class="tab-header-actions">
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-plus" @click="openAtencionModal">
-                  Registrar Atención
+                  Registrar Atenci├│n
                 </el-button>
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-edit" @click="openCarnetModal">
                   {{ carnetDiscapacidad ? 'Editar Carnet Discapacidad' : 'Registrar Carnet Discapacidad' }}
@@ -427,7 +469,7 @@
               </div>
 
               <div class="medical-attention-list">
-                <!-- Tabla aquí -->
+                <!-- Tabla aqu├¡ -->
                 <el-table
                   :data="atencionesMedicas"
                   style="width: 100%"
@@ -435,25 +477,25 @@
                   size="small"
                 >
                   <el-table-column prop="fecha_suceso" label="Fecha" width="100">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ formatDate(scope.row.fecha_suceso) }}
                     </template>
                   </el-table-column>
-                  <el-table-column prop="diagnostico" label="Diagnóstico" />
+                  <el-table-column prop="diagnostico" label="Diagn├│stico" />
                   <el-table-column label="Especialista">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ scope.row.especialista_nombre }} {{ scope.row.especialista_apellido }}
                     </template>
                   </el-table-column>
                   <el-table-column label="Estado Disp." width="120">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-tag :type="getDisponibilidadMedicaType(scope.row.estado_disponibilidad)">
                         {{ getDisponibilidadMedicaLabel(scope.row.estado_disponibilidad) }}
                       </el-tag>
                     </template>
                   </el-table-column>
                   <el-table-column label="Acciones" width="100">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-button type="text" size="small" @click="editAtencion(scope.row)">Editar</el-button>
                       <el-button type="text" size="small" style="color: red" @click="deleteAtencion(scope.row.atencion_id)">Eliminar</el-button>
                     </template>
@@ -462,7 +504,7 @@
 
                 <div v-if="!atencionesMedicas || atencionesMedicas.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-document" />
-                  <p>No hay historial de atenciones médicas</p>
+                  <p>No hay historial de atenciones m├®dicas</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -477,20 +519,20 @@
                   size="small"
                 >
                   <el-table-column prop="fecha_partido" label="Fecha" width="100">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ formatDate(scope.row.fecha_partido) }}
                     </template>
                   </el-table-column>
                   <el-table-column prop="nombre_rival" label="Rival" />
                   <el-table-column label="Resultado" width="120">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       <el-tag :type="getPartidoResultadoType(scope.row.resultado)">
                         {{ getPartidoResultadoLabel(scope.row.resultado) }}
                       </el-tag>
                     </template>
                   </el-table-column>
                   <el-table-column label="Marcador" width="100" align="center">
-                    <template slot-scope="scope">
+                    <template #default="scope">
                       {{ scope.row.goles_anotados }} - {{ scope.row.goles_recibidos }}
                     </template>
                   </el-table-column>
@@ -498,7 +540,7 @@
 
                 <div v-if="!historialPartidos || historialPartidos.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-medal" />
-                  <p>No hay historial de partidos para esta categoría.</p>
+                  <p>No hay historial de partidos para esta categor├¡a.</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -510,10 +552,12 @@
     <!-- Modal Atleta -->
     <el-dialog
       :title="isEditingAtleta ? 'Editar Atleta' : 'Agregar Nuevo Atleta'"
-      :visible.sync="showAtletaModal"
+      v-model="showAtletaModal"
       width="700px"
       :close-on-click-modal="false"
       @closed="resetAtletaStep"
+    
+      class="modern-athlete-dialog"
     >
       <el-steps :active="atletaStep" finish-status="success" align-center style="margin-bottom: 20px;">
         <el-step title="Datos Personales" />
@@ -521,8 +565,8 @@
         <el-step title="Representante" />
       </el-steps>
 
-      <el-form ref="atletaForm" :model="atletaForm" :rules="atletaRules" label-position="top">
-        <!-- PASO 1: Datos Personales y Dirección -->
+      <el-form ref="atletaFormRef" :model="atletaForm" :rules="atletaRules" label-position="top">
+        <!-- PASO 1: Datos Personales y Direcci├│n -->
         <div v-show="atletaStep === 0">
           <div class="photo-upload-container">
             <el-upload
@@ -559,7 +603,7 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Cédula (Opcional)">
+              <el-form-item label="C├®dula (Opcional)">
                 <el-input
                   v-model="atletaForm.cedula"
                   placeholder="Ej: 123456789"
@@ -575,7 +619,7 @@
                   type="date"
                   placeholder="Seleccionar"
                   style="width: 100%"
-                  value-format="yyyy-MM-dd"
+                  value-format="YYYY-MM-DD"
                   :picker-options="datePickerOptions"
                   @change="checkUnderage"
                 />
@@ -593,9 +637,9 @@
             </el-col>
             <el-col :span="12">
               <el-form-item :class="{'is-required': !isUnderage}">
-                <span slot="label">
-                  Teléfono
-                </span>
+                <template #label>
+                  Tel├®fono
+                </template>
                 <el-input
                   v-model="atletaForm.telefono"
                   placeholder="Ej: 04141234567"
@@ -618,7 +662,7 @@
             </el-col>
           </el-row>
 
-          <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección de Habitación</h4>
+          <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Direcci├│n de Habitaci├│n</h4>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="Estado" class="is-required">
@@ -646,7 +690,7 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="24">
-              <el-form-item label="Descripción de la Dirección" class="is-required">
+              <el-form-item label="Descripci├│n de la Direcci├│n" class="is-required">
                 <el-input v-model="atletaForm.direccion.descripcion_descriptiva" placeholder="Calle, casa, edificio, referencias..." type="textarea" :rows="2" />
               </el-form-item>
             </el-col>
@@ -657,7 +701,7 @@
         <div v-show="atletaStep === 1">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Categoría" prop="categoria_id">
+              <el-form-item label="Categor├¡a" prop="categoria_id">
                 <el-select v-model="atletaForm.categoria_id" placeholder="Seleccionar" style="width: 100%">
                   <el-option
                     v-for="cat in categorias"
@@ -673,14 +717,14 @@
                 <el-input
                   :value="getEntrenadorNombre(atletaForm.categoria_id)"
                   disabled
-                  placeholder="Se autocompleta con la categoría"
+                  placeholder="Se autocompleta con la categor├¡a"
                 />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Posición de Juego">
+              <el-form-item label="Posici├│n de Juego">
                 <el-select v-model="atletaForm.posicion_de_juego" placeholder="Seleccionar" style="width: 100%">
                   <el-option label="Sin definir" :value="null" />
                   <el-option
@@ -737,7 +781,7 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Cédula" :class="{'is-required': isUnderage}">
+              <el-form-item label="C├®dula" :class="{'is-required': isUnderage}">
                 <el-input
                   v-model="atletaForm.representante.cedula"
                   placeholder="Ej: 12345678"
@@ -747,7 +791,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="Teléfono" :class="{'is-required': isUnderage}">
+              <el-form-item label="Tel├®fono" :class="{'is-required': isUnderage}">
                 <el-input
                   v-model="atletaForm.representante.telefono"
                   placeholder="Ej: 04141234567"
@@ -759,11 +803,11 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Relación con el atleta" :class="{'is-required': isUnderage}">
+              <el-form-item label="Relaci├│n con el atleta" :class="{'is-required': isUnderage}">
                 <el-select v-model="atletaForm.representante.tipo_relacion" placeholder="Seleccionar" style="width: 100%">
                   <el-option label="Padres" value="padres" />
                   <el-option label="Abuelo/a" value="abuelo/a" />
-                  <el-option label="Tío/a" value="tio/a" />
+                  <el-option label="T├¡o/a" value="tio/a" />
                   <el-option label="Hermano/a" value="hermano/a" />
                   <el-option label="Primo/a" value="primo/a" />
                   <el-option label="Representante Legal" value="representante" />
@@ -774,23 +818,25 @@
         </div>
       </el-form>
 
-      <span slot="footer">
-        <el-button v-if="atletaStep > 0" @click="atletaStep--">Atrás</el-button>
+      <template #footer>
+        <el-button v-if="atletaStep > 0" @click="atletaStep--">Atr├ís</el-button>
         <el-button v-if="atletaStep < 2" type="primary" @click="nextAtletaStep">Siguiente</el-button>
         <el-button v-if="atletaStep === 2" type="success" :loading="loading" @click="saveAtleta">
           Guardar Atleta
         </el-button>
-      </span>
+      </template>
     </el-dialog>
 
     <!-- Modal Editar Datos Personales -->
     <el-dialog
       title="Editar Datos Personales"
-      :visible.sync="showEditPersonalModal"
+      v-model="showEditPersonalModal"
       width="700px"
       :close-on-click-modal="false"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="editPersonalForm" :model="atletaForm" :rules="atletaRules" label-position="top">
+      <el-form ref="editPersonalFormRef" :model="atletaForm" :rules="atletaRules" label-position="top">
         <div class="photo-upload-container">
           <el-upload
             class="avatar-uploader"
@@ -826,7 +872,7 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Cédula (Opcional)">
+            <el-form-item label="C├®dula (Opcional)">
               <el-input
                 v-model="atletaForm.cedula"
                 placeholder="Ej: 123456789"
@@ -842,7 +888,7 @@
                 type="date"
                 placeholder="Seleccionar"
                 style="width: 100%"
-                value-format="yyyy-MM-dd"
+                value-format="YYYY-MM-DD"
                 :picker-options="datePickerOptions"
                 @change="checkUnderage"
               />
@@ -860,9 +906,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item :class="{'is-required': !isUnderage}">
-              <span slot="label">
-                Teléfono
-              </span>
+              <template #label>
+                Tel├®fono
+              </template>
               <el-input
                 v-model="atletaForm.telefono"
                 placeholder="Ej: 04141234567"
@@ -885,7 +931,7 @@
           </el-col>
         </el-row>
 
-        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección de Habitación</h4>
+        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Direcci├│n de Habitaci├│n</h4>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Estado" class="is-required">
@@ -913,29 +959,31 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="Descripción de la Dirección" class="is-required">
+            <el-form-item label="Descripci├│n de la Direcci├│n" class="is-required">
               <el-input v-model="atletaForm.direccion.descripcion_descriptiva" placeholder="Calle, casa, edificio, referencias..." type="textarea" :rows="2" />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showEditPersonalModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveEditPersonal">Guardar Cambios</el-button>
-      </span>
+      </template>
     </el-dialog>
 
     <!-- Modal Editar Datos Deportivos -->
     <el-dialog
       title="Editar Datos Deportivos"
-      :visible.sync="showEditSportsModal"
+      v-model="showEditSportsModal"
       width="600px"
       :close-on-click-modal="false"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="editSportsForm" :model="atletaForm" :rules="atletaRules" label-position="top">
+      <el-form ref="editSportsFormRef" :model="atletaForm" :rules="atletaRules" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Categoría" prop="categoria_id">
+            <el-form-item label="Categor├¡a" prop="categoria_id">
               <el-select v-model="atletaForm.categoria_id" placeholder="Seleccionar" style="width: 100%">
                 <el-option
                   v-for="cat in categorias"
@@ -951,14 +999,14 @@
               <el-input
                 :value="getEntrenadorNombre(atletaForm.categoria_id)"
                 disabled
-                placeholder="Se autocompleta con la categoría"
+                placeholder="Se autocompleta con la categor├¡a"
               />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Posición de Juego">
+            <el-form-item label="Posici├│n de Juego">
               <el-select v-model="atletaForm.posicion_de_juego" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="Sin definir" :value="null" />
                 <el-option
@@ -981,23 +1029,25 @@
           </el-col>
         </el-row>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showEditSportsModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveEditSports">Guardar Cambios</el-button>
-      </span>
+      </template>
     </el-dialog>
 
-    <!-- Modal Ficha Médica -->
+    <!-- Modal Ficha M├®dica -->
     <el-dialog
-      title="Ficha Médica"
-      :visible.sync="showMedicalModal"
+      title="Ficha M├®dica"
+      v-model="showMedicalModal"
       width="600px"
       :close-on-click-modal="false"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="medicalForm" :model="medicalForm" label-position="top">
+      <el-form ref="medicalFormRef" :model="medicalForm" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Grupo Sanguíneo">
+            <el-form-item label="Grupo Sangu├¡neo">
               <el-select v-model="medicalForm.grupo_sanguineo" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="A+" value="A+" />
                 <el-option label="A-" value="A-" />
@@ -1012,37 +1062,39 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="Alergias">
-              <el-input v-model="medicalForm.alergias" placeholder="Ej: Polen, maní" />
+              <el-input v-model="medicalForm.alergias" placeholder="Ej: Polen, man├¡" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="Antecedentes Familiares">
-          <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes médicos en la familia" />
+          <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes m├®dicos en la familia" />
         </el-form-item>
-        <el-form-item label="Antecedentes Quirúrgicos / Lesiones">
+        <el-form-item label="Antecedentes Quir├║rgicos / Lesiones">
           <el-input v-model="medicalForm.antecedentes_quirurgicos" type="textarea" :rows="2" placeholder="Operaciones o lesiones previas" />
         </el-form-item>
-        <el-form-item label="Condiciones Crónicas">
+        <el-form-item label="Condiciones Cr├│nicas">
           <el-input v-model="medicalForm.condicion_cronica" type="textarea" :rows="2" placeholder="Asma, diabetes, etc" />
         </el-form-item>
-        <el-form-item label="Medicación Actual">
+        <el-form-item label="Medicaci├│n Actual">
           <el-input v-model="medicalForm.medicacion_actual" type="textarea" :rows="2" placeholder="Medicamentos que usa actualmente" />
         </el-form-item>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showMedicalModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveMedical">Guardar</el-button>
-      </span>
+      </template>
     </el-dialog>
 
-    <!-- Modal Medidas Antropométricas -->
+    <!-- Modal Medidas Antropom├®tricas -->
     <el-dialog
-      :title="editingAnthropometricId ? 'Editar Medidas Antropométricas' : 'Agregar Medidas Antropométricas'"
-      :visible.sync="showAnthropometricModal"
+      :title="editingAnthropometricId ? 'Editar Medidas Antropom├®tricas' : 'Agregar Medidas Antropom├®tricas'"
+      v-model="showAnthropometricModal"
       width="600px"
       :close-on-click-modal="false"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="anthropometricForm" :model="anthropometricForm" label-position="top">
+      <el-form ref="anthropometricFormRef" :model="anthropometricForm" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Peso (kg)">
@@ -1086,7 +1138,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Fecha y Hora de Medición">
+        <el-form-item label="Fecha y Hora de Medici├│n">
           <el-date-picker
             v-model="anthropometricForm.fecha_medicion"
             type="datetime"
@@ -1096,20 +1148,22 @@
           />
         </el-form-item>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showAnthropometricModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveAnthropometric">Guardar</el-button>
-      </span>
+      </template>
     </el-dialog>
 
     <!-- Modal Tests de Rendimiento -->
     <el-dialog
       :title="editingPerformanceId ? 'Editar Test de Rendimiento' : 'Agregar Test de Rendimiento'"
-      :visible.sync="showPerformanceModal"
+      v-model="showPerformanceModal"
       width="600px"
       :close-on-click-modal="false"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="performanceForm" :model="performanceForm" label-position="top">
+      <el-form ref="performanceFormRef" :model="performanceForm" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Test de Fuerza">
@@ -1129,14 +1183,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Test de Coordinación">
+            <el-form-item label="Test de Coordinaci├│n">
               <el-input-number v-model="performanceForm.test_coordinacion" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Test de Reacción">
+            <el-form-item label="Test de Reacci├│n">
               <el-input-number v-model="performanceForm.test_de_reaccion" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
@@ -1153,25 +1207,27 @@
           </el-col>
         </el-row>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showPerformanceModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="savePerformance">Guardar</el-button>
-      </span>
+      </template>
     </el-dialog>
 
     <!-- Modal Representante -->
     <el-dialog
       :title="isEditingTutor ? 'Editar Representante' : 'Asignar Representante'"
-      :visible.sync="showTutorModal"
+      v-model="showTutorModal"
       width="600px"
       :close-on-click-modal="false"
       @closed="resetTutorForm"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="tutorForm" :model="tutorForm" :rules="tutorRules" label-position="top">
+      <el-form ref="tutorFormRef" :model="tutorForm" :rules="tutorRules" label-position="top">
         <el-form-item label="Nombre del Representante" prop="nombre_completo">
           <el-input v-model="tutorForm.nombre_completo" placeholder="Nombre completo del representante" />
         </el-form-item>
-        <el-form-item label="Cédula" prop="cedula">
+        <el-form-item label="C├®dula" prop="cedula">
           <el-input
             v-model="tutorForm.cedula"
             placeholder="Ej: 12345678"
@@ -1181,7 +1237,7 @@
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Teléfono" prop="telefono">
+            <el-form-item label="Tel├®fono" prop="telefono">
               <el-input
                 v-model="tutorForm.telefono"
                 placeholder="Ej: 04141234567"
@@ -1191,11 +1247,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Tipo de Relación" prop="tipo_relacion">
+            <el-form-item label="Tipo de Relaci├│n" prop="tipo_relacion">
               <el-select v-model="tutorForm.tipo_relacion" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="Padres" value="padres" />
                 <el-option label="Abuelo/a" value="abuelo/a" />
-                <el-option label="Tío/a" value="tio/a" />
+                <el-option label="T├¡o/a" value="tio/a" />
                 <el-option label="Hermano/a" value="hermano/a" />
                 <el-option label="Primo/a" value="primo/a" />
                 <el-option label="Representante Legal" value="representante" />
@@ -1204,7 +1260,7 @@
           </el-col>
         </el-row>
 
-        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección del Representante</h4>
+        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Direcci├│n del Representante</h4>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Estado" prop="direccion.estado">
@@ -1230,32 +1286,34 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Dirección Detallada" prop="direccion.descripcion_descriptiva" class="is-required">
+        <el-form-item label="Direcci├│n Detallada" prop="direccion.descripcion_descriptiva" class="is-required">
           <el-input v-model="tutorForm.direccion.descripcion_descriptiva" type="textarea" :rows="2" placeholder="Calle, casa, edificio..." />
         </el-form-item>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showTutorModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveTutor">
           {{ isEditingTutor ? 'Actualizar' : 'Asignar' }} Representante
         </el-button>
-      </span>
+      </template>
     </el-dialog>
 
-    <!-- Modal Atención Médica -->
+    <!-- Modal Atenci├│n M├®dica -->
     <el-dialog
-      :title="isEditingAtencion ? 'Editar Atención Médica' : 'Registrar Atención Médica'"
-      :visible.sync="showAtencionModal"
+      :title="isEditingAtencion ? 'Editar Atenci├│n M├®dica' : 'Registrar Atenci├│n M├®dica'"
+      v-model="showAtencionModal"
       width="600px"
       :close-on-click-modal="false"
       @closed="resetAtencionForm"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="atencionForm" :model="atencionForm" label-position="top">
+      <el-form ref="atencionFormRef" :model="atencionForm" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Tipo de Registro" required>
               <el-select v-model="atencionForm.tipo_registro" placeholder="Seleccionar" style="width: 100%">
-                <el-option label="Lesión" :value="1" />
+                <el-option label="Lesi├│n" :value="1" />
                 <el-option label="Enfermedad" :value="2" />
                 <el-option label="Control" :value="3" />
               </el-select>
@@ -1268,7 +1326,7 @@
                 type="date"
                 placeholder="Seleccionar"
                 style="width: 100%"
-                value-format="yyyy-MM-dd"
+                value-format="YYYY-MM-DD"
               />
             </el-form-item>
           </el-col>
@@ -1283,10 +1341,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="Descripción" required>
+        <el-form-item label="Descripci├│n" required>
           <el-input v-model="atencionForm.descripcion" type="textarea" :rows="2" placeholder="Describa el suceso..." />
         </el-form-item>
-        <el-form-item label="Diagnóstico">
+        <el-form-item label="Diagn├│stico">
           <el-input v-model="atencionForm.diagnostico" placeholder="Ej: Esguince tobillo derecho" />
         </el-form-item>
         <el-form-item label="Tratamiento Indicado">
@@ -1300,7 +1358,7 @@
                 type="date"
                 placeholder="Seleccionar"
                 style="width: 100%"
-                value-format="yyyy-MM-dd"
+                value-format="YYYY-MM-DD"
               />
             </el-form-item>
           </el-col>
@@ -1311,12 +1369,12 @@
                 type="date"
                 placeholder="Seleccionar"
                 style="width: 100%"
-                value-format="yyyy-MM-dd"
+                value-format="YYYY-MM-DD"
               />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Disponibilidad Médica">
+        <el-form-item label="Disponibilidad M├®dica">
           <el-select v-model="atencionForm.estado_disponibilidad" placeholder="Seleccionar" style="width: 100%">
             <el-option label="No Apto" :value="0" />
             <el-option label="Trabajo Diferenciado" :value="1" />
@@ -1324,21 +1382,23 @@
           </el-select>
         </el-form-item>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showAtencionModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveAtencion">Guardar</el-button>
-      </span>
+      </template>
     </el-dialog>
 
     <!-- Modal Carnet Discapacidad -->
     <el-dialog
       :title="carnetDiscapacidad ? 'Editar Carnet Discapacidad' : 'Registrar Carnet Discapacidad'"
-      :visible.sync="showCarnetModal"
+      v-model="showCarnetModal"
       width="500px"
       :close-on-click-modal="false"
       @closed="resetCarnetForm"
+    
+      class="modern-athlete-dialog"
     >
-      <el-form ref="carnetForm" :model="carnetForm" label-position="top">
+      <el-form ref="carnetFormRef" :model="carnetForm" label-position="top">
         <el-form-item label="Tipo de Discapacidad" required>
           <el-select v-model="carnetForm.tipo_discapacidad_id" placeholder="Seleccionar" style="width: 100%">
             <el-option
@@ -1365,1657 +1425,606 @@
                 type="date"
                 placeholder="Seleccionar"
                 style="width: 100%"
-                value-format="yyyy-MM-dd"
+                value-format="YYYY-MM-DD"
               />
             </el-form-item>
           </el-col>
         </el-row>
       </el-form>
-      <span slot="footer">
+      <template #footer>
         <el-button @click="showCarnetModal = false">Cancelar</el-button>
         <el-button type="primary" :loading="loading" @click="saveCarnet">Guardar</el-button>
-      </span>
+      </template>
     </el-dialog>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { canEdit, isMedico, isEntrenador, getVisibleAtletasTabs } from '@/utils/permission'
-import { mapGetters } from 'vuex'
 import { getPosiciones } from '@/api/posiciones'
-
-export default {
-  name: 'Atletas',
-  data() {
-    return {
-      atletas: [],
-      categorias: [],
-      tutores: [],
-      posiciones: [],
-      currentAtletaId: null,
-      currentAtleta: {},
-      fichaMedica: null,
-      medidas: [],
-      tests: [],
-      tutor: null,
-      atencionesMedicas: [],
-      carnetDiscapacidad: null,
-      historialPartidos: [],
-      activeTab: 'personal',
-      loading: false,
-      loadingAtletas: false,
-      backendUrl: 'http://localhost:3000',
-
-      // Formularios
-      atletaStep: 0,
-
-      showAtletaModal: false,
-      showEditPersonalModal: false,
-      showEditSportsModal: false,
-      showMedicalModal: false,
-      showAnthropometricModal: false,
-      editingAnthropometricId: null,
-      showPerformanceModal: false,
-      editingPerformanceId: null,
-      showTutorModal: false,
-      showAtencionModal: false,
-      showCarnetModal: false,
-
-      // Estados de edición
-      isEditingAtleta: false,
-      isEditingTutor: false,
-      isEditingAtencion: false,
-
-      // Filtros y búsqueda
-      searchQuery: '',
-      searchCedula: '',
-      filterCedula: 'todos', // 'todos', 'con_cedula', 'sin_cedula'
-      filterSinCedula: false,
-      filterCategoria: '',
-      filterEstatus: '', // "" significa por defecto (Activos/Lesionados)
-      filterOrder: 'recent',
-      searchTimeout: null,
-      searchCedulaTimeout: null,
-
-      // Listas para dirección dinámica
-      estadosList: [],
-      municipiosListAtleta: [],
-      parroquiasListAtleta: [],
-      municipiosListTutor: [],
-      parroquiasListTutor: [],
-
-      // Formularios
-      atletaForm: {
-        nombre: '',
-        apellido: '',
-        cedula: '',
-        fecha_nacimiento: '',
-        sexo: 'M',
-        posicion_de_juego: '',
-        categoria_id: '',
-        tutor_id: null,
-        telefono: '',
-        direccion: {
-          estado: '',
-          municipio: '',
-          parroquia: '',
-          descripcion_descriptiva: ''
-        },
-        representante: {
-          nombre: '',
-          apellido: '',
-          cedula: '',
-          telefono: '',
-          tipo_relacion: ''
-        },
-        estatus: 'ACTIVO',
-        foto: null,
-        pierna_dominante: 'Derecha'
-      },
-      medicalForm: {
-        grupo_sanguineo: '',
-        alergias: '',
-        antecedentes_familiares: '',
-        antecedentes_quirurgicos: '',
-        condicion_cronica: '',
-        medicacion_actual: ''
-      },
-      anthropometricForm: {
-        peso: null,
-        altura: null,
-        porcentaje_grasa: null,
-        porcentaje_musculatura: null,
-        envergadura: null,
-        largo_de_pierna: null,
-        largo_de_torso: null,
-        fecha_medicion: ''
-      },
-      performanceForm: {
-        test_de_fuerza: null,
-        test_resistencia: null,
-        test_velocidad: null,
-        test_coordinacion: null,
-        test_de_reaccion: null,
-        fecha_test: ''
-      },
-      tutorForm: {
-        nombre_completo: '',
-        cedula: '',
-        telefono: '',
-        direccion: {
-          estado: '',
-          municipio: '',
-          parroquia: '',
-          descripcion_descriptiva: ''
-        },
-        tipo_relacion: ''
-      },
-      atencionForm: {
-        tipo_registro: 1,
-        descripcion: '',
-        diagnostico: '',
-        fecha_suceso: '',
-        fecha_alta_estimada: '',
-        fecha_alta_real: '',
-        tratamiento_indicado: '',
-        especialista_id: null,
-        estado_disponibilidad: 0
-      },
-      carnetForm: {
-        tipo_discapacidad_id: null,
-        nro_carnet: '',
-        porcentaje_discapacidad: null,
-        fecha_registro: ''
-      },
-      tiposDiscapacidadList: [],
-      medicosList: [],
-
-      // Reglas de validación
-      atletaRules: {
-        nombre: [
-          { required: true, message: 'El nombre es requerido', trigger: 'blur' },
-          { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
-        ],
-        apellido: [
-          { required: true, message: 'El apellido es requerido', trigger: 'blur' },
-          { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
-        ],
-        fecha_nacimiento: [{ required: true, message: 'La fecha de nacimiento es requerida', trigger: 'change' }],
-        sexo: [{ required: true, message: 'El sexo es requerido', trigger: 'change' }],
-        categoria_id: [{ required: true, message: 'La categoría es requerida', trigger: 'change' }]
-      },
-      tutorRules: {
-        nombre_completo: [
-          { required: true, message: 'El nombre es requerido', trigger: 'blur' },
-          { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
-        ],
-        cedula: [
-          { required: true, message: 'La cédula es requerida', trigger: 'blur' },
-          { min: 7, message: 'La cédula debe tener al menos 7 caracteres', trigger: 'blur' }
-        ],
-        telefono: [
-          { required: true, message: 'El teléfono es requerido', trigger: 'blur' },
-          { pattern: /^[0-9]{11}$/, message: 'El teléfono debe tener 11 dígitos numéricos', trigger: 'blur' }
-        ],
-        tipo_relacion: [{ required: true, message: 'El tipo de relación es requerido', trigger: 'change' }],
-        'direccion.pais': [{ required: true, message: 'El país es requerido', trigger: 'change' }],
-        'direccion.estado': [{ required: true, message: 'El estado es requerido', trigger: 'change' }],
-        'direccion.municipio': [{ required: true, message: 'El municipio es requerido', trigger: 'blur' }],
-        'direccion.parroquia': [{ required: true, message: 'La parroquia es requerida', trigger: 'blur' }],
-        'direccion.descripcion_descriptiva': [{ required: true, message: 'La dirección detallada es requerida', trigger: 'blur' }]
-      }
-    }
-  },
-  computed: {
-    ...mapGetters(['roles']),
-
-    // Verificar si el usuario puede editar
-    canUserEdit() {
-      return canEdit()
-    },
-
-    isUserMedico() {
-      return isMedico()
-    },
-
-    // Verificar si el usuario es entrenador
-    isUserEntrenador() {
-      return isEntrenador()
-    },
-
-    // Obtener pestañas visibles según el rol
-    visibleTabs() {
-      return getVisibleAtletasTabs()
-    },
-
-    // Verificar si una pestaña específica es visible
-    isTabVisible() {
-      return (tabName) => {
-        return this.visibleTabs.includes(tabName)
-      }
-    },
-
-    isUnderage() {
-      if (!this.atletaForm.fecha_nacimiento) return false
-      const birthDate = new Date(this.atletaForm.fecha_nacimiento)
-      const today = new Date()
-      let age = today.getFullYear() - birthDate.getFullYear()
-      const m = today.getMonth() - birthDate.getMonth()
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--
-      }
-      return age < 18
-    },
-    isSelfRepresented() {
-      if (!this.tutor || !this.currentAtleta) return false
-
-      const isAdult = !this.isUnderage
-      if (!isAdult) return false
-
-      // Check if cedulas match explicitly (and are not S/N)
-      if (this.tutor.cedula && this.tutor.cedula !== 'S/N' && this.tutor.cedula === this.currentAtleta.cedula) {
-        return true
-      }
-
-      // If cedulas are S/N or empty, check if names match
-      const tutorName = (this.tutor.nombre_completo || '').toLowerCase().trim()
-      const atletaName = `${this.currentAtleta.nombre || ''} ${this.currentAtleta.apellido || ''}`.toLowerCase().trim()
-
-      return this.tutor.tipo_relacion === 'representante' && tutorName === atletaName
-    },
-    datePickerOptions() {
-      return {
-        disabledDate(time) {
-          // No permitir fechas futuras ni menores a 3 años
-          const today = new Date()
-          const maxDate = new Date()
-          maxDate.setFullYear(today.getFullYear() - 3)
-          return time.getTime() > maxDate.getTime()
-        }
-      }
-    }
-  },
-  watch: {
-    searchQuery() {
-      if (this.searchTimeout) clearTimeout(this.searchTimeout)
-      this.searchTimeout = setTimeout(() => {
-        this.loadAtletas()
-      }, 500)
-    },
-    searchCedula() {
-      if (this.searchCedulaTimeout) clearTimeout(this.searchCedulaTimeout)
-      this.searchCedulaTimeout = setTimeout(() => {
-        this.loadAtletas()
-      }, 500)
-    },
-    filterSinCedula() {
-      this.loadAtletas()
-    },
-    filterCedula(newVal) {
-      // Resetear el campo de búsqueda por cédula cuando cambia el tipo de filtro
-      if (newVal !== 'con_cedula') {
-        this.searchCedula = ''
-      }
-      this.loadAtletas()
-    },
-    filterCategoria() {
-      this.loadAtletas()
-    },
-    filterEstatus() {
-      this.loadAtletas()
-    },
-    filterOrder() {
-      this.loadAtletas()
-    },
-    filterOrden() {
-      this.loadAtletas()
-    },
-    currentAtletaId: {
-      immediate: false,
-      handler(newId) {
-        if (newId && this.isUserMedico) {
-          this.activeTab = 'atencion_medica'
-        }
-      }
-    }
-  },
-  created() {
-    this.loadData()
-  },
-  methods: {
-    async loadData() {
-      await this.loadCategorias()
-      await Promise.all([
-        this.loadAtletas(),
-        this.loadTutores(),
-        this.loadPosiciones(),
-        this.fetchEstados(),
-        this.loadMedicos(),
-        this.loadTiposDiscapacidad()
-      ])
-    },
-
-    async loadMedicos() {
-      try {
-        const response = await request({ url: '/plantel?rol=medico', method: 'get' })
-        this.medicosList = Array.isArray(response) ? response : []
-      } catch (error) {
-        console.error('Error cargando médicos para el listado:', error)
-      }
-    },
-
-    async loadTiposDiscapacidad() {
-      try {
-        const response = await request({ url: '/carnet-discapacidad/tipos', method: 'get' })
-        this.tiposDiscapacidadList = Array.isArray(response) ? response : []
-      } catch (error) {
-        console.error('Error cargando tipos de discapacidad:', error)
-      }
-    },
-
-    async loadAtletas() {
-      this.loadingAtletas = true // Asumiendo que agregaremos un pequeño spinner si es necesario
-      try {
-        const params = {}
-        if (this.searchQuery) params.search = this.searchQuery
-
-        // Lógica de filtro por cédula
-        if (this.filterCedula === 'con_cedula') {
-          if (this.searchCedula) params.cedula = this.searchCedula
-          params.con_cedula = 'true'
-        } else if (this.filterCedula === 'sin_cedula') {
-          params.sin_cedula = 'true'
-        }
-        // Si filterCedula === 'todos', no se añaden filtros de cédula
-
-        if (this.filterCategoria) params.categoria_id = this.filterCategoria
-        if (this.filterEstatus) params.estatus = this.filterEstatus
-        if (this.filterOrder) params.order = this.filterOrder
-        if (this.filterOrden) params.orderBy = this.filterOrden
-
-        const response = await request({
-          url: '/atletas',
-          method: 'get',
-          params
-        })
-        this.atletas = Array.isArray(response) ? response : []
-      } catch (error) {
-        console.error('Error cargando atletas:', error)
-        this.$message.error('Error al cargar atletas')
-      } finally {
-        this.loadingAtletas = false
-      }
-    },
-
-    async loadCategorias() {
-      try {
-        const response = await request({ url: '/categoria', method: 'get' })
-        this.categorias = Array.isArray(response) ? response : []
-      } catch (error) {
-        console.error('Error cargando categorías:', error)
-      }
-    },
-
-    async loadTutores() {
-      try {
-        const response = await request({ url: '/tutor', method: 'get' })
-        this.tutores = Array.isArray(response) ? response : []
-      } catch (error) {
-        console.error('Error cargando tutores:', error)
-      }
-    },
-
-    async loadPosiciones() {
-      try {
-        const response = await getPosiciones()
-        this.posiciones = Array.isArray(response) ? response : []
-      } catch (error) {
-        console.error('Error cargando posiciones:', error)
-      }
-    },
-
-    async fetchEstados() {
-      try {
-        const res = await request({ url: '/ubicacion/estados', method: 'get' })
-        this.estadosList = Array.isArray(res) ? res : []
-      } catch (error) {
-        console.error('Error cargando estados:', error)
-      }
-    },
-    async fetchMunicipiosAtleta(estadoName) {
-      if (!estadoName) {
-        this.municipiosListAtleta = []
-        return
-      }
-      const estado = this.estadosList.find(e => e.nombre === estadoName)
-      if (!estado) return
-      try {
-        const res = await request({ url: `/ubicacion/estados/${estado.id}/municipios`, method: 'get' })
-        this.municipiosListAtleta = Array.isArray(res) ? res : []
-      } catch (error) {
-        console.error('Error cargando municipios:', error)
-      }
-    },
-    async fetchParroquiasAtleta(municipioName) {
-      if (!municipioName) {
-        this.parroquiasListAtleta = []
-        return
-      }
-      const municipio = this.municipiosListAtleta.find(m => m.nombre === municipioName)
-      if (!municipio) return
-      try {
-        const res = await request({ url: `/ubicacion/municipios/${municipio.id}/parroquias`, method: 'get' })
-        this.parroquiasListAtleta = Array.isArray(res) ? res : []
-      } catch (error) {
-        console.error('Error cargando parroquias:', error)
-      }
-    },
-    async fetchMunicipiosTutor(estadoName) {
-      if (!estadoName) {
-        this.municipiosListTutor = []
-        return
-      }
-      const estado = this.estadosList.find(e => e.nombre === estadoName)
-      if (!estado) return
-      try {
-        const res = await request({ url: `/ubicacion/estados/${estado.id}/municipios`, method: 'get' })
-        this.municipiosListTutor = Array.isArray(res) ? res : []
-      } catch (error) {
-        console.error('Error cargando municipios:', error)
-      }
-    },
-    async fetchParroquiasTutor(municipioName) {
-      if (!municipioName) {
-        this.parroquiasListTutor = []
-        return
-      }
-      const municipio = this.municipiosListTutor.find(m => m.nombre === municipioName)
-      if (!municipio) return
-      try {
-        const res = await request({ url: `/ubicacion/municipios/${municipio.id}/parroquias`, method: 'get' })
-        this.parroquiasListTutor = Array.isArray(res) ? res : []
-      } catch (error) {
-        console.error('Error cargando parroquias:', error)
-      }
-    },
-    handleEstadoChangeAtleta(val) {
-      this.atletaForm.direccion.municipio = ''
-      this.atletaForm.direccion.parroquia = ''
-      this.municipiosListAtleta = []
-      this.parroquiasListAtleta = []
-      this.fetchMunicipiosAtleta(val)
-    },
-    handleMunicipioChangeAtleta(val) {
-      this.atletaForm.direccion.parroquia = ''
-      this.parroquiasListAtleta = []
-      this.fetchParroquiasAtleta(val)
-    },
-    handleEstadoChangeTutor(val) {
-      this.tutorForm.direccion.municipio = ''
-      this.tutorForm.direccion.parroquia = ''
-      this.municipiosListTutor = []
-      this.parroquiasListTutor = []
-      this.fetchMunicipiosTutor(val)
-    },
-    handleMunicipioChangeTutor(val) {
-      this.tutorForm.direccion.parroquia = ''
-      this.parroquiasListTutor = []
-      this.fetchParroquiasTutor(val)
-    },
-
-    async selectAtleta(id, keepTab = false) {
-      this.currentAtletaId = id
-      this.currentAtleta = this.atletas.find(a => a.atleta_id === id) || {}
-
-      if (!keepTab) {
-        // Si es médico, ir a pestaña médica; si no, a personal
-        this.activeTab = this.isUserMedico ? 'atencion_medica' : 'personal'
-        this.fichaMedica = null
-        this.medidas = []
-        this.tests = []
-        this.tutor = null
-        this.atencionesMedicas = []
-        this.carnetDiscapacidad = null
-        this.historialPartidos = []
-      }
-
-      await Promise.all([
-        this.loadAtencionesMedicas(id),
-        this.loadCarnetDiscapacidad(id),
-        this.loadHistorialPartidos(this.currentAtleta.categoria_id)
-      ])
-      this.loadFichaMedica(id)
-      this.loadMedidas(id)
-      this.loadTests(id)
-      this.loadTutor(this.currentAtleta.representante_id)
-    },
-
-    async loadAtencionesMedicas(atleta_id) {
-      try {
-        const response = await request({ url: `/atencion-medica/atleta/${atleta_id}`, method: 'get' })
-        this.atencionesMedicas = Array.isArray(response) ? response : []
-      } catch (error) {
-        this.atencionesMedicas = []
-      }
-    },
-
-    async loadCarnetDiscapacidad(atleta_id) {
-      try {
-        const response = await request({ url: `/carnet-discapacidad/atleta/${atleta_id}`, method: 'get' })
-        this.carnetDiscapacidad = response || null
-      } catch (error) {
-        this.carnetDiscapacidad = null
-      }
-    },
-
-    async loadHistorialPartidos(categoria_id) {
-      if (!categoria_id) {
-        this.historialPartidos = []
-        return
-      }
-      try {
-        const response = await request({ url: `/historial-partidos/categoria/${categoria_id}`, method: 'get' })
-        this.historialPartidos = Array.isArray(response) ? response : []
-      } catch (error) {
-        this.historialPartidos = []
-      }
-    },
-
-    async loadFichaMedica(atleta_id) {
-      try {
-        const response = await request({ url: `/ficha-medica?atleta_id=${atleta_id}`, method: 'get' })
-        this.fichaMedica = Array.isArray(response) && response.length > 0 ? response[0] : null
-      } catch (error) {
-        this.fichaMedica = null
-      }
-    },
-
-    async loadMedidas(atleta_id) {
-      try {
-        const response = await request({ url: `/mediciones?atleta_id=${atleta_id}`, method: 'get' })
-        this.medidas = Array.isArray(response) ? response : []
-      } catch (error) {
-        this.medidas = []
-      }
-    },
-
-    async loadTests(atleta_id) {
-      try {
-        const response = await request({ url: `/tests?atleta_id=${atleta_id}`, method: 'get' })
-        this.tests = Array.isArray(response) ? response : []
-      } catch (error) {
-        this.tests = []
-      }
-    },
-
-    async loadTutor(tutor_id) {
-      if (!tutor_id) {
-        this.tutor = null
-        return
-      }
-      try {
-        const response = await request({ url: `/tutor/${tutor_id}`, method: 'get' })
-        this.tutor = response
-      } catch (error) {
-        this.tutor = null
-      }
-    },
-
-    handleEdit() {
-      switch (this.activeTab) {
-        case 'personal':
-          this.openAtletaModal(true)
-          break
-        case 'medical':
-          this.openMedicalModal()
-          break
-        case 'anthropometric':
-          this.openAnthropometricModal()
-          break
-        case 'performance':
-          this.openPerformanceModal()
-          break
-        case 'tutor':
-          this.openTutorModal()
-          break
-      }
-    },
-
-    openAtletaModal(editing) {
-      this.isEditingAtleta = editing
-      this.atletaStep = 0
-      if (editing && this.currentAtleta) {
-        this.atletaForm = {
-          nombre: this.currentAtleta.nombre,
-          apellido: this.currentAtleta.apellido,
-          cedula: this.currentAtleta.cedula,
-          fecha_nacimiento: this.currentAtleta.fecha_nacimiento,
-          sexo: this.currentAtleta.sexo || 'M',
-          posicion_de_juego: this.currentAtleta.posicion_de_juego || '',
-          categoria_id: this.currentAtleta.categoria_id,
-          representante_id: this.currentAtleta.representante_id || null,
-          telefono: this.currentAtleta.telefono || '',
-          direccion: {
-            estado: this.currentAtleta.estado || '',
-            municipio: this.currentAtleta.municipio || '',
-            parroquia: this.currentAtleta.parroquia || '',
-            descripcion_descriptiva: this.currentAtleta.descripcion_descriptiva || ''
-          },
-          representante: {
-            nombre: '',
-            apellido: '',
-            cedula: '',
-            telefono: '',
-            tipo_relacion: ''
-          },
-          estatus: this.currentAtleta.estatus || 'ACTIVO',
-          foto: this.currentAtleta.foto || '',
-          pierna_dominante: this.currentAtleta.pierna_dominante || 'Derecha'
-        }
-
-        // Cargar combos dependientes si es edición
-        if (this.atletaForm.direccion.estado) {
-          this.fetchMunicipiosAtleta(this.atletaForm.direccion.estado).then(() => {
-            if (this.atletaForm.direccion.municipio) {
-              this.fetchParroquiasAtleta(this.atletaForm.direccion.municipio)
-            }
-          })
-        }
-
-        // Cargar datos del representante si existe
-        if (this.currentAtleta.representante_id && this.tutor) {
-          const nombres = this.tutor.nombre_completo ? this.tutor.nombre_completo.split(' ') : ['', '']
-          this.atletaForm.representante = {
-            nombre: nombres[0] || '',
-            apellido: nombres.slice(1).join(' ') || '',
-            cedula: this.tutor.cedula || '',
-            telefono: this.tutor.telefono || '',
-            tipo_relacion: this.tutor.tipo_relacion || ''
-          }
-        } else if (this.currentAtleta.representante_id) {
-          // Fetch tutor just in case it wasn't loaded in the view before editing
-          request({ url: `/tutor/${this.currentAtleta.representante_id}`, method: 'get' }).then(res => {
-            if (res) {
-              const nombres = res.nombre_completo ? res.nombre_completo.split(' ') : ['', '']
-              this.atletaForm.representante = {
-                nombre: nombres[0] || '',
-                apellido: nombres.slice(1).join(' ') || '',
-                cedula: res.cedula || '',
-                telefono: res.telefono || '',
-                tipo_relacion: res.tipo_relacion || ''
-              }
-            }
-          }).catch(e => console.error(e))
-        }
-      } else {
-        this.resetAtletaForm()
-      }
-      this.showAtletaModal = true
-    },
-
-    openEditPersonalModal() {
-      this.isEditingAtleta = true
-      if (this.currentAtleta) {
-        this.atletaForm = {
-          nombre: this.currentAtleta.nombre,
-          apellido: this.currentAtleta.apellido,
-          cedula: this.currentAtleta.cedula,
-          fecha_nacimiento: this.currentAtleta.fecha_nacimiento,
-          sexo: this.currentAtleta.sexo || 'M',
-          telefono: this.currentAtleta.telefono || '',
-          estatus: this.currentAtleta.estatus || 'ACTIVO',
-          foto: this.currentAtleta.foto || '',
-          direccion: {
-            estado: this.currentAtleta.estado || '',
-            municipio: this.currentAtleta.municipio || '',
-            parroquia: this.currentAtleta.parroquia || '',
-            descripcion_descriptiva: this.currentAtleta.descripcion_descriptiva || ''
-          },
-          representante: {
-            nombre: '',
-            apellido: '',
-            cedula: '',
-            telefono: '',
-            tipo_relacion: ''
-          }
-        }
-        if (this.atletaForm.direccion.estado) {
-          this.fetchMunicipiosAtleta(this.atletaForm.direccion.estado).then(() => {
-            if (this.atletaForm.direccion.municipio) {
-              this.fetchParroquiasAtleta(this.atletaForm.direccion.municipio)
-            }
-          })
-        }
-      }
-      this.showEditPersonalModal = true
-    },
-
-    openEditSportsModal() {
-      this.isEditingAtleta = true
-      if (this.currentAtleta) {
-        this.atletaForm = {
-          posicion_de_juego: this.currentAtleta.posicion_de_juego || '',
-          categoria_id: this.currentAtleta.categoria_id,
-          pierna_dominante: this.currentAtleta.pierna_dominante || 'Derecha',
-          direccion: {
-            estado: '', municipio: '', parroquia: '', descripcion_descriptiva: ''
-          },
-          representante: {
-            nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: ''
-          }
-        }
-      }
-      this.showEditSportsModal = true
-    },
-
-    nextAtletaStep() {
-      let fieldsToValidate = []
-      if (this.atletaStep === 0) {
-        fieldsToValidate = ['nombre', 'apellido', 'fecha_nacimiento', 'sexo']
-      } else if (this.atletaStep === 1) {
-        fieldsToValidate = ['categoria_id']
-      }
-
-      const goToNextStep = async() => {
-        // Validaciones manuales extra para paso 0
-        if (this.atletaStep === 0) {
-          const { telefono, direccion } = this.atletaForm
-
-          if (!this.isUnderage) {
-            if (!telefono || telefono.length !== 11) {
-              this.$message.error('Debe ingresar un número de teléfono válido de 11 dígitos para atletas mayores de edad.')
-              return
-            }
-          } else if (telefono && telefono.length !== 11) {
-            this.$message.error('El número de teléfono ingresado está incompleto (deben ser 11 dígitos).')
-            return
-          }
-
-          if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.descripcion_descriptiva) {
-            this.$message.error('Todos los atletas (mayores o menores de edad) deben registrar su dirección completa.')
-            return
-          }
-
-          // Validación de cédula
-          if (this.atletaForm.cedula) {
-            if (this.atletaForm.cedula.length < 7 && this.atletaForm.cedula.toUpperCase() !== 'S/N') {
-              this.$message.error('La cédula del atleta debe tener al menos 7 dígitos (o "S/N").')
-              return
-            }
-            try {
-              const res = await request({
-                url: '/atletas',
-                method: 'get',
-                params: { con_cedula: 'true', cedula: this.atletaForm.cedula }
-              })
-              const isDuplicate = this.isEditingAtleta
-                ? res.some(a => a.cedula === this.atletaForm.cedula && a.atleta_id !== this.currentAtletaId)
-                : res.some(a => a.cedula === this.atletaForm.cedula)
-
-              if (isDuplicate) {
-                this.$message.error('La cédula ingresada ya está registrada para otro atleta.')
-                return
-              }
-            } catch (error) {
-              console.error('Error validando cédula', error)
-            }
-          }
-        }
-        this.atletaStep++
-      }
-
-      if (fieldsToValidate.length > 0) {
-        let validCount = 0
-        let hasErrors = false
-
-        fieldsToValidate.forEach(field => {
-          this.$refs.atletaForm.validateField(field, (errorMessage) => {
-            if (errorMessage) {
-              hasErrors = true
-            }
-            validCount++
-
-            if (validCount === fieldsToValidate.length) {
-              if (!hasErrors) {
-                goToNextStep()
-              } else {
-                this.$message.error('Por favor, complete los campos requeridos en este paso.')
-              }
-            }
-          })
-        })
-      } else {
-        goToNextStep()
-      }
-    },
-
-    resetAtletaStep() {
-      this.atletaStep = 0
-      if (this.$refs.atletaForm) {
-        this.$refs.atletaForm.clearValidate()
-      }
-    },
-
-    checkUnderage() {
-      // Método llamado al cambiar la fecha, isUnderage (computed) reaccionará a esto automáticamente.
-      // Se puede añadir lógica extra si se requiere limpiar campos del representante, etc.
-    },
-
-    openMedicalModal() {
-      if (this.fichaMedica) {
-        this.medicalForm = {
-          grupo_sanguineo: this.fichaMedica.grupo_sanguineo || '',
-          alergias: this.fichaMedica.alergias || '',
-          antecedentes_familiares: this.fichaMedica.antecedentes_familiares || '',
-          antecedentes_quirurgicos: this.fichaMedica.antecedentes_quirurgicos || '',
-          condicion_cronica: this.fichaMedica.condicion_cronica || '',
-          medicacion_actual: this.fichaMedica.medicacion_actual || ''
-        }
-      } else {
-        this.resetMedicalForm()
-      }
-      this.showMedicalModal = true
-    },
-
-    openAnthropometricModal(medida = null) {
-      if (medida && medida.medidas_id) {
-        this.editingAnthropometricId = medida.medidas_id
-        this.anthropometricForm = {
-          peso: medida.peso,
-          altura: medida.altura,
-          porcentaje_grasa: medida.porcentaje_grasa,
-          porcentaje_musculatura: medida.porcentaje_musculatura,
-          envergadura: medida.envergadura,
-          largo_de_pierna: medida.largo_de_pierna,
-          largo_de_torso: medida.largo_de_torso,
-          fecha_medicion: medida.fecha_medicion
-        }
-      } else {
-        this.editingAnthropometricId = null
-        this.resetAnthropometricForm()
-        const now = new Date()
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-        this.anthropometricForm.fecha_medicion = now.toISOString().slice(0, 19).replace('T', ' ')
-      }
-      this.showAnthropometricModal = true
-    },
-
-    openPerformanceModal(test = null) {
-      if (test && test.test_id) {
-        this.editingPerformanceId = test.test_id
-        this.performanceForm = {
-          test_de_fuerza: test.test_de_fuerza,
-          test_resistencia: test.test_resistencia,
-          test_velocidad: test.test_velocidad,
-          test_coordinacion: test.test_coordinacion,
-          test_de_reaccion: test.test_de_reaccion,
-          fecha_test: test.fecha_test
-        }
-      } else {
-        this.editingPerformanceId = null
-        this.resetPerformanceForm()
-        const now = new Date()
-        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-        this.performanceForm.fecha_test = now.toISOString().slice(0, 19).replace('T', ' ')
-      }
-      this.showPerformanceModal = true
-    },
-
-    openTutorModal() {
-      if (this.tutor && !this.isSelfRepresented) {
-        // Editing an actual third-party representative
-        this.isEditingTutor = true
-        this.tutorForm = {
-          nombre_completo: this.tutor.nombre_completo,
-          cedula: this.tutor.cedula === 'S/N' ? '' : this.tutor.cedula,
-          telefono: (this.tutor.telefono === 'S/N' ? '' : this.tutor.telefono) || '',
-          direccion: {
-            estado: this.tutor.estado || '',
-            municipio: this.tutor.municipio || '',
-            parroquia: this.tutor.parroquia || '',
-            descripcion_descriptiva: this.tutor.descripcion_descriptiva || ''
-          },
-          tipo_relacion: this.tutor.tipo_relacion
-        }
-        if (this.tutorForm.direccion.estado) {
-          this.fetchMunicipiosTutor(this.tutorForm.direccion.estado).then(() => {
-            if (this.tutorForm.direccion.municipio) {
-              this.fetchParroquiasTutor(this.tutorForm.direccion.municipio)
-            }
-          })
-        }
-      } else {
-        this.isEditingTutor = false
-        this.resetTutorForm()
-        // Pre-fill address from athlete
-        if (this.currentAtleta) {
-          this.tutorForm.direccion = {
-            pais: this.currentAtleta.pais || 'venezuela',
-            estado: this.currentAtleta.estado || '',
-            municipio: this.currentAtleta.municipio || '',
-            parroquia: this.currentAtleta.parroquia || '',
-            descripcion_descriptiva: this.currentAtleta.descripcion_descriptiva || ''
-          }
-        }
-      }
-      this.showTutorModal = true
-    },
-
-    openAtencionModal() {
-      this.isEditingAtencion = false
-      this.resetAtencionForm()
-      this.atencionForm.fecha_suceso = new Date().toISOString().split('T')[0]
-      this.showAtencionModal = true
-    },
-
-    editAtencion(row) {
-      this.isEditingAtencion = true
-      this.atencionForm = { ...row }
-      // Ajustar fechas al formato YYYY-MM-DD
-      if (this.atencionForm.fecha_suceso) this.atencionForm.fecha_suceso = this.atencionForm.fecha_suceso.split('T')[0]
-      if (this.atencionForm.fecha_alta_estimada) this.atencionForm.fecha_alta_estimada = this.atencionForm.fecha_alta_estimada.split('T')[0]
-      if (this.atencionForm.fecha_alta_real) this.atencionForm.fecha_alta_real = this.atencionForm.fecha_alta_real.split('T')[0]
-      this.showAtencionModal = true
-    },
-
-    openCarnetModal() {
-      if (this.carnetDiscapacidad) {
-        this.carnetForm = {
-          tipo_discapacidad_id: this.carnetDiscapacidad.tipo_discapacidad_id,
-          nro_carnet: this.carnetDiscapacidad.nro_carnet,
-          porcentaje_discapacidad: this.carnetDiscapacidad.porcentaje_discapacidad,
-          fecha_registro: this.carnetDiscapacidad.fecha_registro ? this.carnetDiscapacidad.fecha_registro.split('T')[0] : ''
-        }
-      } else {
-        this.resetCarnetForm()
-        this.carnetForm.fecha_registro = new Date().toISOString().split('T')[0]
-      }
-      this.showCarnetModal = true
-    },
-
-    saveAtleta() {
-      this.$refs.atletaForm.validate(async(valid) => {
-        if (!valid) return
-
-        // Validación condicional del representante
-        if (this.isUnderage) {
-          const rep = this.atletaForm.representante
-          if (!rep.nombre || !rep.apellido || !rep.cedula || !rep.telefono || !rep.tipo_relacion) {
-            this.$message.error('Por favor, complete todos los datos del representante, ya que el atleta es menor de edad.')
-            return
-          }
-          if (rep.cedula.length < 7) {
-            this.$message.error('La cédula del representante debe tener al menos 7 dígitos.')
-            return
-          }
-          if (rep.telefono.length !== 11) {
-            this.$message.error('El teléfono del representante debe tener exactamente 11 dígitos.')
-            return
-          }
-        } else {
-          // Si es mayor de edad, teléfono es obligatorio
-          if (!this.atletaForm.telefono || this.atletaForm.telefono.length !== 11) {
-            this.$message.error('Debe ingresar un número de teléfono válido de 11 dígitos para atletas mayores de edad.')
-            return
-          }
-        }
-
-        const dir = this.atletaForm.direccion
-        if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.descripcion_descriptiva) {
-          this.$message.error('Por favor, complete todos los datos de la dirección de habitación.')
-          return
-        }
-
-        this.loading = true
-        try {
-          if (this.isEditingAtleta) {
-            await request({
-              url: `/atletas/${this.currentAtletaId}`,
-              method: 'put',
-              data: this.atletaForm
-            })
-            this.$message.success('Atleta actualizado correctamente')
-          } else {
-            await request({
-              url: '/atletas',
-              method: 'post',
-              data: this.atletaForm
-            })
-            this.$message.success('Atleta creado correctamente')
-          }
-
-          this.showAtletaModal = false
-          await this.loadAtletas()
-
-          if (this.isEditingAtleta) {
-            await this.selectAtleta(this.currentAtletaId)
-          }
-        } catch (error) {
-          console.error('Error guardando atleta:', error)
-        } finally {
-          this.loading = false
-        }
-      })
-    },
-
-    saveEditPersonal() {
-      this.$refs.editPersonalForm.validate(async(valid) => {
-        if (!valid) return
-
-        if (!this.isUnderage) {
-          if (!this.atletaForm.telefono) {
-            this.$message.error('El teléfono es obligatorio para atletas mayores de edad.')
-            return
-          }
-          const dir = this.atletaForm.direccion
-          if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.descripcion_descriptiva) {
-            this.$message.error('Por favor, complete todos los datos de la dirección obligatorios.')
-            return
-          }
-        }
-
-        this.loading = true
-        try {
-          await request({
-            url: `/atletas/${this.currentAtletaId}`,
-            method: 'put',
-            data: {
-              nombre: this.atletaForm.nombre,
-              apellido: this.atletaForm.apellido,
-              cedula: this.atletaForm.cedula,
-              fecha_nacimiento: this.atletaForm.fecha_nacimiento,
-              sexo: this.atletaForm.sexo,
-              telefono: this.atletaForm.telefono,
-              estatus: this.atletaForm.estatus,
-              foto: this.atletaForm.foto,
-              direccion: this.atletaForm.direccion
-            }
-          })
-          this.$message.success('Datos personales actualizados correctamente')
-          this.showEditPersonalModal = false
-          await this.loadAtletas()
-          await this.selectAtleta(this.currentAtletaId)
-        } catch (error) {
-          console.error('Error actualizando datos personales:', error)
-        } finally {
-          this.loading = false
-        }
-      })
-    },
-
-    saveEditSports() {
-      this.$refs.editSportsForm.validate(async(valid) => {
-        if (!valid) return
-
-        this.loading = true
-        try {
-          await request({
-            url: `/atletas/${this.currentAtletaId}`,
-            method: 'put',
-            data: {
-              categoria_id: this.atletaForm.categoria_id,
-              posicion_de_juego: this.atletaForm.posicion_de_juego,
-              pierna_dominante: this.atletaForm.pierna_dominante
-            }
-          })
-          this.$message.success('Datos deportivos actualizados correctamente')
-          this.showEditSportsModal = false
-          await this.loadAtletas()
-          await this.selectAtleta(this.currentAtletaId)
-        } catch (error) {
-          console.error('Error actualizando datos deportivos:', error)
-        } finally {
-          this.loading = false
-        }
-      })
-    },
-
-    async saveMedical() {
-      this.loading = true
-      try {
-        const data = {
-          ...this.medicalForm,
-          atleta_id: this.currentAtletaId
-        }
-
-        if (this.fichaMedica) {
-          await request({
-            url: `/ficha-medica/${this.currentAtletaId}`,
-            method: 'put',
-            data
-          })
-          this.$message.success('Ficha médica actualizada')
-        } else {
-          await request({
-            url: '/ficha-medica',
-            method: 'post',
-            data
-          })
-          this.$message.success('Ficha médica creada')
-        }
-
-        this.showMedicalModal = false
-        await this.loadFichaMedica(this.currentAtletaId)
-      } catch (error) {
-        console.error('Error guardando ficha médica:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async saveAnthropometric() {
-      this.loading = true
-      try {
-        const payload = {
-          ...this.anthropometricForm,
-          atleta_id: this.currentAtletaId
-        }
-
-        let url = '/mediciones'
-        let method = 'post'
-
-        if (this.editingAnthropometricId) {
-          url = `/mediciones/${this.editingAnthropometricId}`
-          method = 'put'
-        }
-
-        await request({
-          url,
-          method,
-          data: payload
-        })
-
-        this.$message.success(`Medidas ${this.editingAnthropometricId ? 'actualizadas' : 'registradas'} exitosamente`)
-        this.showAnthropometricModal = false
-        await this.loadMedidas(this.currentAtletaId)
-      } catch (error) {
-        console.error('Error guardando medidas:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async savePerformance() {
-      this.loading = true
-      try {
-        const payload = {
-          ...this.performanceForm,
-          atleta_id: this.currentAtletaId
-        }
-
-        let url = '/tests'
-        let method = 'post'
-
-        if (this.editingPerformanceId) {
-          url = `/tests/${this.editingPerformanceId}`
-          method = 'put'
-        }
-
-        await request({
-          url,
-          method,
-          data: payload
-        })
-
-        this.$message.success(`Test ${this.editingPerformanceId ? 'actualizado' : 'registrado'} exitosamente`)
-        this.showPerformanceModal = false
-        await this.loadTests(this.currentAtletaId)
-      } catch (error) {
-        console.error('Error guardando test:', error)
-      } finally {
-        this.loading = false
-      }
-    },
-
-    saveTutor() {
-      this.$refs.tutorForm.validate(async(valid) => {
-        if (!valid) return
-
-        this.loading = true
-        try {
-          if (this.isEditingTutor && this.tutor) {
-            await request({
-              url: `/tutor/${this.tutor.representante_id}`,
-              method: 'put',
-              data: this.tutorForm
-            })
-            this.$message.success('Tutor actualizado correctamente')
-          } else {
-            const response = await request({
-              url: '/tutor',
-              method: 'post',
-              data: this.tutorForm
-            })
-
-            const nuevoTutorId = response.id || response.tutor_id || response.insertId
-
-            if (!nuevoTutorId) {
-              console.error('Respuesta del servidor:', response)
-              throw new Error('No se recibió el ID del tutor creado')
-            }
-
-            if (!this.currentAtleta || !this.currentAtletaId) {
-              throw new Error('No hay atleta seleccionado para asignar tutor')
-            }
-
-            await request({
-              url: `/atletas/${this.currentAtletaId}/tutor`,
-              method: 'put',
-              data: { tutor_id: nuevoTutorId }
-            })
-
-            this.$message.success('Tutor creado y asignado correctamente')
-          }
-
-          this.showTutorModal = false
-          await this.loadAtletas()
-          await this.selectAtleta(this.currentAtletaId, true)
-        } catch (error) {
-          console.error('Error guardando tutor:', error)
-        } finally {
-          this.loading = false
-        }
-      })
-    },
-
-    async deleteTutor() {
-      try {
-        await this.$confirm(
-          '¿Está seguro de que desea eliminar este representante? El representante será removido y el atleta quedará sin un tercero asignado.',
-          'Confirmar eliminación',
-          {
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar',
-            type: 'warning'
-          }
-        )
-      } catch (e) {
-        return // User cancelled
-      }
-
-      this.loading = true
-      try {
-        await request({
-          url: `/atletas/${this.currentAtletaId}/tutor`,
-          method: 'delete'
-        })
-
-        this.$message.success('Representante eliminado correctamente')
-        await this.loadAtletas()
-        await this.selectAtleta(this.currentAtletaId, true)
-      } catch (error) {
-        console.error('Error eliminando tutor:', error)
-        this.$message.error('Error al eliminar representante')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async saveAtencion() {
-      if (!this.atencionForm.tipo_registro || !this.atencionForm.especialista_id || !this.atencionForm.descripcion || !this.atencionForm.fecha_suceso) {
-        this.$message.warning('Por favor complete todos los campos obligatorios: Tipo, Especialista, Descripción y Fecha.')
-        return
-      }
-      this.loading = true
-      try {
-        const data = { ...this.atencionForm, atleta_id: this.currentAtletaId }
-        if (this.isEditingAtencion) {
-          await request({ url: `/atencion-medica/${this.atencionForm.atencion_id}`, method: 'put', data })
-          this.$message.success('Atención médica actualizada')
-        } else {
-          await request({ url: '/atencion-medica', method: 'post', data })
-          this.$message.success('Atención médica registrada')
-        }
-        this.showAtencionModal = false
-        await this.loadAtencionesMedicas(this.currentAtletaId)
-      } catch (error) {
-        console.error(error)
-      } finally {
-        this.loading = false
-      }
-    },
-
-    deleteAtencion(id) {
-      this.$confirm('¿Desea eliminar este registro médico?', 'Confirmar', {
-        confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning'
-      }).then(async() => {
-        try {
-          await request({ url: `/atencion-medica/${id}`, method: 'delete' })
-          this.$message.success('Registro eliminado')
-          await this.loadAtencionesMedicas(this.currentAtletaId)
-        } catch (error) {
-          console.error(error)
-          this.$message.error('Error al eliminar')
-        }
-      }).catch(() => {})
-    },
-
-    async saveCarnet() {
-      this.loading = true
-      try {
-        const data = { ...this.carnetForm, atleta_id: this.currentAtletaId }
-        if (this.carnetDiscapacidad) {
-          await request({ url: `/carnet-discapacidad/${this.carnetDiscapacidad.id}`, method: 'put', data })
-          this.$message.success('Carnet de discapacidad actualizado')
-        } else {
-          await request({ url: '/carnet-discapacidad', method: 'post', data })
-          this.$message.success('Carnet de discapacidad registrado')
-        }
-        this.showCarnetModal = false
-        await this.loadCarnetDiscapacidad(this.currentAtletaId)
-      } catch (error) {
-        console.error(error)
-        this.$message.error('Error al guardar el carnet de discapacidad')
-      } finally {
-        this.loading = false
-      }
-    },
-
-    formatEnum(value) {
-      if (!value) return ''
-      return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
-    },
-
-    async deletePerformanceTest(testId) {
-      if (!testId) return
-      try {
-        await this.$confirm('¿Está seguro de eliminar este test de rendimiento?', 'Confirmar', {
-          confirmButtonText: 'Eliminar',
-          cancelButtonText: 'Cancelar',
-          type: 'warning'
-        })
-        this.loading = true
-        await request({
-          url: `/tests/${testId}`,
-          method: 'delete'
-        })
-        this.$message.success('Test eliminado exitosamente')
-        await this.loadAtletas()
-        await this.selectAtleta(this.currentAtletaId)
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('Error eliminando test:', error)
-          this.$message.error('Error al eliminar el test')
-        }
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async deleteMedida(medidaId) {
-      if (!medidaId) return
-      try {
-        await this.$confirm('¿Está seguro de eliminar estas medidas?', 'Confirmar', {
-          confirmButtonText: 'Eliminar',
-          cancelButtonText: 'Cancelar',
-          type: 'warning'
-        })
-        this.loading = true
-        await request({
-          url: `/mediciones/${medidaId}`,
-          method: 'delete'
-        })
-        this.$message.success('Medidas eliminadas exitosamente')
-        await this.loadAtletas()
-        await this.selectAtleta(this.currentAtletaId)
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('Error eliminando medidas:', error)
-          this.$message.error('Error al eliminar medidas antropométricas')
-        }
-      } finally {
-        this.loading = false
-      }
-    },
-
-    deleteAtleta() {
-      this.$confirm(
-        '¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE a este atleta? ' +
-        'Se borrarán TODOS sus registros asociados: asistencias, atenciones médicas, ' +
-        'ficha médica, medidas antropométricas, pruebas de rendimiento y su representante. ' +
-        'Esta acción NO se puede deshacer. Si solo deseas desactivarlo, cambia su estatus a INACTIVO desde "Editar Datos Personales".',
-        'Eliminar Atleta Permanentemente',
-        {
-          confirmButtonText: 'Sí, eliminar todo',
-          cancelButtonText: 'Cancelar',
-          type: 'error'
-        }
-      ).then(async() => {
-        try {
-          await request({
-            url: `/atletas/${this.currentAtletaId}`,
-            method: 'delete'
-          })
-          this.$message.success('Atleta eliminado correctamente')
-          this.currentAtletaId = null
-          this.currentAtleta = {}
-          await this.loadAtletas()
-        } catch (error) {
-          console.error('Error eliminando atleta:', error)
-          this.$message.error('Error al eliminar atleta')
-        }
-      }).catch(() => {})
-    },
-
-    goToProgress() {
-      this.$router.push({
-        path: '/reportes/rendimiento',
-        query: { atleta_id: this.currentAtletaId }
-      })
-    },
-
-    resetAtletaForm() {
-      this.atletaForm = {
-        nombre: '',
-        apellido: '',
-        cedula: '',
-        fecha_nacimiento: '',
-        sexo: 'M',
-        posicion_de_juego: null,
-        categoria_id: '',
-        tutor_id: null,
-        telefono: '',
-        direccion: {
-          estado: '',
-          municipio: '',
-          parroquia: '',
-          descripcion_descriptiva: ''
-        },
-        representante: {
-          nombre: '',
-          apellido: '',
-          cedula: '',
-          telefono: '',
-          tipo_relacion: ''
-        },
-        estatus: 'ACTIVO',
-        foto: null,
-        pierna_dominante: 'Derecha'
-      }
-      this.municipiosListAtleta = []
-      this.parroquiasListAtleta = []
-    },
-
-    resetMedicalForm() {
-      this.medicalForm = {
-        grupo_sanguineo: '',
-        alergias: '',
-        antecedentes_familiares: '',
-        antecedentes_quirurgicos: '',
-        condicion_cronica: '',
-        medicacion_actual: ''
-      }
-    },
-
-    resetAnthropometricForm() {
-      this.anthropometricForm = {
-        peso: null,
-        altura: null,
-        porcentaje_grasa: null,
-        porcentaje_musculatura: null,
-        envergadura: null,
-        largo_de_pierna: null,
-        largo_de_torso: null,
-        fecha_medicion: ''
-      }
-    },
-
-    resetPerformanceForm() {
-      this.performanceForm = {
-        test_de_fuerza: null,
-        test_resistencia: null,
-        test_velocidad: null,
-        test_coordinacion: null,
-        test_de_reaccion: null,
-        fecha_test: ''
-      }
-    },
-
-    resetTutorForm() {
-      this.tutorForm = {
-        nombre_completo: '',
-        cedula: '',
-        telefono: '',
-        correo: '',
-        direccion: {
-          estado: '',
-          municipio: '',
-          parroquia: '',
-          descripcion_descriptiva: ''
-        },
-        tipo_relacion: ''
-      }
-      this.municipiosListTutor = []
-      this.parroquiasListTutor = []
-    },
-
-    resetAtencionForm() {
-      this.atencionForm = {
-        tipo_registro: 1,
-        descripcion: '',
-        diagnostico: '',
-        fecha_suceso: '',
-        fecha_alta_estimada: '',
-        fecha_alta_real: '',
-        tratamiento_indicado: '',
-        especialista_id: null,
-        estado_disponibilidad: 0
-      }
-    },
-
-    resetCarnetForm() {
-      this.carnetForm = {
-        tipo_discapacidad_id: null,
-        nro_carnet: '',
-        porcentaje_discapacidad: null,
-        fecha_registro: ''
-      }
-    },
-
-    calculateAge(birthdate) {
-      if (!birthdate) return '-'
-      const birthDate = new Date(birthdate)
-      const today = new Date()
-      let age = today.getFullYear() - birthDate.getFullYear()
-      const monthDiff = today.getMonth() - birthDate.getMonth()
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--
-      }
-      return age
-    },
-
-    formatDate(dateString) {
-      if (!dateString) return '-'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('es-ES')
-    },
-
-    formatDateTime(dateString) {
-      if (!dateString) return '-'
-      const date = new Date(dateString)
-      return date.toLocaleString('es-ES', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    },
-
-    getStatusType(estatus) {
-      const types = {
-        'ACTIVO': 'success',
-        'INACTIVO': 'info',
-        'LESIONADO': 'warning',
-        'SUSPENDIDO': 'danger'
-      }
-      return types[estatus] || 'info'
-    },
-
-    getDisponibilidadMedicaType(estado) {
-      const types = { 0: 'danger', 1: 'warning', 2: 'success' }
-      return types[estado] || 'info'
-    },
-    getDisponibilidadMedicaLabel(estado) {
-      const labels = { 0: 'No Apto', 1: 'Diferenciado', 2: 'Apto' }
-      return labels[estado] || 'Desconocido'
-    },
-
-    getPartidoResultadoType(resultado) {
-      if (resultado === 'V') return 'success'
-      if (resultado === 'E') return 'warning'
-      if (resultado === 'D') return 'danger'
-      return 'info'
-    },
-
-    getPartidoResultadoLabel(resultado) {
-      if (resultado === 'V') return 'Victoria'
-      if (resultado === 'E') return 'Empate'
-      if (resultado === 'D') return 'Derrota'
-      return 'N/A'
-    },
-
-    getEntrenadorNombre(categoriaId) {
-      if (!categoriaId || !this.categorias || this.categorias.length === 0) return 'No asignado'
-      const categoria = this.categorias.find(c => c.categoria_id === categoriaId)
-      return categoria ? (categoria.entrenador_nombre || categoria.nombre_entrenador || 'No asignado') : 'No asignado'
-    },
-
-    getFotoUrl(filename) {
-      if (!filename) return null
-      return `${this.backendUrl}/uploads/atletas/${filename}`
-    },
-
-    handleUploadSuccess(res) {
-      this.atletaForm.foto = res.filename
-      this.$message.success('Foto cargada exitosamente')
-    },
-
-    removePhoto() {
-      this.atletaForm.foto = ''
-    },
-
-    beforeAvatarUpload(file) {
-      const isJPGorPNG = file.type === 'image/jpeg' || file.type === 'image/png'
-      const isLt2M = file.size / 1024 / 1024 < 2
-
-      if (!isJPGorPNG) {
-        this.$message.error('La imagen debe estar en formato JPG o PNG')
-      }
-      if (!isLt2M) {
-        this.$message.error('La imagen no puede exceder los 2MB')
-      }
-      if (!isLt2M) {
-        this.$message.error('La imagen no puede exceder los 2MB')
-      }
-      return isJPGorPNG && isLt2M
-    }
-
-  }
+import { Collection, CollectionTag, Calendar, Plus, Setting, Edit, Delete, DataAnalysis, UserFilled } from '@element-plus/icons-vue'
+
+const router = useRouter()
+const store = useStore()
+
+// === REFS ===
+const atletas = ref([])
+const categorias = ref([])
+const tutores = ref([])
+const posiciones = ref([])
+const currentAtletaId = ref(null)
+const currentAtleta = ref({})
+const fichaMedica = ref(null)
+const medidas = ref([])
+const tests = ref([])
+const tutor = ref(null)
+const atencionesMedicas = ref([])
+const carnetDiscapacidad = ref(null)
+const historialPartidos = ref([])
+const activeTab = ref('personal')
+const loading = ref(false)
+const loadingAtletas = ref(false)
+const backendUrl = 'http://localhost:3000'
+const atletaStep = ref(0)
+const showAtletaModal = ref(false)
+const showEditPersonalModal = ref(false)
+const showEditSportsModal = ref(false)
+const showMedicalModal = ref(false)
+const showAnthropometricModal = ref(false)
+const editingAnthropometricId = ref(null)
+const showPerformanceModal = ref(false)
+const editingPerformanceId = ref(null)
+const showTutorModal = ref(false)
+const showAtencionModal = ref(false)
+const showCarnetModal = ref(false)
+const isEditingAtleta = ref(false)
+const isEditingTutor = ref(false)
+const isEditingAtencion = ref(false)
+const searchQuery = ref('')
+const searchCedula = ref('')
+const filterCedula = ref('todos')
+const filterSinCedula = ref(false)
+const filterCategoria = ref('')
+const filterEstatus = ref('')
+const filterOrder = ref('recent')
+let searchTimeout = null
+let searchCedulaTimeout = null
+const estadosList = ref([])
+const municipiosListAtleta = ref([])
+const parroquiasListAtleta = ref([])
+const municipiosListTutor = ref([])
+const parroquiasListTutor = ref([])
+const tiposDiscapacidadList = ref([])
+const medicosList = ref([])
+
+// Form refs
+const atletaFormRef = ref(null)
+const editPersonalFormRef = ref(null)
+const editSportsFormRef = ref(null)
+const medicalFormRef = ref(null)
+const anthropometricFormRef = ref(null)
+const performanceFormRef = ref(null)
+const tutorFormRef = ref(null)
+const atencionFormRef = ref(null)
+const carnetFormRef = ref(null)
+
+// === REACTIVE FORMS ===
+const atletaForm = reactive({
+  nombre: '', apellido: '', cedula: '', fecha_nacimiento: '', sexo: 'M',
+  posicion_de_juego: '', categoria_id: '', tutor_id: null, telefono: '',
+  direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' },
+  representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' },
+  estatus: 'ACTIVO', foto: null, pierna_dominante: 'Derecha'
+})
+const medicalForm = reactive({
+  grupo_sanguineo: '', alergias: '', antecedentes_familiares: '',
+  antecedentes_quirurgicos: '', condicion_cronica: '', medicacion_actual: ''
+})
+const anthropometricForm = reactive({
+  peso: null, altura: null, porcentaje_grasa: null, porcentaje_musculatura: null,
+  envergadura: null, largo_de_pierna: null, largo_de_torso: null, fecha_medicion: ''
+})
+const performanceForm = reactive({
+  test_de_fuerza: null, test_resistencia: null, test_velocidad: null,
+  test_coordinacion: null, test_de_reaccion: null, fecha_test: ''
+})
+const tutorForm = reactive({
+  nombre_completo: '', cedula: '', telefono: '',
+  direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' },
+  tipo_relacion: ''
+})
+const atencionForm = reactive({
+  tipo_registro: 1, descripcion: '', diagnostico: '', fecha_suceso: '',
+  fecha_alta_estimada: '', fecha_alta_real: '', tratamiento_indicado: '',
+  especialista_id: null, estado_disponibilidad: 0
+})
+const carnetForm = reactive({
+  tipo_discapacidad_id: null, nro_carnet: '', porcentaje_discapacidad: null, fecha_registro: ''
+})
+
+// === VALIDATION RULES ===
+const atletaRules = {
+  nombre: [
+    { required: true, message: 'El nombre es requerido', trigger: 'blur' },
+    { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
+  ],
+  apellido: [
+    { required: true, message: 'El apellido es requerido', trigger: 'blur' },
+    { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
+  ],
+  fecha_nacimiento: [{ required: true, message: 'La fecha de nacimiento es requerida', trigger: 'change' }],
+  sexo: [{ required: true, message: 'El sexo es requerido', trigger: 'change' }],
+  categoria_id: [{ required: true, message: 'La categoría es requerida', trigger: 'change' }]
+}
+const tutorRules = {
+  nombre_completo: [
+    { required: true, message: 'El nombre es requerido', trigger: 'blur' },
+    { pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, message: 'Solo se permiten letras', trigger: 'blur' }
+  ],
+  cedula: [
+    { required: true, message: 'La cédula es requerida', trigger: 'blur' },
+    { min: 7, message: 'La cédula debe tener al menos 7 caracteres', trigger: 'blur' }
+  ],
+  telefono: [
+    { required: true, message: 'El teléfono es requerido', trigger: 'blur' },
+    { pattern: /^[0-9]{11}$/, message: 'El teléfono debe tener 11 dígitos numéricos', trigger: 'blur' }
+  ],
+  tipo_relacion: [{ required: true, message: 'El tipo de relación es requerido', trigger: 'change' }],
+  'direccion.estado': [{ required: true, message: 'El estado es requerido', trigger: 'change' }],
+  'direccion.municipio': [{ required: true, message: 'El municipio es requerido', trigger: 'blur' }],
+  'direccion.parroquia': [{ required: true, message: 'La parroquia es requerida', trigger: 'blur' }],
+  'direccion.descripcion_descriptiva': [{ required: true, message: 'La dirección detallada es requerida', trigger: 'blur' }]
 }
 
+// === COMPUTED ===
+const canUserEdit = computed(() => canEdit())
+const isUserMedico = computed(() => isMedico())
+const isUserEntrenador = computed(() => isEntrenador())
+const visibleTabs = computed(() => getVisibleAtletasTabs())
+const isTabVisible = computed(() => (tabName) => visibleTabs.value.includes(tabName))
+const isUnderage = computed(() => {
+  if (!atletaForm.fecha_nacimiento) return false
+  const birthDate = new Date(atletaForm.fecha_nacimiento)
+  const today = new Date()
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const m = today.getMonth() - birthDate.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--
+  return age < 18
+})
+const isSelfRepresented = computed(() => {
+  if (!tutor.value || !currentAtleta.value) return false
+  if (!isUnderage.value === false) return false
+  if (tutor.value.cedula && tutor.value.cedula !== 'S/N' && tutor.value.cedula === currentAtleta.value.cedula) return true
+  const tutorName = (tutor.value.nombre_completo || '').toLowerCase().trim()
+  const atletaName = `${currentAtleta.value.nombre || ''} ${currentAtleta.value.apellido || ''}`.toLowerCase().trim()
+  return tutor.value.tipo_relacion === 'representante' && tutorName === atletaName
+})
+const datePickerOptions = computed(() => ({
+  disabledDate(time) {
+    const maxDate = new Date()
+    maxDate.setFullYear(maxDate.getFullYear() - 3)
+    return time.getTime() > maxDate.getTime()
+  }
+}))
+
+// === WATCHERS ===
+watch(searchQuery, () => { if (searchTimeout) clearTimeout(searchTimeout); searchTimeout = setTimeout(() => loadAtletas(), 500) })
+watch(searchCedula, () => { if (searchCedulaTimeout) clearTimeout(searchCedulaTimeout); searchCedulaTimeout = setTimeout(() => loadAtletas(), 500) })
+watch(filterSinCedula, () => loadAtletas())
+watch(filterCedula, (newVal) => { if (newVal !== 'con_cedula') searchCedula.value = ''; loadAtletas() })
+watch(filterCategoria, () => loadAtletas())
+watch(filterEstatus, () => loadAtletas())
+watch(filterOrder, () => loadAtletas())
+watch(currentAtletaId, (newId) => { if (newId && isUserMedico.value) activeTab.value = 'atencion_medica' })
+
+// === DATA LOADING ===
+async function loadData() {
+  await loadCategorias()
+  await Promise.all([loadAtletas(), loadTutores(), loadPosiciones(), fetchEstados(), loadMedicos(), loadTiposDiscapacidad()])
+}
+async function loadMedicos() {
+  try { const r = await request({ url: '/plantel?rol=medico', method: 'get' }); medicosList.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando médicos:', error) }
+}
+async function loadTiposDiscapacidad() {
+  try { const r = await request({ url: '/carnet-discapacidad/tipos', method: 'get' }); tiposDiscapacidadList.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando tipos de discapacidad:', error) }
+}
+async function loadAtletas() {
+  loadingAtletas.value = true
+  try {
+    const params = {}
+    if (searchQuery.value) params.search = searchQuery.value
+    if (filterCedula.value === 'con_cedula') { if (searchCedula.value) params.cedula = searchCedula.value; params.con_cedula = 'true' }
+    else if (filterCedula.value === 'sin_cedula') { params.sin_cedula = 'true' }
+    if (filterCategoria.value) params.categoria_id = filterCategoria.value
+    if (filterEstatus.value) params.estatus = filterEstatus.value
+    if (filterOrder.value) params.order = filterOrder.value
+    const r = await request({ url: '/atletas', method: 'get', params })
+    atletas.value = Array.isArray(r) ? r : []
+  } catch (error) { console.error('Error cargando atletas:', error); ElMessage.error('Error al cargar atletas') }
+  finally { loadingAtletas.value = false }
+}
+async function loadCategorias() {
+  try { const r = await request({ url: '/categoria', method: 'get' }); categorias.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando categorías:', error) }
+}
+async function loadTutores() {
+  try { const r = await request({ url: '/tutor', method: 'get' }); tutores.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando tutores:', error) }
+}
+async function loadPosiciones() {
+  try { const r = await getPosiciones(); posiciones.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando posiciones:', error) }
+}
+
+// === LOCATION FUNCTIONS ===
+async function fetchEstados() {
+  try { const r = await request({ url: '/ubicacion/estados', method: 'get' }); estadosList.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando estados:', error) }
+}
+async function fetchMunicipiosAtleta(estadoName) {
+  if (!estadoName) { municipiosListAtleta.value = []; return }
+  const estado = estadosList.value.find(e => e.nombre === estadoName)
+  if (!estado) return
+  try { const r = await request({ url: `/ubicacion/estados/${estado.id}/municipios`, method: 'get' }); municipiosListAtleta.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando municipios:', error) }
+}
+async function fetchParroquiasAtleta(municipioName) {
+  if (!municipioName) { parroquiasListAtleta.value = []; return }
+  const municipio = municipiosListAtleta.value.find(m => m.nombre === municipioName)
+  if (!municipio) return
+  try { const r = await request({ url: `/ubicacion/municipios/${municipio.id}/parroquias`, method: 'get' }); parroquiasListAtleta.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando parroquias:', error) }
+}
+async function fetchMunicipiosTutor(estadoName) {
+  if (!estadoName) { municipiosListTutor.value = []; return }
+  const estado = estadosList.value.find(e => e.nombre === estadoName)
+  if (!estado) return
+  try { const r = await request({ url: `/ubicacion/estados/${estado.id}/municipios`, method: 'get' }); municipiosListTutor.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando municipios:', error) }
+}
+async function fetchParroquiasTutor(municipioName) {
+  if (!municipioName) { parroquiasListTutor.value = []; return }
+  const municipio = municipiosListTutor.value.find(m => m.nombre === municipioName)
+  if (!municipio) return
+  try { const r = await request({ url: `/ubicacion/municipios/${municipio.id}/parroquias`, method: 'get' }); parroquiasListTutor.value = Array.isArray(r) ? r : [] }
+  catch (error) { console.error('Error cargando parroquias:', error) }
+}
+function handleEstadoChangeAtleta(val) { atletaForm.direccion.municipio = ''; atletaForm.direccion.parroquia = ''; municipiosListAtleta.value = []; parroquiasListAtleta.value = []; fetchMunicipiosAtleta(val) }
+function handleMunicipioChangeAtleta(val) { atletaForm.direccion.parroquia = ''; parroquiasListAtleta.value = []; fetchParroquiasAtleta(val) }
+function handleEstadoChangeTutor(val) { tutorForm.direccion.municipio = ''; tutorForm.direccion.parroquia = ''; municipiosListTutor.value = []; parroquiasListTutor.value = []; fetchMunicipiosTutor(val) }
+function handleMunicipioChangeTutor(val) { tutorForm.direccion.parroquia = ''; parroquiasListTutor.value = []; fetchParroquiasTutor(val) }
+
+// === SELECT ATLETA ===
+async function selectAtleta(id, keepTab = false) {
+  currentAtletaId.value = id
+  currentAtleta.value = atletas.value.find(a => a.atleta_id === id) || {}
+  if (!keepTab) {
+    activeTab.value = isUserMedico.value ? 'atencion_medica' : 'personal'
+    fichaMedica.value = null; medidas.value = []; tests.value = []; tutor.value = null
+    atencionesMedicas.value = []; carnetDiscapacidad.value = null; historialPartidos.value = []
+  }
+  await Promise.all([loadAtencionesMedicas(id), loadCarnetDiscapacidad(id), loadHistorialPartidos(currentAtleta.value.categoria_id)])
+  loadFichaMedica(id); loadMedidas(id); loadTests(id); loadTutor(currentAtleta.value.representante_id)
+}
+async function loadAtencionesMedicas(aid) { try { const r = await request({ url: `/atencion-medica/atleta/${aid}`, method: 'get' }); atencionesMedicas.value = Array.isArray(r) ? r : [] } catch { atencionesMedicas.value = [] } }
+async function loadCarnetDiscapacidad(aid) { try { const r = await request({ url: `/carnet-discapacidad/atleta/${aid}`, method: 'get' }); carnetDiscapacidad.value = r || null } catch { carnetDiscapacidad.value = null } }
+async function loadHistorialPartidos(cid) { if (!cid) { historialPartidos.value = []; return }; try { const r = await request({ url: `/historial-partidos/categoria/${cid}`, method: 'get' }); historialPartidos.value = Array.isArray(r) ? r : [] } catch { historialPartidos.value = [] } }
+async function loadFichaMedica(aid) { try { const r = await request({ url: `/ficha-medica?atleta_id=${aid}`, method: 'get' }); fichaMedica.value = Array.isArray(r) && r.length > 0 ? r[0] : null } catch { fichaMedica.value = null } }
+async function loadMedidas(aid) { try { const r = await request({ url: `/mediciones?atleta_id=${aid}`, method: 'get' }); medidas.value = Array.isArray(r) ? r : [] } catch { medidas.value = [] } }
+async function loadTests(aid) { try { const r = await request({ url: `/tests?atleta_id=${aid}`, method: 'get' }); tests.value = Array.isArray(r) ? r : [] } catch { tests.value = [] } }
+async function loadTutor(tid) { if (!tid) { tutor.value = null; return }; try { const r = await request({ url: `/tutor/${tid}`, method: 'get' }); tutor.value = r } catch { tutor.value = null } }
+
+// === MODAL OPENERS ===
+function handleEdit() {
+  switch (activeTab.value) {
+    case 'personal': openEditPersonalModal(); break
+    case 'sports': openEditSportsModal(); break
+    case 'medical': openMedicalModal(); break
+    case 'anthropometric': openAnthropometricModal(); break
+    case 'performance': openPerformanceModal(); break
+    case 'representante': openTutorModal(); break
+  }
+}
+function openAtletaModal(editing) {
+  isEditingAtleta.value = editing; atletaStep.value = 0
+  if (editing && currentAtleta.value) {
+    Object.assign(atletaForm, {
+      nombre: currentAtleta.value.nombre, apellido: currentAtleta.value.apellido, cedula: currentAtleta.value.cedula,
+      fecha_nacimiento: currentAtleta.value.fecha_nacimiento, sexo: currentAtleta.value.sexo || 'M',
+      posicion_de_juego: currentAtleta.value.posicion_de_juego || '', categoria_id: currentAtleta.value.categoria_id,
+      representante_id: currentAtleta.value.representante_id || null, telefono: currentAtleta.value.telefono || '',
+      estatus: currentAtleta.value.estatus || 'ACTIVO', foto: currentAtleta.value.foto || '',
+      pierna_dominante: currentAtleta.value.pierna_dominante || 'Derecha',
+      direccion: { estado: currentAtleta.value.estado || '', municipio: currentAtleta.value.municipio || '', parroquia: currentAtleta.value.parroquia || '', descripcion_descriptiva: currentAtleta.value.descripcion_descriptiva || '' },
+      representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }
+    })
+    if (atletaForm.direccion.estado) fetchMunicipiosAtleta(atletaForm.direccion.estado).then(() => { if (atletaForm.direccion.municipio) fetchParroquiasAtleta(atletaForm.direccion.municipio) })
+    if (currentAtleta.value.representante_id && tutor.value) {
+      const n = tutor.value.nombre_completo ? tutor.value.nombre_completo.split(' ') : ['', '']
+      Object.assign(atletaForm.representante, { nombre: n[0] || '', apellido: n.slice(1).join(' ') || '', cedula: tutor.value.cedula || '', telefono: tutor.value.telefono || '', tipo_relacion: tutor.value.tipo_relacion || '' })
+    } else if (currentAtleta.value.representante_id) {
+      request({ url: `/tutor/${currentAtleta.value.representante_id}`, method: 'get' }).then(res => {
+        if (res) { const n = res.nombre_completo ? res.nombre_completo.split(' ') : ['', '']; Object.assign(atletaForm.representante, { nombre: n[0] || '', apellido: n.slice(1).join(' ') || '', cedula: res.cedula || '', telefono: res.telefono || '', tipo_relacion: res.tipo_relacion || '' }) }
+      }).catch(e => console.error(e))
+    }
+  } else { resetAtletaForm() }
+  showAtletaModal.value = true
+}
+function openEditPersonalModal() {
+  isEditingAtleta.value = true
+  if (currentAtleta.value) {
+    Object.assign(atletaForm, {
+      nombre: currentAtleta.value.nombre, apellido: currentAtleta.value.apellido, cedula: currentAtleta.value.cedula,
+      fecha_nacimiento: currentAtleta.value.fecha_nacimiento, sexo: currentAtleta.value.sexo || 'M',
+      telefono: currentAtleta.value.telefono || '', estatus: currentAtleta.value.estatus || 'ACTIVO', foto: currentAtleta.value.foto || '',
+      direccion: { estado: currentAtleta.value.estado || '', municipio: currentAtleta.value.municipio || '', parroquia: currentAtleta.value.parroquia || '', descripcion_descriptiva: currentAtleta.value.descripcion_descriptiva || '' },
+      representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }
+    })
+    if (atletaForm.direccion.estado) fetchMunicipiosAtleta(atletaForm.direccion.estado).then(() => { if (atletaForm.direccion.municipio) fetchParroquiasAtleta(atletaForm.direccion.municipio) })
+  }
+  showEditPersonalModal.value = true
+}
+function openEditSportsModal() {
+  isEditingAtleta.value = true
+  if (currentAtleta.value) {
+    Object.assign(atletaForm, {
+      posicion_de_juego: currentAtleta.value.posicion_de_juego || '', categoria_id: currentAtleta.value.categoria_id,
+      pierna_dominante: currentAtleta.value.pierna_dominante || 'Derecha',
+      direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' },
+      representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }
+    })
+  }
+  showEditSportsModal.value = true
+}
+async function nextAtletaStep() {
+  let fieldsToValidate = []
+  if (atletaStep.value === 0) fieldsToValidate = ['nombre', 'apellido', 'fecha_nacimiento', 'sexo']
+  else if (atletaStep.value === 1) fieldsToValidate = ['categoria_id']
+  const goToNextStep = async () => {
+    if (atletaStep.value === 0) {
+      const { telefono, direccion } = atletaForm
+      if (!isUnderage.value) { if (!telefono || telefono.length !== 11) { ElMessage.error('Debe ingresar un número de teléfono válido de 11 dígitos para atletas mayores de edad.'); return } }
+      else if (telefono && telefono.length !== 11) { ElMessage.error('El número de teléfono ingresado está incompleto (deben ser 11 dígitos).'); return }
+      if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.descripcion_descriptiva) { ElMessage.error('Todos los atletas deben registrar su dirección completa.'); return }
+      if (atletaForm.cedula) {
+        if (atletaForm.cedula.length < 7 && atletaForm.cedula.toUpperCase() !== 'S/N') { ElMessage.error('La cédula del atleta debe tener al menos 7 dígitos (o "S/N").'); return }
+        try {
+          const res = await request({ url: '/atletas', method: 'get', params: { con_cedula: 'true', cedula: atletaForm.cedula } })
+          const isDuplicate = isEditingAtleta.value ? res.some(a => a.cedula === atletaForm.cedula && a.atleta_id !== currentAtletaId.value) : res.some(a => a.cedula === atletaForm.cedula)
+          if (isDuplicate) { ElMessage.error('La cédula ingresada ya está registrada para otro atleta.'); return }
+        } catch (error) { console.error('Error validando cédula', error) }
+      }
+    }
+    atletaStep.value++
+  }
+  if (fieldsToValidate.length > 0) {
+    let validCount = 0; let hasErrors = false
+    fieldsToValidate.forEach(field => {
+      atletaFormRef.value.validateField(field, (errorMessage) => {
+        if (errorMessage) hasErrors = true; validCount++
+        if (validCount === fieldsToValidate.length) { if (!hasErrors) goToNextStep(); else ElMessage.error('Por favor, complete los campos requeridos en este paso.') }
+      })
+    })
+  } else { goToNextStep() }
+}
+function resetAtletaStep() { atletaStep.value = 0; if (atletaFormRef.value) atletaFormRef.value.clearValidate() }
+function checkUnderage() { /* isUnderage computed reacts automatically */ }
+function openMedicalModal() {
+  if (fichaMedica.value) { Object.assign(medicalForm, { grupo_sanguineo: fichaMedica.value.grupo_sanguineo || '', alergias: fichaMedica.value.alergias || '', antecedentes_familiares: fichaMedica.value.antecedentes_familiares || '', antecedentes_quirurgicos: fichaMedica.value.antecedentes_quirurgicos || '', condicion_cronica: fichaMedica.value.condicion_cronica || '', medicacion_actual: fichaMedica.value.medicacion_actual || '' }) }
+  else { resetMedicalForm() }
+  showMedicalModal.value = true
+}
+function openAnthropometricModal(medida = null) {
+  if (medida && medida.medidas_id) { editingAnthropometricId.value = medida.medidas_id; Object.assign(anthropometricForm, { peso: medida.peso, altura: medida.altura, porcentaje_grasa: medida.porcentaje_grasa, porcentaje_musculatura: medida.porcentaje_musculatura, envergadura: medida.envergadura, largo_de_pierna: medida.largo_de_pierna, largo_de_torso: medida.largo_de_torso, fecha_medicion: medida.fecha_medicion }) }
+  else { editingAnthropometricId.value = null; resetAnthropometricForm(); const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); anthropometricForm.fecha_medicion = now.toISOString().slice(0, 19).replace('T', ' ') }
+  showAnthropometricModal.value = true
+}
+function openPerformanceModal(test = null) {
+  if (test && test.test_id) { editingPerformanceId.value = test.test_id; Object.assign(performanceForm, { test_de_fuerza: test.test_de_fuerza, test_resistencia: test.test_resistencia, test_velocidad: test.test_velocidad, test_coordinacion: test.test_coordinacion, test_de_reaccion: test.test_de_reaccion, fecha_test: test.fecha_test }) }
+  else { editingPerformanceId.value = null; resetPerformanceForm(); const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); performanceForm.fecha_test = now.toISOString().slice(0, 19).replace('T', ' ') }
+  showPerformanceModal.value = true
+}
+function openTutorModal() {
+  if (tutor.value && !isSelfRepresented.value) {
+    isEditingTutor.value = true
+    Object.assign(tutorForm, { nombre_completo: tutor.value.nombre_completo, cedula: tutor.value.cedula === 'S/N' ? '' : tutor.value.cedula, telefono: (tutor.value.telefono === 'S/N' ? '' : tutor.value.telefono) || '', direccion: { estado: tutor.value.estado || '', municipio: tutor.value.municipio || '', parroquia: tutor.value.parroquia || '', descripcion_descriptiva: tutor.value.descripcion_descriptiva || '' }, tipo_relacion: tutor.value.tipo_relacion })
+    if (tutorForm.direccion.estado) fetchMunicipiosTutor(tutorForm.direccion.estado).then(() => { if (tutorForm.direccion.municipio) fetchParroquiasTutor(tutorForm.direccion.municipio) })
+  } else {
+    isEditingTutor.value = false; resetTutorForm()
+    if (currentAtleta.value) Object.assign(tutorForm.direccion, { pais: currentAtleta.value.pais || 'venezuela', estado: currentAtleta.value.estado || '', municipio: currentAtleta.value.municipio || '', parroquia: currentAtleta.value.parroquia || '', descripcion_descriptiva: currentAtleta.value.descripcion_descriptiva || '' })
+  }
+  showTutorModal.value = true
+}
+function openAtencionModal() { isEditingAtencion.value = false; resetAtencionForm(); atencionForm.fecha_suceso = new Date().toISOString().split('T')[0]; showAtencionModal.value = true }
+function editAtencion(row) { isEditingAtencion.value = true; Object.assign(atencionForm, { ...row }); if (atencionForm.fecha_suceso) atencionForm.fecha_suceso = atencionForm.fecha_suceso.split('T')[0]; if (atencionForm.fecha_alta_estimada) atencionForm.fecha_alta_estimada = atencionForm.fecha_alta_estimada.split('T')[0]; if (atencionForm.fecha_alta_real) atencionForm.fecha_alta_real = atencionForm.fecha_alta_real.split('T')[0]; showAtencionModal.value = true }
+function openCarnetModal() {
+  if (carnetDiscapacidad.value) { Object.assign(carnetForm, { tipo_discapacidad_id: carnetDiscapacidad.value.tipo_discapacidad_id, nro_carnet: carnetDiscapacidad.value.nro_carnet, porcentaje_discapacidad: carnetDiscapacidad.value.porcentaje_discapacidad, fecha_registro: carnetDiscapacidad.value.fecha_registro ? carnetDiscapacidad.value.fecha_registro.split('T')[0] : '' }) }
+  else { resetCarnetForm(); carnetForm.fecha_registro = new Date().toISOString().split('T')[0] }
+  showCarnetModal.value = true
+}
+
+// === SAVE FUNCTIONS ===
+function saveAtleta() {
+  atletaFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    if (isUnderage.value) {
+      const rep = atletaForm.representante
+      if (!rep.nombre || !rep.apellido || !rep.cedula || !rep.telefono || !rep.tipo_relacion) { ElMessage.error('Complete todos los datos del representante, el atleta es menor de edad.'); return }
+      if (rep.cedula.length < 7) { ElMessage.error('La cédula del representante debe tener al menos 7 dígitos.'); return }
+      if (rep.telefono.length !== 11) { ElMessage.error('El teléfono del representante debe tener exactamente 11 dígitos.'); return }
+    } else { if (!atletaForm.telefono || atletaForm.telefono.length !== 11) { ElMessage.error('Debe ingresar un teléfono válido de 11 dígitos para atletas mayores de edad.'); return } }
+    const dir = atletaForm.direccion
+    if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.descripcion_descriptiva) { ElMessage.error('Complete todos los datos de la dirección.'); return }
+    loading.value = true
+    try {
+      if (isEditingAtleta.value) { await request({ url: `/atletas/${currentAtletaId.value}`, method: 'put', data: { ...atletaForm } }); ElMessage.success('Atleta actualizado correctamente') }
+      else { await request({ url: '/atletas', method: 'post', data: { ...atletaForm } }); ElMessage.success('Atleta creado correctamente') }
+      showAtletaModal.value = false; await loadAtletas()
+      if (isEditingAtleta.value) await selectAtleta(currentAtletaId.value)
+    } catch (error) { console.error('Error guardando atleta:', error) }
+    finally { loading.value = false }
+  })
+}
+function saveEditPersonal() {
+  editPersonalFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    if (!isUnderage.value) {
+      if (!atletaForm.telefono) { ElMessage.error('El teléfono es obligatorio para atletas mayores de edad.'); return }
+      const dir = atletaForm.direccion; if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.descripcion_descriptiva) { ElMessage.error('Complete todos los datos de la dirección.'); return }
+    }
+    loading.value = true
+    try {
+      await request({ url: `/atletas/${currentAtletaId.value}`, method: 'put', data: { nombre: atletaForm.nombre, apellido: atletaForm.apellido, cedula: atletaForm.cedula, fecha_nacimiento: atletaForm.fecha_nacimiento, sexo: atletaForm.sexo, telefono: atletaForm.telefono, estatus: atletaForm.estatus, foto: atletaForm.foto, direccion: atletaForm.direccion } })
+      ElMessage.success('Datos personales actualizados correctamente'); showEditPersonalModal.value = false; await loadAtletas(); await selectAtleta(currentAtletaId.value)
+    } catch (error) { console.error('Error actualizando datos personales:', error) }
+    finally { loading.value = false }
+  })
+}
+function saveEditSports() {
+  editSportsFormRef.value.validate(async (valid) => {
+    if (!valid) return; loading.value = true
+    try {
+      await request({ url: `/atletas/${currentAtletaId.value}`, method: 'put', data: { categoria_id: atletaForm.categoria_id, posicion_de_juego: atletaForm.posicion_de_juego, pierna_dominante: atletaForm.pierna_dominante } })
+      ElMessage.success('Datos deportivos actualizados correctamente'); showEditSportsModal.value = false; await loadAtletas(); await selectAtleta(currentAtletaId.value)
+    } catch (error) { console.error('Error actualizando datos deportivos:', error) }
+    finally { loading.value = false }
+  })
+}
+async function saveMedical() {
+  loading.value = true
+  try {
+    const data = { ...medicalForm, atleta_id: currentAtletaId.value }
+    if (fichaMedica.value) { await request({ url: `/ficha-medica/${currentAtletaId.value}`, method: 'put', data }); ElMessage.success('Ficha médica actualizada') }
+    else { await request({ url: '/ficha-medica', method: 'post', data }); ElMessage.success('Ficha médica creada') }
+    showMedicalModal.value = false; await loadFichaMedica(currentAtletaId.value)
+  } catch (error) { console.error('Error guardando ficha médica:', error) }
+  finally { loading.value = false }
+}
+async function saveAnthropometric() {
+  loading.value = true
+  try {
+    const payload = { ...anthropometricForm, atleta_id: currentAtletaId.value }
+    let url = '/mediciones'; let method = 'post'
+    if (editingAnthropometricId.value) { url = `/mediciones/${editingAnthropometricId.value}`; method = 'put' }
+    await request({ url, method, data: payload }); ElMessage.success(`Medidas ${editingAnthropometricId.value ? 'actualizadas' : 'registradas'} exitosamente`)
+    showAnthropometricModal.value = false; await loadMedidas(currentAtletaId.value)
+  } catch (error) { console.error('Error guardando medidas:', error) }
+  finally { loading.value = false }
+}
+async function savePerformance() {
+  loading.value = true
+  try {
+    const payload = { ...performanceForm, atleta_id: currentAtletaId.value }
+    let url = '/tests'; let method = 'post'
+    if (editingPerformanceId.value) { url = `/tests/${editingPerformanceId.value}`; method = 'put' }
+    await request({ url, method, data: payload }); ElMessage.success(`Test ${editingPerformanceId.value ? 'actualizado' : 'registrado'} exitosamente`)
+    showPerformanceModal.value = false; await loadTests(currentAtletaId.value)
+  } catch (error) { console.error('Error guardando test:', error) }
+  finally { loading.value = false }
+}
+function saveTutor() {
+  tutorFormRef.value.validate(async (valid) => {
+    if (!valid) return; loading.value = true
+    try {
+      if (isEditingTutor.value && tutor.value) { await request({ url: `/tutor/${tutor.value.representante_id}`, method: 'put', data: { ...tutorForm } }); ElMessage.success('Tutor actualizado correctamente') }
+      else {
+        const response = await request({ url: '/tutor', method: 'post', data: { ...tutorForm } })
+        const nuevoTutorId = response.id || response.tutor_id || response.insertId
+        if (!nuevoTutorId) { console.error('Respuesta:', response); throw new Error('No se recibió el ID del tutor creado') }
+        if (!currentAtletaId.value) throw new Error('No hay atleta seleccionado')
+        await request({ url: `/atletas/${currentAtletaId.value}/tutor`, method: 'put', data: { tutor_id: nuevoTutorId } }); ElMessage.success('Tutor creado y asignado correctamente')
+      }
+      showTutorModal.value = false; await loadAtletas(); await selectAtleta(currentAtletaId.value, true)
+    } catch (error) { console.error('Error guardando tutor:', error) }
+    finally { loading.value = false }
+  })
+}
+async function saveAtencion() {
+  if (!atencionForm.tipo_registro || !atencionForm.especialista_id || !atencionForm.descripcion || !atencionForm.fecha_suceso) { ElMessage.warning('Complete todos los campos obligatorios: Tipo, Especialista, Descripción y Fecha.'); return }
+  loading.value = true
+  try {
+    const data = { ...atencionForm, atleta_id: currentAtletaId.value }
+    if (isEditingAtencion.value) { await request({ url: `/atencion-medica/${atencionForm.atencion_id}`, method: 'put', data }); ElMessage.success('Atención médica actualizada') }
+    else { await request({ url: '/atencion-medica', method: 'post', data }); ElMessage.success('Atención médica registrada') }
+    showAtencionModal.value = false; await loadAtencionesMedicas(currentAtletaId.value)
+  } catch (error) { console.error(error) } finally { loading.value = false }
+}
+async function saveCarnet() {
+  loading.value = true
+  try {
+    const data = { ...carnetForm, atleta_id: currentAtletaId.value }
+    if (carnetDiscapacidad.value) { await request({ url: `/carnet-discapacidad/${carnetDiscapacidad.value.id}`, method: 'put', data }); ElMessage.success('Carnet de discapacidad actualizado') }
+    else { await request({ url: '/carnet-discapacidad', method: 'post', data }); ElMessage.success('Carnet de discapacidad registrado') }
+    showCarnetModal.value = false; await loadCarnetDiscapacidad(currentAtletaId.value)
+  } catch (error) { console.error(error); ElMessage.error('Error al guardar el carnet de discapacidad') } finally { loading.value = false }
+}
+
+// === DELETE FUNCTIONS ===
+async function deleteTutor() {
+  try { await ElMessageBox.confirm('¿Está seguro de que desea eliminar este representante?', 'Confirmar eliminación', { confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar', type: 'warning' }) } catch { return }
+  loading.value = true
+  try { await request({ url: `/atletas/${currentAtletaId.value}/tutor`, method: 'delete' }); ElMessage.success('Representante eliminado correctamente'); await loadAtletas(); await selectAtleta(currentAtletaId.value, true) }
+  catch (error) { console.error('Error eliminando tutor:', error); ElMessage.error('Error al eliminar representante') } finally { loading.value = false }
+}
+async function deleteAtencion(id) {
+  try { await ElMessageBox.confirm('¿Desea eliminar este registro médico?', 'Confirmar', { confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning' }); await request({ url: `/atencion-medica/${id}`, method: 'delete' }); ElMessage.success('Registro eliminado'); await loadAtencionesMedicas(currentAtletaId.value) }
+  catch (error) { if (error !== 'cancel') { console.error(error); ElMessage.error('Error al eliminar') } }
+}
+async function deletePerformanceTest(testId) {
+  if (!testId) return
+  try { await ElMessageBox.confirm('¿Está seguro de eliminar este test?', 'Confirmar', { confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning' }); loading.value = true; await request({ url: `/tests/${testId}`, method: 'delete' }); ElMessage.success('Test eliminado exitosamente'); await loadAtletas(); await selectAtleta(currentAtletaId.value) }
+  catch (error) { if (error !== 'cancel') { console.error('Error eliminando test:', error); ElMessage.error('Error al eliminar el test') } } finally { loading.value = false }
+}
+async function deleteMedida(medidaId) {
+  if (!medidaId) return
+  try { await ElMessageBox.confirm('¿Está seguro de eliminar estas medidas?', 'Confirmar', { confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning' }); loading.value = true; await request({ url: `/mediciones/${medidaId}`, method: 'delete' }); ElMessage.success('Medidas eliminadas exitosamente'); await loadAtletas(); await selectAtleta(currentAtletaId.value) }
+  catch (error) { if (error !== 'cancel') { console.error('Error eliminando medidas:', error); ElMessage.error('Error al eliminar medidas') } } finally { loading.value = false }
+}
+function deleteAtleta() {
+  ElMessageBox.confirm('¿Estás seguro de que deseas ELIMINAR PERMANENTEMENTE a este atleta? Se borrarán TODOS sus registros asociados. Esta acción NO se puede deshacer.', 'Eliminar Atleta Permanentemente', { confirmButtonText: 'Sí, eliminar todo', cancelButtonText: 'Cancelar', type: 'error' })
+  .then(async () => {
+    try { await request({ url: `/atletas/${currentAtletaId.value}`, method: 'delete' }); ElMessage.success('Atleta eliminado correctamente'); currentAtletaId.value = null; currentAtleta.value = {}; await loadAtletas() }
+    catch (error) { console.error('Error eliminando atleta:', error); ElMessage.error('Error al eliminar atleta') }
+  }).catch(() => {})
+}
+
+// === RESET FUNCTIONS ===
+function resetAtletaForm() { Object.assign(atletaForm, { nombre: '', apellido: '', cedula: '', fecha_nacimiento: '', sexo: 'M', posicion_de_juego: null, categoria_id: '', tutor_id: null, telefono: '', direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' }, representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }, estatus: 'ACTIVO', foto: null, pierna_dominante: 'Derecha' }); municipiosListAtleta.value = []; parroquiasListAtleta.value = [] }
+function resetMedicalForm() { Object.assign(medicalForm, { grupo_sanguineo: '', alergias: '', antecedentes_familiares: '', antecedentes_quirurgicos: '', condicion_cronica: '', medicacion_actual: '' }) }
+function resetAnthropometricForm() { Object.assign(anthropometricForm, { peso: null, altura: null, porcentaje_grasa: null, porcentaje_musculatura: null, envergadura: null, largo_de_pierna: null, largo_de_torso: null, fecha_medicion: '' }) }
+function resetPerformanceForm() { Object.assign(performanceForm, { test_de_fuerza: null, test_resistencia: null, test_velocidad: null, test_coordinacion: null, test_de_reaccion: null, fecha_test: '' }) }
+function resetTutorForm() { Object.assign(tutorForm, { nombre_completo: '', cedula: '', telefono: '', correo: '', direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' }, tipo_relacion: '' }); municipiosListTutor.value = []; parroquiasListTutor.value = [] }
+function resetAtencionForm() { Object.assign(atencionForm, { tipo_registro: 1, descripcion: '', diagnostico: '', fecha_suceso: '', fecha_alta_estimada: '', fecha_alta_real: '', tratamiento_indicado: '', especialista_id: null, estado_disponibilidad: 0 }) }
+function resetCarnetForm() { Object.assign(carnetForm, { tipo_discapacidad_id: null, nro_carnet: '', porcentaje_discapacidad: null, fecha_registro: '' }) }
+
+// === UTILITY FUNCTIONS ===
+function formatEnum(value) { if (!value) return ''; return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() }
+function calculateAge(birthdate) { if (!birthdate) return '-'; const b = new Date(birthdate); const t = new Date(); let age = t.getFullYear() - b.getFullYear(); const m = t.getMonth() - b.getMonth(); if (m < 0 || (m === 0 && t.getDate() < b.getDate())) age--; return age }
+function formatDate(dateString) { if (!dateString) return '-'; return new Date(dateString).toLocaleDateString('es-ES') }
+function formatDateTime(dateString) { if (!dateString) return '-'; return new Date(dateString).toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) }
+function getStatusType(estatus) { return { 'ACTIVO': 'success', 'INACTIVO': 'info', 'LESIONADO': 'warning', 'SUSPENDIDO': 'danger' }[estatus] || 'info' }
+function getDisponibilidadMedicaType(estado) { return { 0: 'danger', 1: 'warning', 2: 'success' }[estado] || 'info' }
+function getDisponibilidadMedicaLabel(estado) { return { 0: 'No Apto', 1: 'Diferenciado', 2: 'Apto' }[estado] || 'Desconocido' }
+function getPartidoResultadoType(r) { if (r === 'V') return 'success'; if (r === 'E') return 'warning'; if (r === 'D') return 'danger'; return 'info' }
+function getPartidoResultadoLabel(r) { if (r === 'V') return 'Victoria'; if (r === 'E') return 'Empate'; if (r === 'D') return 'Derrota'; return 'N/A' }
+function getEntrenadorNombre(categoriaId) { if (!categoriaId || !categorias.value || categorias.value.length === 0) return 'No asignado'; const c = categorias.value.find(c => c.categoria_id === categoriaId); return c ? (c.entrenador_nombre || c.nombre_entrenador || 'No asignado') : 'No asignado' }
+function getFotoUrl(filename) { if (!filename) return null; return `${backendUrl}/uploads/atletas/${filename}` }
+function handleUploadSuccess(res) { atletaForm.foto = res.filename; ElMessage.success('Foto cargada exitosamente') }
+function removePhoto() { atletaForm.foto = '' }
+function beforeAvatarUpload(file) { const isJPGorPNG = file.type === 'image/jpeg' || file.type === 'image/png'; const isLt2M = file.size / 1024 / 1024 < 2; if (!isJPGorPNG) ElMessage.error('La imagen debe estar en formato JPG o PNG'); if (!isLt2M) ElMessage.error('La imagen no puede exceder los 2MB'); return isJPGorPNG && isLt2M }
+function goToProgress() { router.push({ path: '/reportes/rendimiento', query: { atleta_id: currentAtletaId.value } }) }
+
+// === LIFECYCLE ===
+onMounted(() => { loadData() })
 </script>
+
 
 <style scoped>
 .atletas-container {
@@ -3023,13 +2032,13 @@ export default {
   min-height: 100vh;
 }
 
-.page-header {
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
+.premium-header {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
   color: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 12px rgba(229, 29, 34, 0.2);
+  padding: 24px 30px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 25px -5px var(--color-shadow);
 }
 
 .header-content {
@@ -3050,398 +2059,873 @@ export default {
   margin: 0;
 }
 
-/* Header Button - Modern Executive Style */
-.header-content ::v-deep .el-button--primary {
+/* Header Button - Custom Style */
+.add-atleta-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.15);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.35);
   color: #fff;
   font-weight: 600;
   font-size: 0.95rem;
-  padding: 12px 24px;
+  padding: 10px 24px;
   border-radius: 12px;
   backdrop-filter: blur(10px);
+  cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: inherit;
 }
 
-.header-content ::v-deep .el-button--primary:hover {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+.add-atleta-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
   transform: translateY(-2px);
 }
 
-.header-content ::v-deep .el-button--primary:active {
+.add-atleta-btn:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.add-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .main-content {
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 15px;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
 }
 
 aside.sidebar {
   padding: 0;
   background: transparent;
-  margin-bottom: 0;
 }
 
-.sidebar .el-card {
-  height: calc(100vh - 200px);
+.sidebar-card {
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 2px solid var(--color-border);
   overflow: hidden;
+  height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
 }
 
-.sidebar ::v-deep .el-card__body {
-  padding: 0;
+.sidebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.athlete-list {
-  max-height: calc(100vh - 340px);
-  overflow-y: auto;
+.mini-add-btn {
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+  }
 }
 
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #fff;
 }
 
-.search-container {
-  padding: 15px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border-bottom: 2px solid #e2e8f0;
+.sidebar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.2px;
 }
 
-.search-container ::v-deep .el-input__inner {
-  background: #fff !important;
-  border: 2px solid #64748b !important;
+.sidebar-title-icon {
+  font-size: 1rem;
+}
+
+.filter-toggle-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-toggle-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Empty Main Content */
+.empty-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: var(--color-bg-card);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.empty-main-content {
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-main-icon {
+  width: 88px;
+  height: 88px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 18px;
+  border-radius: 24px;
+  font-size: 2.4rem;
+  color: var(--color-primary);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.42));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+.empty-main-content h3 {
+  color: #475569;
+  font-size: 1.3rem;
+  margin: 0 0 8px 0;
+  font-weight: 700;
+}
+
+.empty-main-content p {
+  color: var(--color-border);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Detail Card */
+.detail-card {
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 2px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* Avatar Initials */
+.avatar-initials {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.avatar-initials-large {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+/* Athlete Status Dot */
+.athlete-status-dot {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: center;
+}
+.athlete-status-dot.status-activo { background: #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.4); }
+.athlete-status-dot.status-inactivo { background: var(--color-border); }
+.athlete-status-dot.status-lesionado { background: #f59e0b; box-shadow: 0 0 6px rgba(245, 158, 11, 0.4); }
+.athlete-status-dot.status-suspendido { background: #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.4); }
+
+/* Athlete Category badge in list */
+.athlete-category {
+  color: var(--color-text-main) !important;
+  font-size: 0.8rem !important;
+  font-weight: 600;
+  opacity: 1;
+}
+
+/* Empty List */
+.empty-list {
+  text-align: center;
+  padding: 50px 20px;
+}
+
+.empty-list-icon {
+  width: 64px;
+  height: 64px;
+  font-size: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+  color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+.empty-list-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0 0 6px 0;
+}
+
+.empty-list-hint {
+  font-size: 0.82rem;
+  color: var(--color-border);
+  margin: 0;
+}
+
+/* Action Buttons */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
   border-radius: 10px;
-  padding: 10px 14px 10px 36px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: inherit;
 }
 
-.search-container ::v-deep .el-input__inner:hover {
-  border-color: #E51D22 !important;
+.action-btn-icon {
+  font-size: 0.95rem;
 }
 
-.search-container ::v-deep .el-input__inner:focus {
-  border-color: #E51D22 !important;
-  box-shadow: 0 0 0 3px rgba(229, 29, 34, 0.12);
+/* Search & Filters Inside Sidebar */
+.search-container {
+  padding: 18px 16px 16px;
+  background: linear-gradient(180deg, rgba(255, 59, 48, 0.08), transparent 90px), var(--color-bg-card);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
-.search-container ::v-deep .el-input__inner::placeholder {
-  color: #64748b !important;
-  font-weight: 500;
+.search-intro {
+  margin-bottom: 14px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.search-container ::v-deep .el-input__prefix {
-  color: #64748b;
+.search-intro-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-theme='dark'] .search-intro-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: transparent;
+}
+
+.search-intro p {
+  margin: 10px 0 0;
+  color: var(--color-text-main);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.premium-search-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-primary);
+  margin-bottom: 8px;
+  opacity: 0.95;
+}
+
+:deep(.athletes-filter-popper) {
+  border-radius: 22px !important;
+  padding: 0 !important;
+  background: var(--color-bg-card) !important;
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+  box-shadow: 0 28px 55px -35px rgba(15, 23, 42, 0.75) !important;
 }
 
 .filter-popover {
-  padding: 5px;
+  padding: 18px;
 }
 
-.filter-popover h4 {
-  margin: 0 0 18px 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #E51D22;
-  border-bottom: 2px solid #E51D22;
-  padding-bottom: 12px;
+.filter-popover-header {
+  margin-bottom: 16px;
+}
+
+.filter-popover-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 59, 48, 0.12);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+}
+
+.filter-popover-header h4 {
+  margin: 10px 0 6px;
+  color: var(--color-text-main);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.filter-popover-header p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.83rem;
+  line-height: 1.5;
 }
 
 .filter-item {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+}
+
+.filter-item:last-child {
+  margin-bottom: 0;
 }
 
 .filter-item label {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1e293b;
   margin-bottom: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
 }
 
-.filter-item ::v-deep .el-select .el-input__inner {
-  background: #fff !important;
-  border: 2px solid #64748b !important;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
+:deep(.modern-filter-select .el-select__wrapper) {
+  min-height: 44px;
+  border-radius: 14px;
+  background: var(--color-bg-body);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+  transition: box-shadow 0.25s ease, background 0.25s ease, transform 0.25s ease;
 }
 
-.filter-item ::v-deep .el-select .el-input__inner:hover {
-  border-color: #E51D22 !important;
+:deep(.modern-filter-select .el-select__wrapper:hover) {
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 79, 0.28);
 }
 
-.filter-item ::v-deep .el-select .el-input.is-focus .el-input__inner {
-  border-color: #E51D22 !important;
-  box-shadow: 0 0 0 3px rgba(229, 29, 34, 0.12);
+:deep(.modern-filter-select .el-select__wrapper.is-focused) {
+  background: var(--color-bg-card);
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.14), inset 0 0 0 1px var(--color-primary);
 }
 
-/* Placeholder styling for select dropdowns in filter popover */
-.filter-item ::v-deep .el-select .el-input__inner::placeholder {
-  color: #1e293b !important;
-  font-weight: 500;
-  opacity: 1;
+:deep(.athletes-filter-select-dropdown.el-popper) {
+  border-radius: 14px !important;
+  background: var(--color-bg-card) !important;
+  border: 1px solid rgba(148, 163, 184, 0.18) !important;
+  box-shadow: 0 22px 40px -28px rgba(15, 23, 42, 0.9) !important;
 }
 
-/* Estilos para el input de cédula - igual que los selectores */
-.filter-item ::v-deep > .el-input .el-input__inner {
-  background: #fff !important;
-  border: 2px solid #64748b !important;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #1e293b;
-  transition: all 0.3s ease;
+:deep(.athletes-filter-select-dropdown .el-popper__arrow::before) {
+  background: var(--color-bg-card) !important;
+  border-color: rgba(148, 163, 184, 0.18) !important;
 }
 
-.filter-item ::v-deep > .el-input .el-input__inner:hover {
-  border-color: #E51D22 !important;
+:deep(.athletes-filter-select-dropdown .el-select-dropdown__wrap) {
+  background: transparent !important;
 }
 
-.filter-item ::v-deep > .el-input .el-input__inner:focus {
-  border-color: #E51D22 !important;
-  box-shadow: 0 0 0 3px rgba(229, 29, 34, 0.12);
-}
-
-.filter-item ::v-deep > .el-input .el-input__inner::placeholder {
-  color: #64748b !important;
-  font-weight: 500;
-  opacity: 1;
-}
-
-/* Estilos modernos para el switch */
-.filter-item ::v-deep .el-switch {
-  height: 28px;
-}
-
-.filter-item ::v-deep .el-switch__core {
-  width: 50px !important;
-  height: 26px !important;
-  border-radius: 13px;
-  border: 2px solid #cbd5e1;
-  background-color: #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.filter-item ::v-deep .el-switch__core::after {
-  width: 20px;
-  height: 20px;
-  top: 1px;
-  left: 1px;
-  border-radius: 50%;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-}
-
-.filter-item ::v-deep .el-switch.is-checked .el-switch__core {
-  background-color: #E51D22 !important;
-  border-color: #E51D22 !important;
-}
-
-.filter-item ::v-deep .el-switch.is-checked .el-switch__core::after {
-  left: 100%;
-  margin-left: -23px;
-}
-
-.filter-item ::v-deep .el-switch__label {
-  font-size: 0.85rem;
+:deep(.athletes-filter-select-dropdown .el-select-dropdown__item) {
+  color: var(--color-text-main) !important;
   font-weight: 600;
-  color: #64748b;
 }
 
-.filter-item ::v-deep .el-switch__label.is-active {
-  color: #1e293b;
+:deep(.athletes-filter-select-dropdown .el-select-dropdown__item:hover),
+:deep(.athletes-filter-select-dropdown .el-select-dropdown__item.hover) {
+  background: rgba(255, 59, 48, 0.16) !important;
+  color: var(--color-text-main) !important;
 }
 
-.filter-item ::v-deep .el-switch__label--left {
-  margin-right: 8px;
+:deep(.athletes-filter-select-dropdown .el-select-dropdown__item.selected) {
+  background: rgba(255, 59, 48, 0.22) !important;
+  color: #bfdbfe !important;
+  font-weight: 700;
 }
 
-.filter-item ::v-deep .el-switch__label--right {
-  margin-left: 8px;
+:deep(.modern-sidebar-control .el-input__wrapper) {
+  min-height: 46px;
+  border-radius: 15px;
+  background: var(--color-bg-body);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  padding: 0 14px;
+  transition: box-shadow 0.25s ease, transform 0.25s ease, background 0.25s ease;
 }
 
-.filter-btn {
-  font-size: 1.3rem;
-  color: #64748b;
-  padding: 5px;
-  transition: all 0.3s ease;
+:deep(.modern-sidebar-control .el-input__wrapper:hover) {
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 79, 0.26);
 }
 
-.filter-btn:hover {
-  color: #E51D22;
-  transform: rotate(90deg);
+:deep(.modern-sidebar-control .el-input__wrapper.is-focus) {
+  background: var(--color-bg-card);
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.14), inset 0 0 0 1px var(--color-primary);
 }
 
-.avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+:deep(.modern-sidebar-control .el-input__inner) {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.field-caption {
+  margin: 8px 2px 0;
+  color: var(--color-text-muted);
+  font-size: 0.77rem;
+  line-height: 1.45;
+}
+
+.modern-toggle-group {
+  display: flex;
+  gap: 6px;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.14), rgba(148, 163, 184, 0.08));
+  padding: 6px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.toggle-btn {
+  flex: 1;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 9px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
   border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.active {
+    background: linear-gradient(135deg, rgba(255, 59, 48, 0.18), rgba(255, 59, 48, 0.08));
+    color: var(--color-primary);
+    border-color: rgba(255, 90, 79, 0.16);
+    box-shadow: 0 18px 30px -28px rgba(255, 59, 48, 0.95);
+    transform: translateY(-1px);
+  }
+
+  &:hover:not(.active) {
+    color: var(--color-text-main);
+    background: rgba(255, 255, 255, 0.05);
+  }
 }
 
-.avatar-img-large {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 12px;
+.modern-cedula-input {
+  margin-top: 8px;
+}
+
+/* Modern Dialog Forms */
+:deep(.modern-athlete-dialog) {
+  border-radius: 28px !important;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 59, 48, 0.06), transparent 140px), var(--color-bg-card);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 35px 70px -42px rgba(15, 23, 42, 0.8);
+}
+
+:deep(.modern-athlete-dialog .el-dialog__header) {
+  padding: 24px 24px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+:deep(.modern-athlete-dialog .el-dialog__title) {
+  color: var(--color-text-main);
+  font-size: 1.14rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+:deep(.modern-athlete-dialog .el-dialog__body) {
+  padding: 20px 24px 8px;
+}
+
+:deep(.modern-athlete-dialog .el-dialog__footer) {
+  padding: 0 24px 24px;
+}
+
+:deep(.modern-athlete-dialog .el-button) {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+:deep(.modern-athlete-dialog .el-button--default) {
+  background: var(--color-bg-body);
+  border-color: transparent;
+  color: var(--color-text-main);
+}
+
+:deep(.modern-athlete-dialog .el-button--default:hover) {
+  background: var(--color-bg-hover);
+  border-color: rgba(148, 163, 184, 0.16);
+  color: var(--color-text-main);
 }
 
 .photo-upload-container {
   display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.14), rgba(255, 122, 102, 0.05));
+  border: 1px dashed rgba(96, 165, 250, 0.28);
+  box-shadow: 0 24px 36px -34px rgba(255, 59, 48, 0.95);
+}
+
+.photo-upload-copy {
+  flex: 1;
+}
+
+.photo-upload-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.photo-upload-copy p {
+  margin: 10px 0 0;
+  color: var(--color-text-main);
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 
 .avatar-uploader {
-  border: 2px dashed #d9d9d9;
-  border-radius: 50%;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  width: 120px;
-  height: 120px;
-  transition: border-color 0.3s;
-}
-
-.avatar-uploader:hover {
-  border-color: #E51D22;
+  flex-shrink: 0;
 }
 
 .avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
   width: 120px;
   height: 120px;
-  line-height: 1.2;
-  text-align: center;
+  border-radius: 18px;
+  border: 1px dashed rgba(255, 90, 79, 0.38);
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-primary);
+  font-weight: 700;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
-.avatar-uploader-icon span {
-  font-size: 12px;
-  margin-top: 5px;
+.avatar-uploader-icon:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 59, 48, 0.08);
+  box-shadow: 0 22px 34px -30px rgba(255, 59, 48, 0.95);
 }
 
 .avatar-preview {
-  width: 120px;
-  height: 120px;
-  display: block;
-  object-fit: cover;
-}
-
-.athlete-item {
-  padding: 16px;
-  margin: 8px 12px;
-  border: 2px solid #cbd5e1;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-}
-
-.athlete-item:hover {
-  border-color: #E51D22;
-  background: linear-gradient(135deg, #fff5f5, #fff);
-  box-shadow: 0 4px 12px rgba(229, 29, 34, 0.12);
-  transform: translateX(4px);
-}
-
-.athlete-item.active {
-  background: linear-gradient(135deg, #fee2e2, #fff);
-  border: 2px solid #E51D22;
-  box-shadow: 0 4px 16px rgba(229, 29, 34, 0.2);
-}
-
-.athlete-photo {
-  width: 48px;
-  height: 48px;
-  min-width: 48px;
-  min-height: 48px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #E51D22, #c41a1d);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  overflow: hidden;
-  box-shadow: 0 3px 8px rgba(229, 29, 34, 0.3);
-}
-
-.avatar-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.athlete-info {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
+.dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.athlete-info h3 {
-  font-size: 0.95rem;
+.dialog-form-intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.14), rgba(255, 122, 102, 0.05));
+  border: 1px solid rgba(96, 165, 250, 0.18);
+  box-shadow: 0 20px 34px -30px rgba(255, 59, 48, 0.95);
+}
+
+.compact-intro {
+  padding: 16px 18px;
+}
+
+.dialog-form-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dialog-form-intro h3 {
+  margin: 10px 0 0;
+  color: var(--color-text-main);
+  font-size: 1.18rem;
+  font-weight: 800;
+}
+
+.dialog-form-intro p {
+  margin: 0;
+  max-width: 260px;
+  color: var(--color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.form-section-card {
+  padding: 18px 18px 6px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 59, 48, 0.05), transparent 48px), var(--color-bg-card);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 24px 42px -38px rgba(15, 23, 42, 0.95);
+}
+
+.form-section-heading {
+  margin-bottom: 16px;
+}
+
+.form-section-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 59, 48, 0.12);
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.form-section-heading h4 {
+  margin: 10px 0 6px;
+  color: var(--color-text-main);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.form-section-heading p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+:deep(.dialog-form .el-form-item) {
+  margin-bottom: 18px;
+}
+
+:deep(.dialog-form .el-form-item__label) {
+  padding-bottom: 8px;
+  color: var(--color-text-main);
+  font-size: 0.83rem;
   font-weight: 700;
-  margin: 0 0 6px 0;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 }
 
-.athlete-info p {
-  font-size: 0.8rem;
-  color: #64748b;
-  margin: 3px 0;
+:deep(.dialog-form .el-input__wrapper),
+:deep(.dialog-form .el-select__wrapper),
+:deep(.dialog-form .el-date-editor .el-input__wrapper),
+:deep(.dialog-form .el-input-number .el-input__wrapper) {
+  min-height: 48px;
+  border-radius: 16px;
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  padding: 0 14px;
+  transition: box-shadow 0.25s ease, background 0.25s ease, transform 0.25s ease;
+}
+
+:deep(.dialog-form .el-input__wrapper:hover),
+:deep(.dialog-form .el-select__wrapper:hover),
+:deep(.dialog-form .el-date-editor .el-input__wrapper:hover),
+:deep(.dialog-form .el-input-number:hover .el-input__wrapper) {
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 79, 0.28);
+}
+
+:deep(.dialog-form .el-input__wrapper.is-focus),
+:deep(.dialog-form .el-select__wrapper.is-focused),
+:deep(.dialog-form .el-date-editor .el-input__wrapper.is-focus),
+:deep(.dialog-form .el-input-number .el-input__wrapper.is-focus) {
+  background: transparent !important;
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.12), inset 0 0 0 1px var(--color-primary);
+}
+
+:deep(.dialog-form .el-input__inner),
+:deep(.dialog-form .el-select__selected-item),
+:deep(.dialog-form .el-select__placeholder),
+:deep(.dialog-form .el-textarea__inner),
+:deep(.dialog-form .el-input-number .el-input__inner) {
+  color: var(--color-text-main);
+  font-size: 0.95rem;
   font-weight: 500;
+}
+
+:deep(.dialog-form .el-textarea__inner) {
+  min-height: 104px;
+  border-radius: 16px;
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  padding: 14px 16px;
+  line-height: 1.55;
+  resize: vertical;
+  transition: box-shadow 0.25s ease, background 0.25s ease;
+}
+
+:deep(.dialog-form .el-textarea__inner:hover) {
+  box-shadow: inset 0 0 0 1px rgba(255, 90, 79, 0.28);
+}
+
+:deep(.dialog-form .el-textarea__inner:focus) {
+  background: transparent !important;
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.12), inset 0 0 0 1px var(--color-primary);
+}
+
+:deep(.dialog-form .el-input-number) {
+  width: 100%;
+}
+
+:deep(.dialog-form .el-input-number__increase),
+:deep(.dialog-form .el-input-number__decrease) {
+  width: 34px;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+}
+
+:deep(.dialog-form .el-input-number__increase:hover),
+:deep(.dialog-form .el-input-number__decrease:hover) {
+  background: rgba(255, 59, 48, 0.08);
+}
+
+/* Athlete List */
+.athlete-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 450px);
+}
+
+.athlete-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.status-activo { background-color: #10b981; }
+.status-lesionado { background-color: #f59e0b; }
+.status-suspendido { background-color: #ef4444; }
+.status-inactivo { background-color: #64748b; }
+
+/* Detail Card */
+.detail-card {
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
 }
 
 .athlete-details-header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e2e8f0;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--color-border);
+  margin-bottom: 24px;
 }
 
 .athlete-details-photo {
   width: 100px;
   height: 100px;
-  border-radius: 12px;
-  background-color: #E51D22;
-  color: white;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  flex-shrink: 0;
+  font-size: 2.8rem;
+}
+
+.item-photo {
+  overflow: hidden;
+}
+
+.avatar-img,
+.avatar-img-large {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .athlete-details-info {
@@ -3453,14 +2937,66 @@ aside.sidebar {
 .athlete-details-info h2 {
   font-size: 1.5rem;
   margin: 0 0 8px 0;
-  color: #2c3e50;
+  color: var(--color-text-main);
   word-break: break-all;
 }
 
 .athlete-details-info p {
-  color: #64748b;
+  color: var(--color-text-muted);
   margin: 4px 0;
   font-size: 0.95rem;
+}
+
+.athlete-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.athlete-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--color-bg-card), var(--color-bg-body));
+  border: 1px solid var(--color-border);
+  box-shadow: 0 12px 26px rgba(2, 6, 23, 0.18);
+}
+
+.athlete-meta-icon {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--color-primary);
+  background: linear-gradient(180deg, var(--color-bg-body), var(--color-bg-card));
+  font-size: 1rem;
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.athlete-meta-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.athlete-meta-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.athlete-meta-value {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-main);
 }
 
 .athlete-actions {
@@ -3480,19 +3016,19 @@ aside.sidebar {
   justify-content: flex-end;
   margin-bottom: 15px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .form-item label {
   display: block;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--color-text-main);
   margin-bottom: 8px;
   font-size: 0.9rem;
 }
 
 .form-item p {
-  color: #64748b;
+  color: var(--color-text-muted);
   font-size: 1rem;
   margin: 0;
 }
@@ -3509,15 +3045,15 @@ aside.sidebar {
 }
 
 .performance-item {
-  background-color: #f8fafc;
+  background-color: var(--color-bg-card);
   padding: 20px;
   border-radius: 8px;
-  border-left: 4px solid #E51D22;
+  border-left: 4px solid var(--color-primary);
 }
 
 .performance-item h4 {
   font-size: 0.9rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   margin: 0 0 10px 0;
   font-weight: 600;
 }
@@ -3525,20 +3061,20 @@ aside.sidebar {
 .performance-item p {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--color-text-main);
   margin: 0;
 }
 
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #94a3b8;
+  color: var(--color-border);
 }
 
 .empty-tab {
   text-align: center;
   padding: 80px 20px;
-  color: #94a3b8;
+  color: var(--color-border);
 }
 
 .empty-tab i {
@@ -3558,45 +3094,45 @@ aside.sidebar {
   margin-top: 10px;
 }
 
-::v-deep .el-button--primary {
-  background-color: #E51D22;
-  border-color: #E51D22;
+:deep(.el-button--primary) {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
-::v-deep .el-button--primary:hover,
-::v-deep .el-button--primary:focus {
-  background-color: #c41a1d;
-  border-color: #c41a1d;
+:deep(.el-button--primary:hover),
+:deep(.el-button--primary:focus) {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
 }
 
-::v-deep .el-tabs__item.is-active {
-  color: #E51D22;
+:deep(.el-tabs__item.is-active) {
+  color: var(--color-primary);
 }
 
-::v-deep .el-tabs__active-bar {
-  background-color: #E51D22;
+:deep(.el-tabs__active-bar) {
+  background-color: var(--color-primary);
 }
 
-::v-deep .el-tabs__item:hover {
-  color: #E51D22;
+:deep(.el-tabs__item:hover) {
+  color: var(--color-primary);
 }
 
-::v-deep .el-tabs__content {
+:deep(.el-tabs__content) {
   height: calc(100vh - 350px);
   overflow-y: auto;
   padding-right: 10px;
 }
 
-::v-deep .el-tabs__content::-webkit-scrollbar {
+:deep(.el-tabs__content::-webkit-scrollbar) {
   width: 8px;
 }
 
-::v-deep .el-tabs__content::-webkit-scrollbar-thumb {
+:deep(.el-tabs__content::-webkit-scrollbar-thumb) {
   background-color: #cbd5e1;
   border-radius: 4px;
 }
 
-/* Responsive - Tablets y Laptops pequeños */
+/* Responsive - Tablets y Laptops peque├▒os */
 @media (max-width: 1200px) {
   .main-content {
     grid-template-columns: 1fr;
@@ -3664,7 +3200,7 @@ aside.sidebar {
   }
 }
 
-/* Responsive - Móviles */
+/* Responsive - M├│viles */
 @media (max-width: 768px) {
   .atletas-container {
     padding: 10px;
@@ -3703,8 +3239,21 @@ aside.sidebar {
     font-size: 1.2rem;
   }
 
-  .athlete-details-info p {
-    font-size: 0.85rem;
+  .athlete-meta {
+    justify-content: center;
+  }
+
+  .athlete-meta-item {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .athlete-meta-copy {
+    align-items: center;
+  }
+
+  .athlete-meta-value {
+    font-size: 0.9rem;
   }
 
   .athlete-actions {
@@ -3751,19 +3300,49 @@ aside.sidebar {
     justify-content: center;
   }
 
+  .dialog-form-intro,
+  .photo-upload-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dialog-form-intro p {
+    max-width: none;
+  }
+
+  .form-section-card {
+    padding: 16px 16px 4px;
+  }
+
+  :deep(.modern-athlete-dialog) {
+    width: calc(100vw - 24px) !important;
+  }
+
+  :deep(.modern-athlete-dialog .el-dialog__header) {
+    padding: 20px 18px 12px;
+  }
+
+  :deep(.modern-athlete-dialog .el-dialog__body) {
+    padding: 16px 18px 8px;
+  }
+
+  :deep(.modern-athlete-dialog .el-dialog__footer) {
+    padding: 0 18px 18px;
+  }
+
   /* Tabs scrollable */
-  ::v-deep .el-tabs__nav-wrap {
+  :deep(.el-tabs__nav-wrap) {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  ::v-deep .el-tabs__content {
+  :deep(.el-tabs__content) {
     height: auto;
     max-height: none;
   }
 }
 
-/* Responsive - Móviles pequeños */
+/* Responsive - M├│viles peque├▒os */
 @media (max-width: 480px) {
   .atletas-container {
     padding: 8px;
@@ -3802,6 +3381,14 @@ aside.sidebar {
   .performance-item p {
     font-size: 1.3rem;
   }
+
+  .dialog-form-intro h3 {
+    font-size: 1.02rem;
+  }
+
+  .photo-upload-container {
+    padding: 16px;
+  }
 }
 
 .photo-preview-wrapper {
@@ -3835,5 +3422,20 @@ aside.sidebar {
 .photo-overlay i {
   color: white;
   font-size: 24px;
+}
+
+.search-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding-left: 2px;
+}
+
+.search-field {
+  margin-bottom: 12px;
 }
 </style>

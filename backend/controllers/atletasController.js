@@ -18,6 +18,39 @@ function mapEstatusToInt(val) {
   return ESTATUS_REVERSE[normalized] !== undefined ? ESTATUS_REVERSE[normalized] : 1
 }
 
+async function resolveLegacyRepresentanteId(requestedTutorId, fallbackDireccionId) {
+  if (requestedTutorId) {
+    return requestedTutorId;
+  }
+
+  const [existingRepresentantes] = await pool.execute(
+    'SELECT representante_id FROM representante ORDER BY representante_id ASC LIMIT 1'
+  );
+
+  if (existingRepresentantes.length > 0) {
+    return existingRepresentantes[0].representante_id;
+  }
+
+  let direccionId = fallbackDireccionId;
+  if (!direccionId) {
+    const [dirRes] = await pool.execute(
+      'INSERT INTO direcciones (parroquias_id, localidad, tipo_vivienda, `ubicación vivienda`) VALUES (?, ?, ?, ?)',
+      [0, '', '', '']
+    );
+    direccionId = dirRes.insertId;
+  }
+
+  const tempCedula = `TMP${Date.now().toString().slice(-8)}`;
+  const [representanteRes] = await pool.execute(
+    `INSERT INTO representante
+     (nombre_completo, telefono, cedula, tipo_relacion, direccion_id, foto)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    ['Sin representante', '00000000000', tempCedula, 'representante', direccionId, null]
+  );
+
+  return representanteRes.insertId;
+}
+
 const getAtletas = async (req, res) => {
   try {
     const { search, cedula, sin_cedula, categoria_id, estatus, order } = req.query

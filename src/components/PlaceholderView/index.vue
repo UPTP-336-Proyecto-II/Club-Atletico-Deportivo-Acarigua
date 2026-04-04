@@ -38,29 +38,27 @@ export default {
 <style lang="scss" scoped>
 .placeholder-container {
   padding: 40px;
-  background-color: #f5f7fa;
-  min-height: calc(100vh - 84px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .placeholder-card {
-  background: white;
+  background: var(--color-bg-card);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(229, 29, 34, 0.1);
+  box-shadow: 0 4px 20px var(--color-shadow);
   padding: 60px 80px;
   text-align: center;
   max-width: 600px;
   width: 100%;
-  border-top: 4px solid #E51D22;
+  border-top: 4px solid var(--color-primary);
 
   .icon-wrapper {
     margin-bottom: 24px;
 
     i {
       font-size: 64px;
-      color: #E51D22;
+      color: var(--color-primary);
       opacity: 0.8;
     }
   }
@@ -68,26 +66,26 @@ export default {
   .page-title {
     font-size: 28px;
     font-weight: 700;
-    color: #333;
+    color: var(--color-text-main);
     margin: 0 0 16px 0;
     font-family: 'Figtree', 'Segoe UI', sans-serif;
   }
 
   .page-description {
     font-size: 16px;
-    color: #666;
+    color: var(--color-text-muted);
     margin: 0 0 32px 0;
   }
 
   .info-box {
     background: rgba(229, 29, 34, 0.05);
-    border: 1px solid rgba(229, 29, 34, 0.2);
+    border: 1px solid var(--color-border);
     border-radius: 8px;
     padding: 16px 24px;
     display: inline-flex;
     align-items: center;
     gap: 12px;
-    color: #E51D22;
+    color: var(--color-primary);
     font-size: 14px;
     font-weight: 500;
 

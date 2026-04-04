@@ -62,56 +62,43 @@
   </section>
 </template>
 
-<script>
-export default {
-  name: 'LandingBanner',
-  data() {
-    return {
-      carouselImages: [
-        {
-          url: require('@/assets/carousel/1.jpeg'),
-          alt: 'Equipo en gradas'
-        },
-        {
-          url: require('@/assets/carousel/2.jpeg'),
-          alt: 'Partido'
-        },
-        {
-          url: require('@/assets/carousel/3.jpeg'),
-          alt: 'Entrenamiento'
-        },
-        {
-          url: require('@/assets/carousel/4.jpeg'),
-          alt: 'Eventos del club'
-        },
-        {
-          url: require('@/assets/carousel/5.jpeg'),
-          alt: 'Equipo'
-        },
-        {
-          url: require('@/assets/carousel/6.jpeg'),
-          alt: 'Partido'
-        },
-        {
-          url: require('@/assets/carousel/7.jpeg'),
-          alt: 'Partido'
-        }
-      ]
-    }
-  },
-  methods: {
-    goToLogin() {
-      this.$router.push('/login')
-    },
-    scrollToSection(sectionId) {
-      const element = document.getElementById(sectionId)
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' })
-      }
-    }
+<script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import img1 from '@/assets/carousel/1.jpeg'
+import img2 from '@/assets/carousel/2.jpeg'
+import img3 from '@/assets/carousel/3.jpeg'
+import img4 from '@/assets/carousel/4.jpeg'
+import img5 from '@/assets/carousel/5.jpeg'
+import img6 from '@/assets/carousel/6.jpeg'
+import img7 from '@/assets/carousel/7.jpeg'
+
+defineOptions({ name: 'LandingBanner' })
+
+const router = useRouter()
+
+const carouselImages = ref([
+  { url: img1, alt: 'Equipo en gradas' },
+  { url: img2, alt: 'Partido' },
+  { url: img3, alt: 'Entrenamiento' },
+  { url: img4, alt: 'Eventos del club' },
+  { url: img5, alt: 'Equipo' },
+  { url: img6, alt: 'Partido' },
+  { url: img7, alt: 'Partido' }
+])
+
+const goToLogin = () => {
+  router.push('/login')
+}
+
+const scrollToSection = (sectionId) => {
+  const element = document.getElementById(sectionId)
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' })
   }
 }
 </script>
+
 
 <style scoped>
 .banner {
@@ -157,8 +144,8 @@ export default {
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(229, 29, 34, 0.7) 0%,
-    rgba(139, 0, 0, 0.6) 100%
+    rgba(15, 23, 42, 0.9) 0%,
+    rgba(239, 68, 68, 0.6) 100%
   );
 }
 
@@ -194,20 +181,21 @@ export default {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
-  color: var(--color-background);
+  color: #ffffff;
 }
 
 .banner-text {
-  color: var(--color-background);
+  color: #ffffff;
 }
 
 .badge {
   display: inline-block;
-  background: var(--color-background);
+  background: #ffffff;
   color: var(--color-primary);
   padding: 0.5rem 1.5rem;
   border-radius: 25px;
   margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .badge-text {
@@ -228,7 +216,7 @@ export default {
 }
 
 .highlight {
-  background: linear-gradient(135deg, var(--color-background) 0%, var(--color-text-light) 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -253,9 +241,9 @@ export default {
 }
 
 .primary-action {
-  background: var(--color-background);
+  background: #ffffff;
   color: var(--color-primary);
-  border: 2px solid transparent;
+  border: 2px solid #ffffff;
   padding: 15px 30px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -269,8 +257,8 @@ export default {
 
 .secondary-action {
   background: transparent;
-  border: 2px solid var(--color-background);
-  color: var(--color-background);
+  border: 2px solid #ffffff;
+  color: #ffffff;
   padding: 15px 30px;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -389,11 +377,9 @@ export default {
   }
 
   .secondary-action {
-    background: var(--color-primary);
-    border: none;
-    outline: 2px solid var(--color-background);
-    outline-offset: -2px;
-    color: var(--color-background);
+    background: transparent;
+    border: 2px solid #ffffff;
+    color: #ffffff;
   }
 }
 
