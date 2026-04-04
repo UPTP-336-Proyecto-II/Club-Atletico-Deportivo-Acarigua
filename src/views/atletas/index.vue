@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="atletas-container">
     <!-- Header -->
     <div class="premium-header">
@@ -1807,8 +1807,9 @@ async function nextAtletaStep() {
   if (fieldsToValidate.length > 0) {
     let validCount = 0; let hasErrors = false
     fieldsToValidate.forEach(field => {
-      atletaFormRef.value.validateField(field, (errorMessage) => {
-        if (errorMessage) hasErrors = true; validCount++
+      atletaFormRef.value.validateField(field, (isValidOrError) => {
+        const isError = typeof isValidOrError === 'boolean' ? !isValidOrError : !!isValidOrError;
+        if (isError) hasErrors = true; validCount++
         if (validCount === fieldsToValidate.length) { if (!hasErrors) goToNextStep(); else ElMessage.error('Por favor, complete los campos requeridos en este paso.') }
       })
     })
