@@ -4,15 +4,15 @@
     <div class="premium-header">
       <div class="header-content">
         <div class="header-info">
-          <h1>Gesti├│n de Atletas
+          <h1>Gestión de Atletas
             <el-tag v-if="!canUserEdit && !isUserMedico" type="info" size="small" style="margin-left: 10px;">
               Solo Lectura
             </el-tag>
             <el-tag v-if="isUserMedico" type="warning" size="small" style="margin-left: 10px;">
-              Acceso M├®dico
+              Acceso Médico
             </el-tag>
           </h1>
-          <p class="subtitle">Club Atl├®tico Deportivo Acarigua</p>
+          <p class="subtitle">Club Atlético Deportivo Acarigua</p>
         </div>
       </div>
     </div>
@@ -34,9 +34,9 @@
               <el-popover placement="bottom-end" width="280" trigger="click" popper-class="athletes-filter-popper">
                 <div class="filter-popover">
                   <div class="filter-popover-header">
-                    <span class="filter-popover-kicker">Panel r├ípido</span>
+                    <span class="filter-popover-kicker">Panel rápido</span>
                     <h4>Filtros avanzados</h4>
-                    <p>Refina la lista por orden, categor├¡a o estatus.</p>
+                    <p>Refina la lista por orden, categoría o estatus.</p>
                   </div>
                   <div class="filter-item">
                     <label>Ordenar por</label>
@@ -47,17 +47,17 @@
                       popper-class="athletes-filter-select-dropdown"
                       style="width: 100%"
                     >
-                      <el-option label="M├ís Recientes" value="recent" />
-                      <el-option label="M├ís Antiguos" value="oldest" />
+                      <el-option label="Más Recientes" value="recent" />
+                      <el-option label="Más Antiguos" value="oldest" />
                       <el-option label="Nombre (A-Z)" value="name_asc" />
                       <el-option label="Nombre (Z-A)" value="name_desc" />
                     </el-select>
                   </div>
                   <div class="filter-item">
-                    <label>Categor├¡a</label>
+                    <label>Categoría</label>
                     <el-select
                       v-model="filterCategoria"
-                      placeholder="Todas las categor├¡as"
+                      placeholder="Todas las categorías"
                       clearable
                       class="modern-filter-select"
                       popper-class="athletes-filter-select-dropdown"
@@ -95,22 +95,22 @@
           </div>
           <div class="search-container">
             <div class="search-intro">
-              <span class="search-intro-badge">B├║squeda r├ípida</span>
-              <p>Encuentra atletas por nombre o filtra por c├®dula en segundos.</p>
+              <span class="search-intro-badge">Búsqueda rápida</span>
+              <p>Encuentra atletas por nombre o filtra por cédula en segundos.</p>
             </div>
             <div class="search-field">
               <label class="premium-search-label">Buscar Atleta</label>
               <el-input v-model="searchQuery" placeholder="Busca por nombre o apellido" clearable class="modern-search-input modern-sidebar-control" />
             </div>
             <div class="cedula-filter">
-              <label class="premium-search-label">Filtro de C├®dula</label>
+              <label class="premium-search-label">Filtro de Cédula</label>
               <div class="modern-toggle-group">
                 <button class="toggle-btn" :class="{ active: filterCedula === 'todos' }" @click="filterCedula = 'todos'">Todos</button>
-                <button class="toggle-btn" :class="{ active: filterCedula === 'con_cedula' }" @click="filterCedula = 'con_cedula'">Con C├®dula</button>
-                <button class="toggle-btn" :class="{ active: filterCedula === 'sin_cedula' }" @click="filterCedula = 'sin_cedula'">Sin C├®dula</button>
+                <button class="toggle-btn" :class="{ active: filterCedula === 'con_cedula' }" @click="filterCedula = 'con_cedula'">Con Cédula</button>
+                <button class="toggle-btn" :class="{ active: filterCedula === 'sin_cedula' }" @click="filterCedula = 'sin_cedula'">Sin Cédula</button>
               </div>
-              <el-input v-if="filterCedula === 'con_cedula'" v-model="searchCedula" placeholder="Escribe la c├®dula sin puntos" clearable maxlength="9" class="modern-cedula-input modern-sidebar-control" @input="v => searchCedula = v.replace(/\D/g, '')" />
-              <p v-if="filterCedula === 'con_cedula'" class="field-caption">Usa solo n├║meros para encontrar coincidencias exactas.</p>
+              <el-input v-if="filterCedula === 'con_cedula'" v-model="searchCedula" placeholder="Escribe la cédula sin puntos" clearable maxlength="9" class="modern-cedula-input modern-sidebar-control" @input="v => searchCedula = v.replace(/\D/g, '')" />
+              <p v-if="filterCedula === 'con_cedula'" class="field-caption">Usa solo números para encontrar coincidencias exactas.</p>
             </div>
           </div>
           <div class="athlete-list">
@@ -121,8 +121,8 @@
               </div>
               <div class="item-info">
                 <h3>{{ atleta.nombre }} {{ atleta.apellido }}</h3>
-                <p>{{ formatEnum(atleta.posicion_de_juego_nombre) || 'Sin posici├│n' }}</p>
-                <p class="athlete-category">{{ atleta.categoria_nombre || 'Sin categor├¡a' }}</p>
+                <p>{{ formatEnum(atleta.posicion_de_juego_nombre) || 'Sin posición' }}</p>
+                <p class="athlete-category">{{ atleta.categoria_nombre || 'Sin categoría' }}</p>
               </div>
               <span class="athlete-status-dot" :class="'status-' + (atleta.estatus || '').toLowerCase()" :title="atleta.estatus" />
             </div>
@@ -131,13 +131,13 @@
                 <el-icon><Collection /></el-icon>
               </span>
               <p class="empty-list-title">Sin atletas</p>
-              <p class="empty-list-hint">Agrega tu primer atleta con el bot├│n de arriba</p>
+              <p class="empty-list-hint">Agrega tu primer atleta con el botón de arriba</p>
             </div>
           </div>
         </el-card>
       </aside>
 
-      <!-- ├ürea de contenido -->
+      <!-- Área de contenido -->
       <main class="content-area">
         <div v-if="!currentAtletaId" class="empty-main">
           <div class="empty-main-content">
@@ -164,7 +164,7 @@
                     <el-icon><CollectionTag /></el-icon>
                   </span>
                   <span class="athlete-meta-copy">
-                    <span class="athlete-meta-label">Categor├¡a</span>
+                    <span class="athlete-meta-label">Categoría</span>
                     <span class="athlete-meta-value">{{ currentAtleta.categoria_nombre || 'No asignada' }}</span>
                   </span>
                 </div>
@@ -174,16 +174,16 @@
                   </span>
                   <span class="athlete-meta-copy">
                     <span class="athlete-meta-label">Edad</span>
-                    <span class="athlete-meta-value">{{ calculateAge(currentAtleta.fecha_nacimiento) }} a├▒os</span>
+                    <span class="athlete-meta-value">{{ calculateAge(currentAtleta.fecha_nacimiento) }} años</span>
                   </span>
                 </div>
               </div>
               <el-tag :type="getStatusType(currentAtleta.estatus)" size="small">{{ currentAtleta.estatus }}</el-tag>
             </div>
             <div class="athlete-actions">
-              <button v-if="!isUserMedico" class="action-btn action-btn-info" @click="goToProgress" title="An├ílisis">
+              <button v-if="!isUserMedico" class="action-btn action-btn-info" @click="goToProgress" title="Análisis">
                 <el-icon class="action-btn-icon"><DataAnalysis /></el-icon>
-                <span>An├ílisis</span>
+                <span>Análisis</span>
               </button>
               <button v-if="canUserEdit && !isUserMedico" class="action-btn action-btn-danger" @click="deleteAtleta" title="Eliminar">
                 <el-icon class="action-btn-icon"><Delete /></el-icon>
@@ -230,22 +230,22 @@
                 </div>
                 <div class="form-item">
                   <label>Edad</label>
-                  <p>{{ calculateAge(currentAtleta.fecha_nacimiento) }} a├▒os</p>
+                  <p>{{ calculateAge(currentAtleta.fecha_nacimiento) }} años</p>
                 </div>
                 <div class="form-item">
                   <label>Estatus</label>
                   <el-tag :type="getStatusType(currentAtleta.estatus)">{{ currentAtleta.estatus }}</el-tag>
                 </div>
                 <div class="form-item">
-                  <label>C├®dula</label>
+                  <label>Cédula</label>
                   <p>{{ currentAtleta.cedula || 'No registrada' }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Tel├®fono</label>
+                  <label>Teléfono</label>
                   <p>{{ currentAtleta.telefono || 'No registrado' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Direcci├│n</label>
+                  <label>Dirección</label>
                   <p>
                     {{ [currentAtleta.estado, currentAtleta.municipio, currentAtleta.parroquia, currentAtleta.descripcion_descriptiva].filter(Boolean).join(', ') || 'No registrada' }}
                   </p>
@@ -260,11 +260,11 @@
               </div>
               <div class="form-grid">
                 <div class="form-item">
-                  <label>Posici├│n de Juego</label>
+                  <label>Posición de Juego</label>
                   <p>{{ formatEnum(currentAtleta.posicion_de_juego_nombre) || 'No especificada' }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Categor├¡a</label>
+                  <label>Categoría</label>
                   <p>{{ currentAtleta.categoria_nombre || 'No asignada' }}</p>
                 </div>
                 <div class="form-item">
@@ -278,8 +278,8 @@
               </div>
             </el-tab-pane>
 
-            <!-- Tab 3: Medidas Antropom├®tricas -->
-            <el-tab-pane v-if="isTabVisible('medidas-antropometricas')" label="Medidas Antropom├®tricas" name="anthropometric">
+            <!-- Tab 3: Medidas Antropométricas -->
+            <el-tab-pane v-if="isTabVisible('medidas-antropometricas')" label="Medidas Antropométricas" name="anthropometric">
               <div class="tab-header-actions">
                 <el-button v-if="canUserEdit || isUserEntrenador" type="primary" size="small" icon="el-icon-plus" @click="openAnthropometricModal">
                   Agregar Medidas
@@ -320,7 +320,7 @@
 
                 <div v-if="!medidas || medidas.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-data-line" />
-                  <p>No hay medidas antropom├®tricas registradas</p>
+                  <p>No hay medidas antropométricas registradas</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -348,8 +348,8 @@
                   <el-table-column prop="test_de_fuerza" label="Fuerza" />
                   <el-table-column prop="test_resistencia" label="Resistencia" />
                   <el-table-column prop="test_velocidad" label="Velocidad" />
-                  <el-table-column prop="test_coordinacion" label="Coordinaci├│n" />
-                  <el-table-column prop="test_de_reaccion" label="Reacci├│n" />
+                  <el-table-column prop="test_coordinacion" label="Coordinación" />
+                  <el-table-column prop="test_de_reaccion" label="Reacción" />
                   <el-table-column label="Acciones" width="120" align="center">
                     <template #default="scope">
                       <el-button type="text" size="small" @click="openPerformanceModal(scope.row)">Editar</el-button>
@@ -381,19 +381,19 @@
                   <p>{{ tutor.nombre_completo }}</p>
                 </div>
                 <div class="form-item">
-                  <label>C├®dula</label>
+                  <label>Cédula</label>
                   <p>{{ tutor.cedula || 'No registrada' }}</p>
                 </div>
                 <div class="form-item">
-                  <label>Tipo de Relaci├│n</label>
+                  <label>Tipo de Relación</label>
                   <el-tag>{{ tutor.tipo_relacion }}</el-tag>
                 </div>
                 <div class="form-item">
-                  <label>Tel├®fono</label>
+                  <label>Teléfono</label>
                   <p>{{ tutor.telefono || 'No especificado' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Direcci├│n</label>
+                  <label>Dirección</label>
                   <p>
                     {{ [tutor.estado, tutor.municipio, tutor.parroquia, tutor.descripcion_descriptiva].filter(Boolean).join(', ') || 'No registrada' }}
                   </p>
@@ -403,20 +403,20 @@
                 <i class="el-icon-user-solid" />
                 <p>No hay representante asignado</p>
                 <p v-if="!isSelfRepresented" class="hint">Haz clic en "Asignar Representante" para asignar un representante</p>
-                <p v-else class="hint">El atleta se representa a s├¡ mismo. Haz clic en "Editar Representante" si deseas asignar un tercero.</p>
+                <p v-else class="hint">El atleta se representa a sí mismo. Haz clic en "Editar Representante" si deseas asignar un tercero.</p>
               </div>
             </el-tab-pane>
 
-            <!-- Tab: Ficha M├®dica (Movido) -->
-            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Ficha M├®dica" name="medical">
+            <!-- Tab: Ficha Médica (Movido) -->
+            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Ficha Médica" name="medical">
               <div class="tab-header-actions">
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-edit" @click="openMedicalModal">
-                  {{ fichaMedica ? 'Editar Ficha M├®dica' : 'Agregar Ficha M├®dica' }}
+                  {{ fichaMedica ? 'Editar Ficha Médica' : 'Agregar Ficha Médica' }}
                 </el-button>
               </div>
               <div v-if="fichaMedica" class="form-grid">
                 <div class="form-item">
-                  <label>Grupo Sangu├¡neo</label>
+                  <label>Grupo Sanguíneo</label>
                   <p>{{ fichaMedica.grupo_sanguineo || 'No especificado' }}</p>
                 </div>
                 <div class="form-item">
@@ -428,30 +428,30 @@
                   <p>{{ fichaMedica.antecedentes_familiares || 'Ninguno' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Antecedentes Quir├║rgicos / Lesiones</label>
+                  <label>Antecedentes Quirúrgicos / Lesiones</label>
                   <p>{{ fichaMedica.antecedentes_quirurgicos || 'Ninguno' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Condiciones Cr├│nicas</label>
+                  <label>Condiciones Crónicas</label>
                   <p>{{ fichaMedica.condicion_cronica || 'Ninguna' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Medicaci├│n Actual</label>
+                  <label>Medicación Actual</label>
                   <p>{{ fichaMedica.medicacion_actual || 'Ninguna' }}</p>
                 </div>
               </div>
               <div v-else class="empty-tab">
                 <i class="el-icon-document" />
-                <p>No hay ficha m├®dica registrada</p>
-                <p v-if="canUserEdit || isUserMedico" class="hint">Haz clic en "Agregar Ficha M├®dica" para crear la ficha m├®dica</p>
+                <p>No hay ficha médica registrada</p>
+                <p v-if="canUserEdit || isUserMedico" class="hint">Haz clic en "Agregar Ficha Médica" para crear la ficha médica</p>
               </div>
             </el-tab-pane>
 
-            <!-- Tab 6: Atenci├│n M├®dica -->
-            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Atenci├│n M├®dica" name="atencion_medica">
+            <!-- Tab 6: Atención Médica -->
+            <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Atención Médica" name="atencion_medica">
               <div class="tab-header-actions">
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-plus" @click="openAtencionModal">
-                  Registrar Atenci├│n
+                  Registrar Atención
                 </el-button>
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-edit" @click="openCarnetModal">
                   {{ carnetDiscapacidad ? 'Editar Carnet Discapacidad' : 'Registrar Carnet Discapacidad' }}
@@ -469,7 +469,7 @@
               </div>
 
               <div class="medical-attention-list">
-                <!-- Tabla aqu├¡ -->
+                <!-- Tabla aquí -->
                 <el-table
                   :data="atencionesMedicas"
                   style="width: 100%"
@@ -481,7 +481,7 @@
                       {{ formatDate(scope.row.fecha_suceso) }}
                     </template>
                   </el-table-column>
-                  <el-table-column prop="diagnostico" label="Diagn├│stico" />
+                  <el-table-column prop="diagnostico" label="Diagnóstico" />
                   <el-table-column label="Especialista">
                     <template #default="scope">
                       {{ scope.row.especialista_nombre }} {{ scope.row.especialista_apellido }}
@@ -504,7 +504,7 @@
 
                 <div v-if="!atencionesMedicas || atencionesMedicas.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-document" />
-                  <p>No hay historial de atenciones m├®dicas</p>
+                  <p>No hay historial de atenciones médicas</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -540,7 +540,7 @@
 
                 <div v-if="!historialPartidos || historialPartidos.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-medal" />
-                  <p>No hay historial de partidos para esta categor├¡a.</p>
+                  <p>No hay historial de partidos para esta categoría.</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -566,7 +566,7 @@
       </el-steps>
 
       <el-form ref="atletaFormRef" :model="atletaForm" :rules="atletaRules" label-position="top">
-        <!-- PASO 1: Datos Personales y Direcci├│n -->
+        <!-- PASO 1: Datos Personales y Dirección -->
         <div v-show="atletaStep === 0">
           <div class="photo-upload-container">
             <el-upload
@@ -603,7 +603,7 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="C├®dula (Opcional)">
+              <el-form-item label="Cédula (Opcional)">
                 <el-input
                   v-model="atletaForm.cedula"
                   placeholder="Ej: 123456789"
@@ -638,7 +638,7 @@
             <el-col :span="12">
               <el-form-item :class="{'is-required': !isUnderage}">
                 <template #label>
-                  Tel├®fono
+                  Teléfono
                 </template>
                 <el-input
                   v-model="atletaForm.telefono"
@@ -662,7 +662,7 @@
             </el-col>
           </el-row>
 
-          <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Direcci├│n de Habitaci├│n</h4>
+          <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección de Habitación</h4>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="Estado" class="is-required">
@@ -690,7 +690,7 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="24">
-              <el-form-item label="Descripci├│n de la Direcci├│n" class="is-required">
+              <el-form-item label="Descripción de la Dirección" class="is-required">
                 <el-input v-model="atletaForm.direccion.descripcion_descriptiva" placeholder="Calle, casa, edificio, referencias..." type="textarea" :rows="2" />
               </el-form-item>
             </el-col>
@@ -701,7 +701,7 @@
         <div v-show="atletaStep === 1">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Categor├¡a" prop="categoria_id">
+              <el-form-item label="Categoría" prop="categoria_id">
                 <el-select v-model="atletaForm.categoria_id" placeholder="Seleccionar" style="width: 100%">
                   <el-option
                     v-for="cat in categorias"
@@ -717,14 +717,14 @@
                 <el-input
                   :value="getEntrenadorNombre(atletaForm.categoria_id)"
                   disabled
-                  placeholder="Se autocompleta con la categor├¡a"
+                  placeholder="Se autocompleta con la categoría"
                 />
               </el-form-item>
             </el-col>
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Posici├│n de Juego">
+              <el-form-item label="Posición de Juego">
                 <el-select v-model="atletaForm.posicion_de_juego" placeholder="Seleccionar" style="width: 100%">
                   <el-option label="Sin definir" :value="null" />
                   <el-option
@@ -781,7 +781,7 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="C├®dula" :class="{'is-required': isUnderage}">
+              <el-form-item label="Cédula" :class="{'is-required': isUnderage}">
                 <el-input
                   v-model="atletaForm.representante.cedula"
                   placeholder="Ej: 12345678"
@@ -791,7 +791,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="Tel├®fono" :class="{'is-required': isUnderage}">
+              <el-form-item label="Teléfono" :class="{'is-required': isUnderage}">
                 <el-input
                   v-model="atletaForm.representante.telefono"
                   placeholder="Ej: 04141234567"
@@ -803,11 +803,11 @@
           </el-row>
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="Relaci├│n con el atleta" :class="{'is-required': isUnderage}">
+              <el-form-item label="Relación con el atleta" :class="{'is-required': isUnderage}">
                 <el-select v-model="atletaForm.representante.tipo_relacion" placeholder="Seleccionar" style="width: 100%">
                   <el-option label="Padres" value="padres" />
                   <el-option label="Abuelo/a" value="abuelo/a" />
-                  <el-option label="T├¡o/a" value="tio/a" />
+                  <el-option label="Tío/a" value="tio/a" />
                   <el-option label="Hermano/a" value="hermano/a" />
                   <el-option label="Primo/a" value="primo/a" />
                   <el-option label="Representante Legal" value="representante" />
@@ -819,7 +819,7 @@
       </el-form>
 
       <template #footer>
-        <el-button v-if="atletaStep > 0" @click="atletaStep--">Atr├ís</el-button>
+        <el-button v-if="atletaStep > 0" @click="atletaStep--">Atrás</el-button>
         <el-button v-if="atletaStep < 2" type="primary" @click="nextAtletaStep">Siguiente</el-button>
         <el-button v-if="atletaStep === 2" type="success" :loading="loading" @click="saveAtleta">
           Guardar Atleta
@@ -872,7 +872,7 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="C├®dula (Opcional)">
+            <el-form-item label="Cédula (Opcional)">
               <el-input
                 v-model="atletaForm.cedula"
                 placeholder="Ej: 123456789"
@@ -907,7 +907,7 @@
           <el-col :span="12">
             <el-form-item :class="{'is-required': !isUnderage}">
               <template #label>
-                Tel├®fono
+                Teléfono
               </template>
               <el-input
                 v-model="atletaForm.telefono"
@@ -931,7 +931,7 @@
           </el-col>
         </el-row>
 
-        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Direcci├│n de Habitaci├│n</h4>
+        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección de Habitación</h4>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Estado" class="is-required">
@@ -959,7 +959,7 @@
         </el-row>
         <el-row :gutter="20">
           <el-col :span="24">
-            <el-form-item label="Descripci├│n de la Direcci├│n" class="is-required">
+            <el-form-item label="Descripción de la Dirección" class="is-required">
               <el-input v-model="atletaForm.direccion.descripcion_descriptiva" placeholder="Calle, casa, edificio, referencias..." type="textarea" :rows="2" />
             </el-form-item>
           </el-col>
@@ -983,7 +983,7 @@
       <el-form ref="editSportsFormRef" :model="atletaForm" :rules="atletaRules" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Categor├¡a" prop="categoria_id">
+            <el-form-item label="Categoría" prop="categoria_id">
               <el-select v-model="atletaForm.categoria_id" placeholder="Seleccionar" style="width: 100%">
                 <el-option
                   v-for="cat in categorias"
@@ -999,14 +999,14 @@
               <el-input
                 :value="getEntrenadorNombre(atletaForm.categoria_id)"
                 disabled
-                placeholder="Se autocompleta con la categor├¡a"
+                placeholder="Se autocompleta con la categoría"
               />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Posici├│n de Juego">
+            <el-form-item label="Posición de Juego">
               <el-select v-model="atletaForm.posicion_de_juego" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="Sin definir" :value="null" />
                 <el-option
@@ -1035,9 +1035,9 @@
       </template>
     </el-dialog>
 
-    <!-- Modal Ficha M├®dica -->
+    <!-- Modal Ficha Médica -->
     <el-dialog
-      title="Ficha M├®dica"
+      title="Ficha Médica"
       v-model="showMedicalModal"
       width="600px"
       :close-on-click-modal="false"
@@ -1047,7 +1047,7 @@
       <el-form ref="medicalFormRef" :model="medicalForm" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Grupo Sangu├¡neo">
+            <el-form-item label="Grupo Sanguíneo">
               <el-select v-model="medicalForm.grupo_sanguineo" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="A+" value="A+" />
                 <el-option label="A-" value="A-" />
@@ -1062,20 +1062,20 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="Alergias">
-              <el-input v-model="medicalForm.alergias" placeholder="Ej: Polen, man├¡" />
+              <el-input v-model="medicalForm.alergias" placeholder="Ej: Polen, maní" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="Antecedentes Familiares">
-          <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes m├®dicos en la familia" />
+          <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes médicos en la familia" />
         </el-form-item>
-        <el-form-item label="Antecedentes Quir├║rgicos / Lesiones">
+        <el-form-item label="Antecedentes Quirúrgicos / Lesiones">
           <el-input v-model="medicalForm.antecedentes_quirurgicos" type="textarea" :rows="2" placeholder="Operaciones o lesiones previas" />
         </el-form-item>
-        <el-form-item label="Condiciones Cr├│nicas">
+        <el-form-item label="Condiciones Crónicas">
           <el-input v-model="medicalForm.condicion_cronica" type="textarea" :rows="2" placeholder="Asma, diabetes, etc" />
         </el-form-item>
-        <el-form-item label="Medicaci├│n Actual">
+        <el-form-item label="Medicación Actual">
           <el-input v-model="medicalForm.medicacion_actual" type="textarea" :rows="2" placeholder="Medicamentos que usa actualmente" />
         </el-form-item>
       </el-form>
@@ -1085,9 +1085,9 @@
       </template>
     </el-dialog>
 
-    <!-- Modal Medidas Antropom├®tricas -->
+    <!-- Modal Medidas Antropométricas -->
     <el-dialog
-      :title="editingAnthropometricId ? 'Editar Medidas Antropom├®tricas' : 'Agregar Medidas Antropom├®tricas'"
+      :title="editingAnthropometricId ? 'Editar Medidas Antropométricas' : 'Agregar Medidas Antropométricas'"
       v-model="showAnthropometricModal"
       width="600px"
       :close-on-click-modal="false"
@@ -1138,7 +1138,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Fecha y Hora de Medici├│n">
+        <el-form-item label="Fecha y Hora de Medición">
           <el-date-picker
             v-model="anthropometricForm.fecha_medicion"
             type="datetime"
@@ -1183,14 +1183,14 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Test de Coordinaci├│n">
+            <el-form-item label="Test de Coordinación">
               <el-input-number v-model="performanceForm.test_coordinacion" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Test de Reacci├│n">
+            <el-form-item label="Test de Reacción">
               <el-input-number v-model="performanceForm.test_de_reaccion" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
@@ -1227,7 +1227,7 @@
         <el-form-item label="Nombre del Representante" prop="nombre_completo">
           <el-input v-model="tutorForm.nombre_completo" placeholder="Nombre completo del representante" />
         </el-form-item>
-        <el-form-item label="C├®dula" prop="cedula">
+        <el-form-item label="Cédula" prop="cedula">
           <el-input
             v-model="tutorForm.cedula"
             placeholder="Ej: 12345678"
@@ -1237,7 +1237,7 @@
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Tel├®fono" prop="telefono">
+            <el-form-item label="Teléfono" prop="telefono">
               <el-input
                 v-model="tutorForm.telefono"
                 placeholder="Ej: 04141234567"
@@ -1247,11 +1247,11 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Tipo de Relaci├│n" prop="tipo_relacion">
+            <el-form-item label="Tipo de Relación" prop="tipo_relacion">
               <el-select v-model="tutorForm.tipo_relacion" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="Padres" value="padres" />
                 <el-option label="Abuelo/a" value="abuelo/a" />
-                <el-option label="T├¡o/a" value="tio/a" />
+                <el-option label="Tío/a" value="tio/a" />
                 <el-option label="Hermano/a" value="hermano/a" />
                 <el-option label="Primo/a" value="primo/a" />
                 <el-option label="Representante Legal" value="representante" />
@@ -1260,7 +1260,7 @@
           </el-col>
         </el-row>
 
-        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Direcci├│n del Representante</h4>
+        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección del Representante</h4>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Estado" prop="direccion.estado">
@@ -1286,7 +1286,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Direcci├│n Detallada" prop="direccion.descripcion_descriptiva" class="is-required">
+        <el-form-item label="Dirección Detallada" prop="direccion.descripcion_descriptiva" class="is-required">
           <el-input v-model="tutorForm.direccion.descripcion_descriptiva" type="textarea" :rows="2" placeholder="Calle, casa, edificio..." />
         </el-form-item>
       </el-form>
@@ -1298,9 +1298,9 @@
       </template>
     </el-dialog>
 
-    <!-- Modal Atenci├│n M├®dica -->
+    <!-- Modal Atención Médica -->
     <el-dialog
-      :title="isEditingAtencion ? 'Editar Atenci├│n M├®dica' : 'Registrar Atenci├│n M├®dica'"
+      :title="isEditingAtencion ? 'Editar Atención Médica' : 'Registrar Atención Médica'"
       v-model="showAtencionModal"
       width="600px"
       :close-on-click-modal="false"
@@ -1313,7 +1313,7 @@
           <el-col :span="12">
             <el-form-item label="Tipo de Registro" required>
               <el-select v-model="atencionForm.tipo_registro" placeholder="Seleccionar" style="width: 100%">
-                <el-option label="Lesi├│n" :value="1" />
+                <el-option label="Lesión" :value="1" />
                 <el-option label="Enfermedad" :value="2" />
                 <el-option label="Control" :value="3" />
               </el-select>
@@ -1341,10 +1341,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="Descripci├│n" required>
+        <el-form-item label="Descripción" required>
           <el-input v-model="atencionForm.descripcion" type="textarea" :rows="2" placeholder="Describa el suceso..." />
         </el-form-item>
-        <el-form-item label="Diagn├│stico">
+        <el-form-item label="Diagnóstico">
           <el-input v-model="atencionForm.diagnostico" placeholder="Ej: Esguince tobillo derecho" />
         </el-form-item>
         <el-form-item label="Tratamiento Indicado">
@@ -1374,7 +1374,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Disponibilidad M├®dica">
+        <el-form-item label="Disponibilidad Médica">
           <el-select v-model="atencionForm.estado_disponibilidad" placeholder="Seleccionar" style="width: 100%">
             <el-option label="No Apto" :value="0" />
             <el-option label="Trabajo Diferenciado" :value="1" />
@@ -3132,7 +3132,7 @@ aside.sidebar {
   border-radius: 4px;
 }
 
-/* Responsive - Tablets y Laptops peque├▒os */
+/* Responsive - Tablets y Laptops pequeños */
 @media (max-width: 1200px) {
   .main-content {
     grid-template-columns: 1fr;
@@ -3200,7 +3200,7 @@ aside.sidebar {
   }
 }
 
-/* Responsive - M├│viles */
+/* Responsive - Móviles */
 @media (max-width: 768px) {
   .atletas-container {
     padding: 10px;
@@ -3342,7 +3342,7 @@ aside.sidebar {
   }
 }
 
-/* Responsive - M├│viles peque├▒os */
+/* Responsive - Móviles pequeños */
 @media (max-width: 480px) {
   .atletas-container {
     padding: 8px;
