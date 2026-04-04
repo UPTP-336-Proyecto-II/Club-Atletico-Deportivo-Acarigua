@@ -185,19 +185,7 @@
                 <el-icon class="action-btn-icon"><DataAnalysis /></el-icon>
                 <span>Análisis</span>
               </button>
-              <button v-if="canUserEdit && !isUserMedico" class="action-btn action-btn-danger" @click="deleteAtleta" title="Eliminar">
-                <el-icon class="action-btn-icon"><Delete /></el-icon>
-                <span>Eliminar</span>
-              </button>
-              <button
-                v-if="canUserEdit || (isUserEntrenador && (activeTab === 'anthropometric' || activeTab === 'performance'))"
-                class="action-btn action-btn-primary"
-                @click="handleEdit"
-                title="Editar"
-              >
-                <el-icon class="action-btn-icon"><Edit /></el-icon>
-                <span>Editar</span>
-              </button>
+
             </div>
           </div>
 
@@ -569,6 +557,13 @@
         <!-- PASO 1: Datos Personales y Dirección -->
         <div v-show="atletaStep === 0">
           <div class="photo-upload-container">
+            <div class="photo-upload-copy">
+              <span class="photo-upload-badge">Fotografía</span>
+              <p>Sube una foto clara y reciente del atleta. Formatos: JPG o PNG. Máximo 2MB.</p>
+              <el-button v-if="atletaForm.foto" type="danger" plain size="small" @click.stop="removePhoto" style="margin-top: 10px;">
+                <el-icon style="margin-right: 5px;"><Delete /></el-icon> Eliminar Foto
+              </el-button>
+            </div>
             <el-upload
               class="avatar-uploader"
               :action="backendUrl + '/api/atletas/upload'"
@@ -579,12 +574,9 @@
             >
               <div v-if="atletaForm.foto" class="photo-preview-wrapper">
                 <img :src="getFotoUrl(atletaForm.foto)" class="avatar-preview">
-                <div class="photo-overlay">
-                  <i class="el-icon-delete" @click.stop="removePhoto" />
-                </div>
               </div>
               <div v-else class="avatar-uploader-icon">
-                <i class="el-icon-plus" />
+                <el-icon><Plus /></el-icon>
                 <span>Subir Foto</span>
               </div>
             </el-upload>
@@ -620,7 +612,7 @@
                   placeholder="Seleccionar"
                   style="width: 100%"
                   value-format="YYYY-MM-DD"
-                  :picker-options="datePickerOptions"
+                  :disabled-date="disabledBirthDate"
                   @change="checkUnderage"
                 />
               </el-form-item>
@@ -662,7 +654,7 @@
             </el-col>
           </el-row>
 
-          <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección de Habitación</h4>
+          <h4 style="margin-top: 10px; margin-bottom: 10px; color: #000;">Dirección de Habitación</h4>
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="Estado" class="is-required">
@@ -838,6 +830,13 @@
     >
       <el-form ref="editPersonalFormRef" :model="atletaForm" :rules="atletaRules" label-position="top">
         <div class="photo-upload-container">
+          <div class="photo-upload-copy">
+            <span class="photo-upload-badge">Fotografía</span>
+            <p>Sube una foto clara y reciente del atleta. Formatos: JPG o PNG. Máximo 2MB.</p>
+            <el-button v-if="atletaForm.foto" type="danger" plain size="small" @click.stop="removePhoto" style="margin-top: 10px;">
+              <el-icon style="margin-right: 5px;"><Delete /></el-icon> Eliminar Foto
+            </el-button>
+          </div>
           <el-upload
             class="avatar-uploader"
             :action="backendUrl + '/api/atletas/upload'"
@@ -848,12 +847,9 @@
           >
             <div v-if="atletaForm.foto" class="photo-preview-wrapper">
               <img :src="getFotoUrl(atletaForm.foto)" class="avatar-preview">
-              <div class="photo-overlay">
-                <i class="el-icon-delete" @click.stop="removePhoto" />
-              </div>
             </div>
             <div v-else class="avatar-uploader-icon">
-              <i class="el-icon-plus" />
+              <el-icon><Plus /></el-icon>
               <span>Subir Foto</span>
             </div>
           </el-upload>
@@ -889,7 +885,7 @@
                 placeholder="Seleccionar"
                 style="width: 100%"
                 value-format="YYYY-MM-DD"
-                :picker-options="datePickerOptions"
+                :disabled-date="disabledBirthDate"
                 @change="checkUnderage"
               />
             </el-form-item>
@@ -931,7 +927,7 @@
           </el-col>
         </el-row>
 
-        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #606266;">Dirección de Habitación</h4>
+        <h4 style="margin-top: 10px; margin-bottom: 10px; color: #000;">Dirección de Habitación</h4>
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="Estado" class="is-required">
@@ -1604,13 +1600,11 @@ const isSelfRepresented = computed(() => {
   const atletaName = `${currentAtleta.value.nombre || ''} ${currentAtleta.value.apellido || ''}`.toLowerCase().trim()
   return tutor.value.tipo_relacion === 'representante' && tutorName === atletaName
 })
-const datePickerOptions = computed(() => ({
-  disabledDate(time) {
-    const maxDate = new Date()
-    maxDate.setFullYear(maxDate.getFullYear() - 3)
-    return time.getTime() > maxDate.getTime()
-  }
-}))
+const disabledBirthDate = (time) => {
+  const maxDate = new Date()
+  maxDate.setFullYear(maxDate.getFullYear() - 4)
+  return time.getTime() > maxDate.getTime()
+}
 
 // === WATCHERS ===
 watch(searchQuery, () => { if (searchTimeout) clearTimeout(searchTimeout); searchTimeout = setTimeout(() => loadAtletas(), 500) })
@@ -1876,10 +1870,12 @@ function saveAtleta() {
 function saveEditPersonal() {
   editPersonalFormRef.value.validate(async (valid) => {
     if (!valid) return
-    if (!isUnderage.value) {
-      if (!atletaForm.telefono) { ElMessage.error('El teléfono es obligatorio para atletas mayores de edad.'); return }
-      const dir = atletaForm.direccion; if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.descripcion_descriptiva) { ElMessage.error('Complete todos los datos de la dirección.'); return }
-    }
+    const { telefono, direccion, cedula } = atletaForm
+    if (!isUnderage.value) { 
+      if (!telefono || telefono.length !== 11) { ElMessage.error('Debe ingresar un número de teléfono válido de 11 dígitos para atletas mayores de edad.'); return } 
+    } else if (telefono && telefono.length !== 11) { ElMessage.error('El número de teléfono ingresado está incompleto (deben ser 11 dígitos).'); return }
+    if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.descripcion_descriptiva) { ElMessage.error('Complete todos los datos de la dirección.'); return }
+    if (cedula && cedula.length < 7 && cedula.toUpperCase() !== 'S/N') { ElMessage.error('La cédula del atleta debe tener al menos 7 dígitos (o "S/N").'); return }
     loading.value = true
     try {
       await request({ url: `/atletas/${currentAtletaId.value}`, method: 'put', data: { nombre: atletaForm.nombre, apellido: atletaForm.apellido, cedula: atletaForm.cedula, fecha_nacimiento: atletaForm.fecha_nacimiento, sexo: atletaForm.sexo, telefono: atletaForm.telefono, estatus: atletaForm.estatus, foto: atletaForm.foto, direccion: atletaForm.direccion } })
@@ -2632,10 +2628,11 @@ aside.sidebar {
   justify-content: space-between;
   gap: 18px;
   padding: 18px 20px;
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.14), rgba(255, 122, 102, 0.05));
-  border: 1px dashed rgba(96, 165, 250, 0.28);
-  box-shadow: 0 24px 36px -34px rgba(255, 59, 48, 0.95);
+  border-radius: 20px;
+  margin-bottom: 24px;
+  background: var(--color-bg-body);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
 }
 
 .photo-upload-copy {
@@ -2647,8 +2644,9 @@ aside.sidebar {
   align-items: center;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  background: var(--color-bg-card);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-border);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -2963,7 +2961,6 @@ aside.sidebar {
   border-radius: 14px;
   background: linear-gradient(180deg, var(--color-bg-card), var(--color-bg-body));
   border: 1px solid var(--color-border);
-  box-shadow: 0 12px 26px rgba(2, 6, 23, 0.18);
 }
 
 .athlete-meta-icon {
@@ -3438,5 +3435,13 @@ aside.sidebar {
 
 .search-field {
   margin-bottom: 12px;
+}
+
+:deep(.el-select__selected-item),
+:deep(.el-select__placeholder) {
+  color: #000 !important;
+}
+:deep(.el-input__inner) {
+  color: #000 !important;
 }
 </style>
