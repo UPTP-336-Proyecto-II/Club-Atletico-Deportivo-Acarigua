@@ -37,12 +37,12 @@
           class="login-form"
           @submit.prevent="handleLogin"
         >
-          <el-form-item label="Usuario" prop="username" class="form-item-custom">
+          <el-form-item label="Usuario o correo" prop="username" class="form-item-custom">
             <div class="input-group">
               <el-input
                 ref="usernameRef"
                 v-model="loginForm.username"
-                placeholder="Ingresa tu usuario"
+                placeholder="Ingresa tu usuario o correo"
                 size="large"
                 class="mobile-input"
                 @input="handleInput"
@@ -180,7 +180,7 @@ const loginForm = reactive({
 
 const validateUsername = (rule, value, callback) => {
   if (!value || value.trim() === '') {
-    callback(new Error('Ingresa tu usuario'))
+    callback(new Error('Ingresa tu usuario o correo'))
   } else {
     callback()
   }
