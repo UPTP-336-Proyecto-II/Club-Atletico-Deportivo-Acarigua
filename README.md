@@ -47,7 +47,7 @@ El sistema implementa un modelo de Control de Acceso Basado en Roles para garant
 ## 🚀 Instalación y Uso
 
 Para poner en marcha el proyecto, consulte la guía detallada en:
-👉 [**DATABASE_SETUP.md**](./DATABASE_SETUP.md)
+👉 [**SETUP.md**](./SETUP.md)
 
 ## 👥 Autores - Proyecto II UPTP
 
