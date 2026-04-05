@@ -196,8 +196,8 @@
           <el-tabs v-model="activeTab" type="border-card">
             <el-tab-pane v-if="isTabVisible('datos-personales')" label="Datos Personales" name="personal">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit" type="primary" size="small" icon="el-icon-edit" @click="openEditPersonalModal">Editar Datos Personales</el-button>
-                <el-button v-if="canUserEdit && !isUserMedico" type="danger" size="small" icon="el-icon-delete" @click="deleteAtleta">Eliminar Atleta</el-button>
+                <el-button v-if="canUserEdit" type="primary" class="modern-action-btn" icon="Edit" round @click="openEditPersonalModal">Editar Datos Personales</el-button>
+                <el-button v-if="canUserEdit && !isUserMedico" type="danger" class="modern-action-btn" icon="Delete" plain round @click="deleteAtleta">Eliminar Atleta</el-button>
               </div>
               <div class="form-grid">
                 <div class="form-item">
@@ -244,7 +244,7 @@
             <!-- Nueva Tab: Datos Deportivos -->
             <el-tab-pane v-if="isTabVisible('datos-personales')" label="Datos Deportivos" name="sports">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit" type="primary" size="small" icon="el-icon-edit" @click="openEditSportsModal">Editar Datos Deportivos</el-button>
+                <el-button v-if="canUserEdit" type="primary" class="modern-action-btn" icon="Edit" round @click="openEditSportsModal">Editar Datos Deportivos</el-button>
               </div>
               <div class="form-grid">
                 <div class="form-item">
@@ -269,7 +269,7 @@
             <!-- Tab 3: Medidas Antropométricas -->
             <el-tab-pane v-if="isTabVisible('medidas-antropometricas')" label="Medidas Antropométricas" name="anthropometric">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit || isUserEntrenador" type="primary" size="small" icon="el-icon-plus" @click="openAnthropometricModal">
+                <el-button v-if="canUserEdit || isUserEntrenador" type="primary" class="modern-action-btn" icon="Plus" round @click="openAnthropometricModal">
                   Agregar Medidas
                 </el-button>
               </div>
@@ -300,8 +300,12 @@
                   <el-table-column prop="largo_de_torso" label="L. Torso" width="90" align="center" />
                   <el-table-column label="Acciones" width="120" align="center">
                     <template #default="scope">
-                      <el-button type="text" size="small" @click="openAnthropometricModal(scope.row)">Editar</el-button>
-                      <el-button type="text" size="small" style="color: red" @click="deleteMedida(scope.row.medidas_id)">Eliminar</el-button>
+                      <el-tooltip content="Editar" placement="top">
+                        <el-button type="primary" size="small" circle icon="Edit" @click="openAnthropometricModal(scope.row)" />
+                      </el-tooltip>
+                      <el-tooltip content="Eliminar" placement="top">
+                        <el-button type="danger" size="small" circle icon="Delete" plain @click="deleteMedida(scope.row.medidas_id)" />
+                      </el-tooltip>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -316,7 +320,7 @@
             <!-- Tab 4: Rendimiento -->
             <el-tab-pane v-if="isTabVisible('rendimiento')" label="Rendimiento" name="performance">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit || isUserEntrenador" type="primary" size="small" icon="el-icon-plus" @click="openPerformanceModal">
+                <el-button v-if="canUserEdit || isUserEntrenador" type="primary" class="modern-action-btn" icon="Plus" round @click="openPerformanceModal">
                   Agregar Rendimiento
                 </el-button>
               </div>
@@ -340,8 +344,12 @@
                   <el-table-column prop="test_de_reaccion" label="Reacción" />
                   <el-table-column label="Acciones" width="120" align="center">
                     <template #default="scope">
-                      <el-button type="text" size="small" @click="openPerformanceModal(scope.row)">Editar</el-button>
-                      <el-button type="text" size="small" style="color: red" @click="deletePerformanceTest(scope.row.test_id)">Eliminar</el-button>
+                      <el-tooltip content="Editar" placement="top">
+                        <el-button type="primary" size="small" circle icon="Edit" @click="openPerformanceModal(scope.row)" />
+                      </el-tooltip>
+                      <el-tooltip content="Eliminar" placement="top">
+                        <el-button type="danger" size="small" circle icon="Delete" plain @click="deletePerformanceTest(scope.row.test_id)" />
+                      </el-tooltip>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -356,10 +364,10 @@
             <!-- Tab 5: Representante -->
             <el-tab-pane v-if="isTabVisible('representante')" label="Representante" name="representante">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit" type="primary" size="small" icon="el-icon-edit" @click="openTutorModal">
+                <el-button v-if="canUserEdit" type="primary" class="modern-action-btn" :icon="tutor && !isSelfRepresented ? 'Edit' : 'Plus'" round @click="openTutorModal">
                   {{ (tutor && !isSelfRepresented) ? 'Editar Representante' : 'Asignar Representante' }}
                 </el-button>
-                <el-button v-if="canUserEdit && tutor && !isSelfRepresented" type="danger" size="small" icon="el-icon-delete" @click="deleteTutor">
+                <el-button v-if="canUserEdit && tutor && !isSelfRepresented" type="danger" class="modern-action-btn" icon="Delete" plain round @click="deleteTutor">
                   Eliminar Representante
                 </el-button>
               </div>
@@ -398,7 +406,7 @@
             <!-- Tab: Ficha Médica (Movido) -->
             <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Ficha Médica" name="medical">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-edit" @click="openMedicalModal">
+                <el-button v-if="canUserEdit || isUserMedico" type="primary" class="modern-action-btn" :icon="fichaMedica ? 'Edit' : 'DocumentAdd'" round @click="openMedicalModal">
                   {{ fichaMedica ? 'Editar Ficha Médica' : 'Agregar Ficha Médica' }}
                 </el-button>
               </div>
@@ -438,11 +446,14 @@
             <!-- Tab 6: Atención Médica -->
             <el-tab-pane v-if="isTabVisible('ficha-medica')" label="Atención Médica" name="atencion_medica">
               <div class="tab-header-actions">
-                <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-plus" @click="openAtencionModal">
+                <el-button v-if="canUserEdit || isUserMedico" type="primary" class="modern-action-btn" icon="Plus" round @click="openAtencionModal">
                   Registrar Atención
                 </el-button>
-                <el-button v-if="canUserEdit || isUserMedico" type="primary" size="small" icon="el-icon-edit" @click="openCarnetModal">
+                <el-button v-if="canUserEdit || isUserMedico" type="warning" class="modern-action-btn" :icon="carnetDiscapacidad ? 'Edit' : 'DocumentAdd'" plain round @click="openCarnetModal">
                   {{ carnetDiscapacidad ? 'Editar Carnet Discapacidad' : 'Registrar Carnet Discapacidad' }}
+                </el-button>
+                <el-button v-if="(canUserEdit || isUserMedico) && carnetDiscapacidad" type="danger" class="modern-action-btn" icon="Delete" plain round @click="deleteCarnet">
+                  Eliminar Carnet
                 </el-button>
               </div>
               <div v-if="carnetDiscapacidad" class="carnet-info-banner">
@@ -482,10 +493,17 @@
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="Acciones" width="100">
+                  <el-table-column label="Acciones" width="140" align="center">
                     <template #default="scope">
-                      <el-button type="text" size="small" @click="editAtencion(scope.row)">Editar</el-button>
-                      <el-button type="text" size="small" style="color: red" @click="deleteAtencion(scope.row.atencion_id)">Eliminar</el-button>
+                      <el-tooltip content="Visualizar" placement="top">
+                        <el-button type="info" size="small" circle icon="View" plain @click="viewAtencion(scope.row)" />
+                      </el-tooltip>
+                      <el-tooltip content="Editar" placement="top">
+                        <el-button type="primary" size="small" circle icon="Edit" @click="editAtencion(scope.row)" />
+                      </el-tooltip>
+                      <el-tooltip content="Eliminar" placement="top">
+                        <el-button type="danger" size="small" circle icon="Delete" plain @click="deleteAtencion(scope.row.atencion_id)" />
+                      </el-tooltip>
                     </template>
                   </el-table-column>
                 </el-table>
@@ -1090,57 +1108,59 @@
     
       class="modern-athlete-dialog"
     >
-      <el-form ref="anthropometricFormRef" :model="anthropometricForm" label-position="top">
+      <el-form ref="anthropometricFormRef" :model="anthropometricForm" :rules="anthropometricRules" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Peso (kg)">
+            <el-form-item label="Peso (kg)" prop="peso">
               <el-input-number v-model="anthropometricForm.peso" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Altura (cm)">
+            <el-form-item label="Altura (cm)" prop="altura">
               <el-input-number v-model="anthropometricForm.altura" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Porcentaje de Grasa">
+            <el-form-item label="Porcentaje de Grasa" prop="porcentaje_grasa">
               <el-input-number v-model="anthropometricForm.porcentaje_grasa" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Porcentaje de Musculatura">
+            <el-form-item label="Porcentaje de Musculatura" prop="porcentaje_musculatura">
               <el-input-number v-model="anthropometricForm.porcentaje_musculatura" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Envergadura (cm)">
+            <el-form-item label="Envergadura (cm)" prop="envergadura">
               <el-input-number v-model="anthropometricForm.envergadura" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Largo de Pierna (cm)">
+            <el-form-item label="Largo de Pierna (cm)" prop="largo_de_pierna">
               <el-input-number v-model="anthropometricForm.largo_de_pierna" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Largo de Torso (cm)">
+            <el-form-item label="Largo de Torso (cm)" prop="largo_de_torso">
               <el-input-number v-model="anthropometricForm.largo_de_torso" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Fecha y Hora de Medición">
+        <el-form-item label="Fecha y Hora de Medición" prop="fecha_medicion">
           <el-date-picker
             v-model="anthropometricForm.fecha_medicion"
             type="datetime"
+            :disabled-date="disabledFutureDate"
             placeholder="Seleccionar fecha y hora"
             style="width: 100%"
-            value-format="yyyy-MM-dd HH:mm:ss"
+            format="DD/MM/YYYY HH:mm"
+            value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
       </el-form>
@@ -1159,45 +1179,47 @@
     
       class="modern-athlete-dialog"
     >
-      <el-form ref="performanceFormRef" :model="performanceForm" label-position="top">
+      <el-form ref="performanceFormRef" :model="performanceForm" :rules="performanceRules" label-position="top">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Test de Fuerza">
+            <el-form-item label="Test de Fuerza" prop="test_de_fuerza">
               <el-input-number v-model="performanceForm.test_de_fuerza" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Test de Resistencia">
+            <el-form-item label="Test de Resistencia" prop="test_resistencia">
               <el-input-number v-model="performanceForm.test_resistencia" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Test de Velocidad">
+            <el-form-item label="Test de Velocidad" prop="test_velocidad">
               <el-input-number v-model="performanceForm.test_velocidad" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Test de Coordinación">
+            <el-form-item label="Test de Coordinación" prop="test_coordinacion">
               <el-input-number v-model="performanceForm.test_coordinacion" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Test de Reacción">
+            <el-form-item label="Test de Reacción" prop="test_de_reaccion">
               <el-input-number v-model="performanceForm.test_de_reaccion" :min="0" :step="0.1" style="width: 100%" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Fecha y Hora del Test">
+            <el-form-item label="Fecha y Hora del Test" prop="fecha_test">
               <el-date-picker
                 v-model="performanceForm.fecha_test"
                 type="datetime"
+                :disabled-date="disabledFutureDate"
                 placeholder="Seleccionar fecha y hora"
                 style="width: 100%"
-                value-format="yyyy-MM-dd HH:mm:ss"
+                format="DD/MM/YYYY HH:mm"
+                value-format="YYYY-MM-DD HH:mm:ss"
               />
             </el-form-item>
           </el-col>
@@ -1304,10 +1326,10 @@
     
       class="modern-athlete-dialog"
     >
-      <el-form ref="atencionFormRef" :model="atencionForm" label-position="top">
+      <el-form ref="atencionFormRef" :model="atencionForm" :rules="atencionRules" label-position="top" :disabled="isViewingAtencion">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Tipo de Registro" required>
+            <el-form-item label="Tipo de Registro" prop="tipo_registro">
               <el-select v-model="atencionForm.tipo_registro" placeholder="Seleccionar" style="width: 100%">
                 <el-option label="Lesión" :value="1" />
                 <el-option label="Enfermedad" :value="2" />
@@ -1316,28 +1338,30 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Fecha Suceso" required>
+            <el-form-item label="Fecha Suceso" prop="fecha_suceso">
               <el-date-picker
                 v-model="atencionForm.fecha_suceso"
                 type="date"
+                :disabled-date="disabledFutureDate"
                 placeholder="Seleccionar"
                 style="width: 100%"
+                format="DD/MM/YYYY"
                 value-format="YYYY-MM-DD"
               />
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Especialista" required>
+        <el-form-item label="Especialista" prop="especialista_id">
           <el-select v-model="atencionForm.especialista_id" placeholder="Seleccionar Especialista" style="width: 100%">
             <el-option
               v-for="medico in medicosList"
-              :key="medico.personal_id"
+              :key="medico.plantel_id"
               :label="medico.nombre + ' ' + medico.apellido"
-              :value="medico.personal_id"
+              :value="medico.plantel_id"
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="Descripción" required>
+        <el-form-item label="Descripción" prop="descripcion">
           <el-input v-model="atencionForm.descripcion" type="textarea" :rows="2" placeholder="Describa el suceso..." />
         </el-form-item>
         <el-form-item label="Diagnóstico">
@@ -1379,8 +1403,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAtencionModal = false">Cancelar</el-button>
-        <el-button type="primary" :loading="loading" @click="saveAtencion">Guardar</el-button>
+        <el-button @click="showAtencionModal = false">{{ isViewingAtencion ? 'Cerrar' : 'Cancelar' }}</el-button>
+        <el-button v-if="!isViewingAtencion" type="primary" :loading="loading" @click="saveAtencion">Guardar</el-button>
       </template>
     </el-dialog>
 
@@ -1394,8 +1418,8 @@
     
       class="modern-athlete-dialog"
     >
-      <el-form ref="carnetFormRef" :model="carnetForm" label-position="top">
-        <el-form-item label="Tipo de Discapacidad" required>
+      <el-form ref="carnetFormRef" :model="carnetForm" :rules="carnetRules" label-position="top">
+        <el-form-item label="Tipo de Discapacidad" prop="tipo_discapacidad_id">
           <el-select v-model="carnetForm.tipo_discapacidad_id" placeholder="Seleccionar" style="width: 100%">
             <el-option
               v-for="tipo in tiposDiscapacidadList"
@@ -1405,22 +1429,24 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="Nro. Carnet">
+        <el-form-item label="Nro. Carnet" prop="nro_carnet">
           <el-input v-model="carnetForm.nro_carnet" placeholder="Ej: 123456789" />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Porcentaje">
-              <el-input v-model="carnetForm.porcentaje_discapacidad" type="number" placeholder="Ej: 30" append="%" />
+            <el-form-item label="Porcentaje (%)" prop="porcentaje_discapacidad">
+              <el-input-number v-model="carnetForm.porcentaje_discapacidad" :min="1" :max="100" style="width: 100%" placeholder="Ej: 30" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Fecha Registro">
+            <el-form-item label="Fecha Registro" prop="fecha_registro">
               <el-date-picker
                 v-model="carnetForm.fecha_registro"
                 type="date"
+                :disabled-date="disabledFutureDate"
                 placeholder="Seleccionar"
                 style="width: 100%"
+                format="DD/MM/YYYY"
                 value-format="YYYY-MM-DD"
               />
             </el-form-item>
@@ -1443,7 +1469,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import { canEdit, isMedico, isEntrenador, getVisibleAtletasTabs } from '@/utils/permission'
 import { getPosiciones } from '@/api/posiciones'
-import { Collection, CollectionTag, Calendar, Plus, Setting, Edit, Delete, DataAnalysis, UserFilled } from '@element-plus/icons-vue'
+import { Collection, CollectionTag, Calendar, Plus, Setting, Edit, Delete, DataAnalysis, UserFilled, View, DocumentAdd } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const store = useStore()
@@ -1481,6 +1507,7 @@ const showCarnetModal = ref(false)
 const isEditingAtleta = ref(false)
 const isEditingTutor = ref(false)
 const isEditingAtencion = ref(false)
+const isViewingAtencion = ref(false)
 const searchQuery = ref('')
 const searchCedula = ref('')
 const filterCedula = ref('todos')
@@ -1604,6 +1631,9 @@ const disabledBirthDate = (time) => {
   const maxDate = new Date()
   maxDate.setFullYear(maxDate.getFullYear() - 4)
   return time.getTime() > maxDate.getTime()
+}
+const disabledFutureDate = (time) => {
+  return time.getTime() > Date.now()
 }
 
 // === WATCHERS ===
@@ -1816,13 +1846,68 @@ function openMedicalModal() {
   else { resetMedicalForm() }
   showMedicalModal.value = true
 }
+const anthropometricRules = {
+  peso: [{ required: true, message: 'El peso es obligatorio', trigger: 'blur' }],
+  altura: [{ required: true, message: 'La altura es obligatoria', trigger: 'blur' }],
+  porcentaje_grasa: [{ required: true, message: 'Este campo es obligatorio', trigger: 'blur' }],
+  porcentaje_musculatura: [{ required: true, message: 'Este campo es obligatorio', trigger: 'blur' }],
+  envergadura: [{ required: true, message: 'Este campo es obligatorio', trigger: 'blur' }],
+  largo_de_pierna: [{ required: true, message: 'Este campo es obligatorio', trigger: 'blur' }],
+  largo_de_torso: [{ required: true, message: 'Este campo es obligatorio', trigger: 'blur' }],
+  fecha_medicion: [{ required: true, message: 'La fecha es obligatoria', trigger: 'change' }]
+}
+
+const performanceRules = {
+  test_de_fuerza: [{ required: true, message: 'Este campo es requerido', trigger: 'blur' }],
+  test_resistencia: [{ required: true, message: 'Este campo es requerido', trigger: 'blur' }],
+  test_velocidad: [{ required: true, message: 'Este campo es requerido', trigger: 'blur' }],
+  test_coordinacion: [{ required: true, message: 'Este campo es requerido', trigger: 'blur' }],
+  test_de_reaccion: [{ required: true, message: 'Este campo es requerido', trigger: 'blur' }],
+  fecha_test: [{ required: true, message: 'La fecha es requerida', trigger: 'change' }]
+}
+
+const atencionRules = {
+  tipo_registro: [{ required: true, message: 'Requerido', trigger: 'change' }],
+  fecha_suceso: [{ required: true, message: 'Requerido', trigger: 'change' }],
+  especialista_id: [{ required: true, message: 'Seleccione un especialista', trigger: 'change' }],
+  descripcion: [{ required: true, message: 'La descripción es obligatoria', trigger: 'blur' }]
+}
+
+const carnetRules = {
+  tipo_discapacidad_id: [{ required: true, message: 'El tipo es obligatorio', trigger: 'change' }],
+  nro_carnet: [
+    { required: true, message: 'Número de carnet obligatorio', trigger: 'blur' },
+    { pattern: /^[0-9]+$/, message: 'Solo se permiten números', trigger: 'blur' }
+  ],
+  porcentaje_discapacidad: [{ required: true, message: 'Indique un % válido', trigger: 'blur' }],
+  fecha_registro: [{ required: true, message: 'La fecha es obligatoria', trigger: 'change' }]
+}
+
 function openAnthropometricModal(medida = null) {
-  if (medida && medida.medidas_id) { editingAnthropometricId.value = medida.medidas_id; Object.assign(anthropometricForm, { peso: medida.peso, altura: medida.altura, porcentaje_grasa: medida.porcentaje_grasa, porcentaje_musculatura: medida.porcentaje_musculatura, envergadura: medida.envergadura, largo_de_pierna: medida.largo_de_pierna, largo_de_torso: medida.largo_de_torso, fecha_medicion: medida.fecha_medicion }) }
+  if (medida && medida.medidas_id) { 
+    editingAnthropometricId.value = medida.medidas_id; 
+    let dt = medida.fecha_medicion || '';
+    if (dt && dt.includes('T')) {
+      const d = new Date(dt);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      dt = d.toISOString().slice(0, 19).replace('T', ' ');
+    }
+    Object.assign(anthropometricForm, { peso: medida.peso, altura: medida.altura, porcentaje_grasa: medida.porcentaje_grasa, porcentaje_musculatura: medida.porcentaje_musculatura, envergadura: medida.envergadura, largo_de_pierna: medida.largo_de_pierna, largo_de_torso: medida.largo_de_torso, fecha_medicion: dt }) 
+  }
   else { editingAnthropometricId.value = null; resetAnthropometricForm(); const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); anthropometricForm.fecha_medicion = now.toISOString().slice(0, 19).replace('T', ' ') }
   showAnthropometricModal.value = true
 }
 function openPerformanceModal(test = null) {
-  if (test && test.test_id) { editingPerformanceId.value = test.test_id; Object.assign(performanceForm, { test_de_fuerza: test.test_de_fuerza, test_resistencia: test.test_resistencia, test_velocidad: test.test_velocidad, test_coordinacion: test.test_coordinacion, test_de_reaccion: test.test_de_reaccion, fecha_test: test.fecha_test }) }
+  if (test && test.test_id) { 
+    editingPerformanceId.value = test.test_id; 
+    let dt = test.fecha_test || '';
+    if (dt && dt.includes('T')) {
+      const d = new Date(dt);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      dt = d.toISOString().slice(0, 19).replace('T', ' ');
+    }
+    Object.assign(performanceForm, { test_de_fuerza: test.test_de_fuerza, test_resistencia: test.test_resistencia, test_velocidad: test.test_velocidad, test_coordinacion: test.test_coordinacion, test_de_reaccion: test.test_de_reaccion, fecha_test: dt }) 
+  }
   else { editingPerformanceId.value = null; resetPerformanceForm(); const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset()); performanceForm.fecha_test = now.toISOString().slice(0, 19).replace('T', ' ') }
   showPerformanceModal.value = true
 }
@@ -1837,8 +1922,9 @@ function openTutorModal() {
   }
   showTutorModal.value = true
 }
-function openAtencionModal() { isEditingAtencion.value = false; resetAtencionForm(); atencionForm.fecha_suceso = new Date().toISOString().split('T')[0]; showAtencionModal.value = true }
-function editAtencion(row) { isEditingAtencion.value = true; Object.assign(atencionForm, { ...row }); if (atencionForm.fecha_suceso) atencionForm.fecha_suceso = atencionForm.fecha_suceso.split('T')[0]; if (atencionForm.fecha_alta_estimada) atencionForm.fecha_alta_estimada = atencionForm.fecha_alta_estimada.split('T')[0]; if (atencionForm.fecha_alta_real) atencionForm.fecha_alta_real = atencionForm.fecha_alta_real.split('T')[0]; showAtencionModal.value = true }
+function openAtencionModal() { isEditingAtencion.value = false; isViewingAtencion.value = false; resetAtencionForm(); atencionForm.fecha_suceso = new Date().toISOString().split('T')[0]; showAtencionModal.value = true }
+function editAtencion(row) { isViewingAtencion.value = false; isEditingAtencion.value = true; Object.assign(atencionForm, { ...row }); if (atencionForm.fecha_suceso) atencionForm.fecha_suceso = atencionForm.fecha_suceso.split('T')[0]; if (atencionForm.fecha_alta_estimada) atencionForm.fecha_alta_estimada = atencionForm.fecha_alta_estimada.split('T')[0]; if (atencionForm.fecha_alta_real) atencionForm.fecha_alta_real = atencionForm.fecha_alta_real.split('T')[0]; showAtencionModal.value = true }
+function viewAtencion(row) { isViewingAtencion.value = true; isEditingAtencion.value = true; Object.assign(atencionForm, { ...row }); if (atencionForm.fecha_suceso) atencionForm.fecha_suceso = atencionForm.fecha_suceso.split('T')[0]; if (atencionForm.fecha_alta_estimada) atencionForm.fecha_alta_estimada = atencionForm.fecha_alta_estimada.split('T')[0]; if (atencionForm.fecha_alta_real) atencionForm.fecha_alta_real = atencionForm.fecha_alta_real.split('T')[0]; showAtencionModal.value = true }
 function openCarnetModal() {
   if (carnetDiscapacidad.value) { Object.assign(carnetForm, { tipo_discapacidad_id: carnetDiscapacidad.value.tipo_discapacidad_id, nro_carnet: carnetDiscapacidad.value.nro_carnet, porcentaje_discapacidad: carnetDiscapacidad.value.porcentaje_discapacidad, fecha_registro: carnetDiscapacidad.value.fecha_registro ? carnetDiscapacidad.value.fecha_registro.split('T')[0] : '' }) }
   else { resetCarnetForm(); carnetForm.fecha_registro = new Date().toISOString().split('T')[0] }
@@ -1905,26 +1991,34 @@ async function saveMedical() {
   finally { loading.value = false }
 }
 async function saveAnthropometric() {
-  loading.value = true
-  try {
-    const payload = { ...anthropometricForm, atleta_id: currentAtletaId.value }
-    let url = '/mediciones'; let method = 'post'
-    if (editingAnthropometricId.value) { url = `/mediciones/${editingAnthropometricId.value}`; method = 'put' }
-    await request({ url, method, data: payload }); ElMessage.success(`Medidas ${editingAnthropometricId.value ? 'actualizadas' : 'registradas'} exitosamente`)
-    showAnthropometricModal.value = false; await loadMedidas(currentAtletaId.value)
-  } catch (error) { console.error('Error guardando medidas:', error) }
-  finally { loading.value = false }
+  if (!anthropometricFormRef.value) return
+  await anthropometricFormRef.value.validate(async (valid) => {
+    if (!valid) { ElMessage.error('Faltan datos obligatorios'); return }
+    loading.value = true
+    try {
+      const payload = { ...anthropometricForm, atleta_id: currentAtletaId.value }
+      let url = '/mediciones'; let method = 'post'
+      if (editingAnthropometricId.value) { url = `/mediciones/${editingAnthropometricId.value}`; method = 'put' }
+      await request({ url, method, data: payload }); ElMessage.success(`Medidas ${editingAnthropometricId.value ? 'actualizadas' : 'registradas'} exitosamente`)
+      showAnthropometricModal.value = false; await loadMedidas(currentAtletaId.value)
+    } catch (error) { console.error('Error guardando medidas:', error) }
+    finally { loading.value = false }
+  })
 }
 async function savePerformance() {
-  loading.value = true
-  try {
-    const payload = { ...performanceForm, atleta_id: currentAtletaId.value }
-    let url = '/tests'; let method = 'post'
-    if (editingPerformanceId.value) { url = `/tests/${editingPerformanceId.value}`; method = 'put' }
-    await request({ url, method, data: payload }); ElMessage.success(`Test ${editingPerformanceId.value ? 'actualizado' : 'registrado'} exitosamente`)
-    showPerformanceModal.value = false; await loadTests(currentAtletaId.value)
-  } catch (error) { console.error('Error guardando test:', error) }
-  finally { loading.value = false }
+  if (!performanceFormRef.value) return
+  await performanceFormRef.value.validate(async (valid) => {
+    if (!valid) { ElMessage.error('Faltan datos obligatorios'); return }
+    loading.value = true
+    try {
+      const payload = { ...performanceForm, atleta_id: currentAtletaId.value }
+      let url = '/tests'; let method = 'post'
+      if (editingPerformanceId.value) { url = `/tests/${editingPerformanceId.value}`; method = 'put' }
+      await request({ url, method, data: payload }); ElMessage.success(`Test ${editingPerformanceId.value ? 'actualizado' : 'registrado'} exitosamente`)
+      showPerformanceModal.value = false; await loadTests(currentAtletaId.value)
+    } catch (error) { console.error('Error guardando test:', error) }
+    finally { loading.value = false }
+  })
 }
 function saveTutor() {
   tutorFormRef.value.validate(async (valid) => {
@@ -1944,26 +2038,41 @@ function saveTutor() {
   })
 }
 async function saveAtencion() {
-  if (!atencionForm.tipo_registro || !atencionForm.especialista_id || !atencionForm.descripcion || !atencionForm.fecha_suceso) { ElMessage.warning('Complete todos los campos obligatorios: Tipo, Especialista, Descripción y Fecha.'); return }
-  loading.value = true
-  try {
-    const data = { ...atencionForm, atleta_id: currentAtletaId.value }
-    if (isEditingAtencion.value) { await request({ url: `/atencion-medica/${atencionForm.atencion_id}`, method: 'put', data }); ElMessage.success('Atención médica actualizada') }
-    else { await request({ url: '/atencion-medica', method: 'post', data }); ElMessage.success('Atención médica registrada') }
-    showAtencionModal.value = false; await loadAtencionesMedicas(currentAtletaId.value)
-  } catch (error) { console.error(error) } finally { loading.value = false }
+  if (!atencionFormRef.value) return;
+  await atencionFormRef.value.validate(async (valid) => {
+    if (!valid) { ElMessage.error('Por favor complete los campos obligatorios.'); return; }
+    loading.value = true
+    try {
+      const data = { ...atencionForm, atleta_id: currentAtletaId.value }
+      if (isEditingAtencion.value) { await request({ url: `/atencion-medica/${atencionForm.atencion_id}`, method: 'put', data }); ElMessage.success('Registro actualizado exitosamente') }
+      else { await request({ url: '/atencion-medica', method: 'post', data }); ElMessage.success('Atención médica registrada exitosamente') }
+      showAtencionModal.value = false; await loadAtencionesMedicas(currentAtletaId.value)
+    } catch (error) { console.error('Error guardando atención médica:', error) }
+    finally { loading.value = false }
+  });
 }
 async function saveCarnet() {
-  loading.value = true
-  try {
-    const data = { ...carnetForm, atleta_id: currentAtletaId.value }
-    if (carnetDiscapacidad.value) { await request({ url: `/carnet-discapacidad/${carnetDiscapacidad.value.id}`, method: 'put', data }); ElMessage.success('Carnet de discapacidad actualizado') }
-    else { await request({ url: '/carnet-discapacidad', method: 'post', data }); ElMessage.success('Carnet de discapacidad registrado') }
-    showCarnetModal.value = false; await loadCarnetDiscapacidad(currentAtletaId.value)
-  } catch (error) { console.error(error); ElMessage.error('Error al guardar el carnet de discapacidad') } finally { loading.value = false }
+  if (!carnetFormRef.value) return;
+  await carnetFormRef.value.validate(async (valid) => {
+    if (!valid) { ElMessage.error('Por favor complete los campos obligatorios del carnet.'); return; }
+    loading.value = true
+    try {
+      const data = { ...carnetForm, atleta_id: currentAtletaId.value }
+      if (carnetDiscapacidad.value) { await request({ url: `/carnet-discapacidad/${carnetDiscapacidad.value.id}`, method: 'put', data }); ElMessage.success('Carnet de discapacidad actualizado') }
+      else { await request({ url: '/carnet-discapacidad', method: 'post', data }); ElMessage.success('Carnet de discapacidad registrado') }
+      showCarnetModal.value = false; await loadCarnetDiscapacidad(currentAtletaId.value)
+    } catch (error) { console.error(error); ElMessage.error('Error al guardar el carnet de discapacidad') } finally { loading.value = false }
+  });
 }
 
 // === DELETE FUNCTIONS ===
+async function deleteCarnet() {
+  try { await ElMessageBox.confirm('¿Está seguro de que desea eliminar el carnet de discapacidad?', 'Confirmar eliminación', { confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning' }) } catch { return }
+  loading.value = true
+  try { await request({ url: `/carnet-discapacidad/${carnetDiscapacidad.value.id}`, method: 'delete' }); ElMessage.success('Carnet de discapacidad eliminado'); await loadCarnetDiscapacidad(currentAtletaId.value) }
+  catch (error) { console.error('Error eliminando carnet:', error); ElMessage.error('Error al eliminar carnet') } finally { loading.value = false }
+}
+
 async function deleteTutor() {
   try { await ElMessageBox.confirm('¿Está seguro de que desea eliminar este representante?', 'Confirmar eliminación', { confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar', type: 'warning' }) } catch { return }
   loading.value = true
@@ -3443,5 +3552,14 @@ aside.sidebar {
 }
 :deep(.el-input__inner) {
   color: #000 !important;
+}
+
+.modern-action-btn {
+  margin-bottom: 10px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+.modern-action-btn:hover {
+  transform: translateY(-2px);
 }
 </style>

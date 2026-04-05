@@ -411,6 +411,7 @@ const deleteAtleta = async (req, res) => {
     // Delete all child records first (ON DELETE NO ACTION requires manual cleanup)
     await pool.execute('DELETE FROM asistencias WHERE atleta_id = ?', [id])
     await pool.execute('DELETE FROM atencion_medica WHERE atleta_id = ?', [id])
+    await pool.execute('DELETE FROM carnet_discapacidad WHERE ficha_id IN (SELECT ficha_id FROM ficha_medica WHERE atleta_id = ?)', [id])
     await pool.execute('DELETE FROM ficha_medica WHERE atleta_id = ?', [id])
     await pool.execute('DELETE FROM medidas_antropometricas WHERE atleta_id = ?', [id])
     await pool.execute('DELETE FROM resultado_pruebas WHERE atleta_id = ?', [id])
