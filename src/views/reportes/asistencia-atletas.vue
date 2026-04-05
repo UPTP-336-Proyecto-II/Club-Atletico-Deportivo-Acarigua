@@ -79,7 +79,7 @@
       <div v-else>
         <!-- TABLA DESKTOP (oculta en móvil) -->
         <el-table
-          :data="filteredAthletesStats"
+          :data="paginatedAthletes"
           style="width: 100%"
           class="custom-table desktop-table"
           :header-cell-style="{
@@ -107,7 +107,7 @@
           </el-table-column>
 
           <!-- New Explicit Category Column -->
-          <el-table-column label="Categoría" min-width="120" align="center">
+          <el-table-column label="Categoría" min-width="160" align="center">
             <template #default="scope">
               <el-tag size="medium" effect="plain" type="info" class="category-tag">
                 {{ scope.row.categoria_nombre }}
@@ -181,7 +181,7 @@
         <!-- VISTA TARJETAS MÓVIL (oculta en desktop) -->
         <div class="mobile-cards-view">
           <div
-            v-for="atleta in filteredAthletesStats"
+            v-for="atleta in paginatedAthletes"
             :key="atleta.atleta_id"
             class="athlete-card"
           >
@@ -248,8 +248,16 @@
           <p>No se encontraron datos coincidente con los filtros.</p>
         </div>
 
-        <div v-if="filteredAthletesStats.length > 0" class="table-footer">
+        <div v-if="filteredAthletesStats.length > 0" class="table-footer" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 20px; gap: 15px;">
           <span>Total: <strong>{{ filteredAthletesStats.length }}</strong> atletas</span>
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[10, 25, 50, 100]"
+            layout="total, sizes, prev, pager, next"
+            :total="filteredAthletesStats.length"
+            background
+          />
         </div>
 
       </div>
@@ -289,19 +297,19 @@
         </div>
 
         <el-table
-          :data="selectedAthleteHistory"
-          height="400"
+          :data="paginatedHistory"
+          height="350"
           border
           stripe
           style="width: 100%"
           class="detail-table"
         >
-          <el-table-column prop="fecha" label="Fecha" width="120">
+          <el-table-column prop="fecha" label="Fecha" min-width="120">
             <template #default="scope">
               {{ formatDate(scope.row.fecha) }}
             </template>
           </el-table-column>
-          <el-table-column prop="tipo_evento" label="Evento" width="140" />
+          <el-table-column prop="tipo_evento" label="Evento" min-width="160" />
           <el-table-column prop="estatus" label="Estado" align="center">
             <template #default="scope">
               <el-tag :type="getStatusType(scope.row.estatus)">
@@ -312,6 +320,17 @@
           <el-table-column prop="observaciones" label="Observaciones" show-overflow-tooltip />
         </el-table>
 
+        <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+          <el-pagination
+            v-model:current-page="modalCurrentPage"
+            v-model:page-size="modalPageSize"
+            :page-sizes="[5, 10, 20]"
+            layout="total, prev, pager, next"
+            :total="selectedAthleteHistory.length"
+            background
+            small
+          />
+        </div>
       </div>
 
       <template #footer><div class="dialog-footer no-print">
@@ -348,6 +367,28 @@ const selectedCategoryName = computed(() => {
   if (!filters.value.categoria_id) return 'Todas las Categorías'
   const cat = categorias.value.find(c => c.categoria_id === filters.value.categoria_id)
   return cat ? cat.nombre_categoria : ''
+})
+
+const selectedTrainerName = computed(() => {
+  if (!filters.value.categoria_id) return ''
+  const cat = categorias.value.find(c => c.categoria_id === filters.value.categoria_id)
+  return cat ? cat.entrenador_nombre : ''
+})
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const paginatedAthletes = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredAthletesStats.value.slice(start, start + pageSize.value)
+})
+
+const modalCurrentPage = ref(1)
+const modalPageSize = ref(5)
+
+const paginatedHistory = computed(() => {
+  const start = (modalCurrentPage.value - 1) * modalPageSize.value
+  return selectedAthleteHistory.value.slice(start, start + modalPageSize.value)
 })
 
 const filteredAthletesStats = computed(() => {
@@ -439,10 +480,12 @@ const initialLoad = async () => {
 }
 
 const handleFilterChange = () => {
+  currentPage.value = 1
 }
 
 const viewDetail = (row) => {
   selectedAthlete.value = row
+  modalCurrentPage.value = 1
   showDetailModal.value = true
 }
 
@@ -457,7 +500,9 @@ const printIndividual = async (row) => {
 
     PdfReportService.generateIndividualAttendanceReport(
       `${row.nombre} ${row.apellido}`,
-      sorted
+      sorted,
+      row.categoria_nombre,
+      selectedTrainerName.value
     )
   } catch (e) {
     console.error(e)
@@ -485,7 +530,8 @@ const handlePrint = async () => {
     PdfReportService.generateAttendanceReport(
       dataForPdf,
       selectedCategoryName.value,
-      filters.value.dateRange
+      filters.value.dateRange,
+      selectedTrainerName.value
     )
   } catch (e) {
     console.error(e)

@@ -139,7 +139,7 @@
             </div>
             <div class="stat-mini">
               <span class="label">IMC</span>
-              <span class="value">{{ latestMedicion ? latestMedicion.indice_de_masa : '-' }}</span>
+              <span class="value">{{ latestMedicion ? Number(latestMedicion.indice_de_masa).toFixed(2) : '-' }}</span>
             </div>
             <div class="stat-mini">
               <span class="label">Tests</span>
@@ -150,8 +150,8 @@
       </el-card>
 
       <!-- Trends Row -->
-      <el-row :gutter="20" class="stat-cards">
-        <el-col v-for="trend in trends" :key="trend.label" :span="6">
+      <div class="stat-cards" style="display: flex; gap: 20px; margin-bottom: 20px;">
+        <div v-for="trend in trends" :key="trend.label" style="flex: 1; min-width: 0;">
           <el-card shadow="hover" class="trend-card">
             <div class="trend-label">{{ trend.label }}</div>
             <div class="trend-value">{{ trend.value }}{{ trend.unit }}</div>
@@ -160,8 +160,8 @@
               {{ trend.diff > 0 ? '+' : '' }}{{ trend.diff }}%
             </div>
           </el-card>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
 
       <!-- Charts Grid -->
       <el-row :gutter="20">
@@ -244,7 +244,8 @@ const trends = computed(() => {
     { label: 'Fuerza', value: latest.test_de_fuerza, unit: '', diff: calculate(first.test_de_fuerza, latest.test_de_fuerza), status: (latest.test_de_fuerza >= first.test_de_fuerza ? 'up' : 'down') },
     { label: 'Velocidad', value: latest.test_velocidad, unit: '', diff: calculate(first.test_velocidad, latest.test_velocidad), status: (latest.test_velocidad >= first.test_velocidad ? 'up' : 'down') },
     { label: 'Resistencia', value: latest.test_resistencia, unit: '', diff: calculate(first.test_resistencia, latest.test_resistencia), status: (latest.test_resistencia >= first.test_resistencia ? 'up' : 'down') },
-    { label: 'Coordinación', value: latest.test_coordinacion, unit: '', diff: calculate(first.test_coordinacion, latest.test_coordinacion), status: (latest.test_coordinacion >= first.test_coordinacion ? 'up' : 'down') }
+    { label: 'Coordinación', value: latest.test_coordinacion, unit: '', diff: calculate(first.test_coordinacion, latest.test_coordinacion), status: (latest.test_coordinacion >= first.test_coordinacion ? 'up' : 'down') },
+    { label: 'Reacción', value: latest.test_de_reaccion, unit: '', diff: calculate(first.test_de_reaccion, latest.test_de_reaccion), status: (latest.test_de_reaccion >= first.test_de_reaccion ? 'up' : 'down') }
   ]
 })
 
@@ -390,7 +391,7 @@ const initPerformanceChart = () => {
 
   const option = {
     tooltip: { trigger: 'axis' },
-    legend: { data: ['Fuerza', 'Velocidad', 'Resistencia', 'Coordinación'] },
+    legend: { data: ['Fuerza', 'Velocidad', 'Resistencia', 'Coordinación', 'Reacción'] },
     grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
     xAxis: { type: 'category', boundaryGap: false, data: dates },
     yAxis: { type: 'value' },
@@ -398,9 +399,10 @@ const initPerformanceChart = () => {
       { name: 'Fuerza', type: 'line', smooth: true, data: revertedTests.map(t => t.test_de_fuerza) },
       { name: 'Velocidad', type: 'line', smooth: true, data: revertedTests.map(t => t.test_velocidad) },
       { name: 'Resistencia', type: 'line', smooth: true, data: revertedTests.map(t => t.test_resistencia) },
-      { name: 'Coordinación', type: 'line', smooth: true, data: revertedTests.map(t => t.test_coordinacion) }
+      { name: 'Coordinación', type: 'line', smooth: true, data: revertedTests.map(t => t.test_coordinacion) },
+      { name: 'Reacción', type: 'line', smooth: true, data: revertedTests.map(t => t.test_de_reaccion) }
     ],
-    color: ['var(--color-text-main)', 'var(--color-text-main)', '#4CAF50', '#f39c12']
+    color: ['#1e293b', '#3b82f6', '#4CAF50', '#f39c12', '#9c27b0']
   }
   charts.performance.setOption(option)
 }
@@ -423,12 +425,12 @@ const initRadarChart = () => {
     legend: {
       data: ['Estado Actual', 'Estado Inicial'],
       bottom: 0,
-      textStyle: { color: 'var(--color-text-main)' }
+      textStyle: { color: '#333' }
     },
     radar: {
       center: ['50%', '45%'],
-      radius: '60%',
-      nameGap: 15,
+      radius: '50%',
+      nameGap: 10,
       indicator: [
         { name: 'Fuerza', max: 100 },
         { name: 'Velocidad', max: 100 },
@@ -437,7 +439,7 @@ const initRadarChart = () => {
         { name: 'Reacción', max: 100 }
       ],
       axisName: {
-        color: 'var(--color-text-main)',
+        color: '#333',
         fontSize: 11,
         padding: [5, 10]
       },
@@ -455,8 +457,8 @@ const initRadarChart = () => {
             latest.test_de_reaccion
           ],
           name: 'Estado Actual',
-          areaStyle: { color: 'rgba(30, 41, 59, 0.3)' },
-          itemStyle: { color: 'var(--color-text-main)' }
+          areaStyle: { color: 'rgba(30, 41, 59, 0.4)' },
+          itemStyle: { color: '#1e293b' }
         },
         {
           value: [
@@ -467,8 +469,8 @@ const initRadarChart = () => {
             first.test_de_reaccion
           ],
           name: 'Estado Inicial',
-          areaStyle: { color: 'rgba(26, 58, 95, 0.1)' },
-          itemStyle: { color: 'var(--color-text-main)' },
+          areaStyle: { color: 'rgba(59, 130, 246, 0.2)' },
+          itemStyle: { color: '#3b82f6' },
           lineStyle: { type: 'dashed' }
         }
       ]
@@ -510,9 +512,9 @@ const initAnthropometricChart = () => {
     series: [
       { name: 'Peso (kg)', type: 'bar', data: revertedMediciones.map(m => m.peso) },
       { name: 'Altura (cm)', type: 'line', data: revertedMediciones.map(m => m.altura) },
-      { name: 'IMC', type: 'line', yAxisIndex: 1, data: revertedMediciones.map(m => m.indice_de_masa) }
+      { name: 'IMC', type: 'line', yAxisIndex: 1, data: revertedMediciones.map(m => Number(m.indice_de_masa).toFixed(2)) }
     ],
-    color: ['#f39c12', 'var(--color-text-main)', '#4CAF50']
+    color: ['#f39c12', '#1e293b', '#4CAF50']
   }
   charts.anthropometric.setOption(option)
 }
@@ -617,10 +619,12 @@ const printCategoryReports = async () => {
       return {
         cedula: atletaItem.cedula || `ID: ${atletaItem.atleta_id}`,
         nombre: `${atletaItem.nombre} ${atletaItem.apellido}`,
-        posicion: atletaItem.posicion_de_juego_nombre || 'N/A',
         peso: latestMed.peso || '-',
         altura: latestMed.altura || '-',
-        imc: latestMed.indice_de_masa || '-',
+        imc: latestMed.indice_de_masa ? Number(latestMed.indice_de_masa).toFixed(2) : '-',
+        grasa: latestMed.porcentaje_grasa || '-',
+        musculo: latestMed.porcentaje_musculatura || '-',
+        envergadura: latestMed.envergadura || '-',
         fuerza: latestTest.test_de_fuerza || '-',
         velocidad: latestTest.test_velocidad || '-',
         resistencia: latestTest.test_resistencia || '-',

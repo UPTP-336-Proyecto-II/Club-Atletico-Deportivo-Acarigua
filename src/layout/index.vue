@@ -169,7 +169,7 @@ export default {
   }
 
   .hideSidebar .fixed-header {
-    width: 100%
+    width: calc(100% - 54px);
   }
 
   .mobile .fixed-header {

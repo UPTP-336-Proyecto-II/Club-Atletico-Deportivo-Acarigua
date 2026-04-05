@@ -276,7 +276,7 @@
 
               <div class="medidas-list">
                 <el-table
-                  :data="medidas"
+                  :data="paginatedMedidas"
                   style="width: 100%"
                   border
                   size="small"
@@ -314,6 +314,9 @@
                   <i class="el-icon-data-line" />
                   <p>No hay medidas antropométricas registradas</p>
                 </div>
+                <div v-if="medidas && medidas.length > 0" style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                  <el-pagination v-model:current-page="medidasCurrentPage" v-model:page-size="medidasPageSize" :page-sizes="[5, 10, 20]" layout="total, sizes, prev, pager, next" :total="medidas.length" background small />
+                </div>
               </div>
             </el-tab-pane>
 
@@ -327,7 +330,7 @@
 
               <div class="performance-list">
                 <el-table
-                  :data="tests"
+                  :data="paginatedTests"
                   style="width: 100%"
                   border
                   size="small"
@@ -357,6 +360,9 @@
                 <div v-if="!tests || tests.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-trophy" />
                   <p>No hay tests de rendimiento registrados</p>
+                </div>
+                <div v-if="tests && tests.length > 0" style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                  <el-pagination v-model:current-page="testsCurrentPage" v-model:page-size="testsPageSize" :page-sizes="[5, 10, 20]" layout="total, sizes, prev, pager, next" :total="tests.length" background small />
                 </div>
               </div>
             </el-tab-pane>
@@ -470,7 +476,7 @@
               <div class="medical-attention-list">
                 <!-- Tabla aquí -->
                 <el-table
-                  :data="atencionesMedicas"
+                  :data="paginatedAtencionesMedicas"
                   style="width: 100%"
                   border
                   size="small"
@@ -512,6 +518,9 @@
                   <i class="el-icon-document" />
                   <p>No hay historial de atenciones médicas</p>
                 </div>
+                <div v-if="atencionesMedicas && atencionesMedicas.length > 0" style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                  <el-pagination v-model:current-page="atencionesCurrentPage" v-model:page-size="atencionesPageSize" :page-sizes="[5, 10, 20]" layout="total, sizes, prev, pager, next" :total="atencionesMedicas.length" background small />
+                </div>
               </div>
             </el-tab-pane>
 
@@ -519,7 +528,7 @@
             <el-tab-pane v-if="isTabVisible('rendimiento')" label="Historial de Partidos" name="historial_partidos">
               <div class="partidos-list">
                 <el-table
-                  :data="historialPartidos"
+                  :data="paginatedHistorialPartidos"
                   style="width: 100%"
                   border
                   size="small"
@@ -547,6 +556,9 @@
                 <div v-if="!historialPartidos || historialPartidos.length === 0" class="empty-tab" style="padding-top: 30px">
                   <i class="el-icon-medal" />
                   <p>No hay historial de partidos para esta categoría.</p>
+                </div>
+                <div v-if="historialPartidos && historialPartidos.length > 0" style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                  <el-pagination v-model:current-page="partidosCurrentPage" v-model:page-size="partidosPageSize" :page-sizes="[5, 10, 20]" layout="total, sizes, prev, pager, next" :total="historialPartidos.length" background small />
                 </div>
               </div>
             </el-tab-pane>
@@ -1491,6 +1503,34 @@ const historialPartidos = ref([])
 const activeTab = ref('personal')
 const loading = ref(false)
 const loadingAtletas = ref(false)
+
+const medidasCurrentPage = ref(1)
+const medidasPageSize = ref(5)
+const paginatedMedidas = computed(() => {
+  const start = (medidasCurrentPage.value - 1) * medidasPageSize.value
+  return (medidas.value || []).slice(start, start + medidasPageSize.value)
+})
+
+const testsCurrentPage = ref(1)
+const testsPageSize = ref(5)
+const paginatedTests = computed(() => {
+  const start = (testsCurrentPage.value - 1) * testsPageSize.value
+  return (tests.value || []).slice(start, start + testsPageSize.value)
+})
+
+const atencionesCurrentPage = ref(1)
+const atencionesPageSize = ref(5)
+const paginatedAtencionesMedicas = computed(() => {
+  const start = (atencionesCurrentPage.value - 1) * atencionesPageSize.value
+  return (atencionesMedicas.value || []).slice(start, start + atencionesPageSize.value)
+})
+
+const partidosCurrentPage = ref(1)
+const partidosPageSize = ref(5)
+const paginatedHistorialPartidos = computed(() => {
+  const start = (partidosCurrentPage.value - 1) * partidosPageSize.value
+  return (historialPartidos.value || []).slice(start, start + partidosPageSize.value)
+})
 const backendUrl = 'http://localhost:3000'
 const atletaStep = ref(0)
 const showAtletaModal = ref(false)
@@ -1733,6 +1773,7 @@ async function selectAtleta(id, keepTab = false) {
     activeTab.value = isUserMedico.value ? 'atencion_medica' : 'personal'
     fichaMedica.value = null; medidas.value = []; tests.value = []; tutor.value = null
     atencionesMedicas.value = []; carnetDiscapacidad.value = null; historialPartidos.value = []
+    medidasCurrentPage.value = 1; testsCurrentPage.value = 1; atencionesCurrentPage.value = 1; partidosCurrentPage.value = 1
   }
   await Promise.all([loadAtencionesMedicas(id), loadCarnetDiscapacidad(id), loadHistorialPartidos(currentAtleta.value.categoria_id)])
   loadFichaMedica(id); loadMedidas(id); loadTests(id); loadTutor(currentAtleta.value.representante_id)

@@ -1,5 +1,6 @@
 import pdfMake from 'pdfmake/build/pdfmake'
 import pdfFonts from 'pdfmake/build/vfs_fonts'
+import { LOGO_BASE64 } from './logoBase64'
 
 // Register fonts
 // Fix for different build environments (Webpack vs others)
@@ -27,15 +28,14 @@ export const PdfReportService = {
           columns: [
             // Logo (placeholder or text if image fails)
             {
-              text: 'CADA',
-              style: 'headerLogo',
+              image: LOGO_BASE64,
               width: 50
             },
             // Title and Date
             {
               stack: [
                 { text: COMPANY_NAME, style: 'headerCompany' },
-                { text: new Date().toLocaleDateString(), alignment: 'right', style: 'headerDate' }
+                { text: `${new Date().toLocaleDateString('es-VE')} - ${new Date().toLocaleTimeString('es-VE')}`, alignment: 'right', style: 'headerDate' }
               ],
               width: '*'
             }
@@ -168,13 +168,34 @@ export const PdfReportService = {
               columnGap: 10,
               margin: [0, 0, 0, 5]
             },
-            atleta.entrenador_nombre ? {
+            {
               columns: [
+                { width: 'auto', text: 'Sexo: ', style: 'label' },
+                { width: '*', text: (atleta.sexo === 'M' ? 'Masculino' : (atleta.sexo === 'F' ? 'Femenino' : atleta.sexo)) || 'N/A', style: 'value' },
+                { width: 'auto', text: 'Edad: ', style: 'label' },
+                { width: '*', text: (() => {
+                  if (!atleta.fecha_nacimiento) return '-'
+                  const today = new Date()
+                  const birthDate = new Date(atleta.fecha_nacimiento)
+                  let age = today.getFullYear() - birthDate.getFullYear()
+                  const m = today.getMonth() - birthDate.getMonth()
+                  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--
+                  return age + ' años'
+                })(), style: 'value' }
+              ],
+              columnGap: 10,
+              margin: [0, 0, 0, 5]
+            },
+            {
+              columns: [
+                { width: 'auto', text: 'Teléfono: ', style: 'label' },
+                { width: '*', text: atleta.telefono || 'N/A', style: 'value' },
                 { width: 'auto', text: 'Entrenador: ', style: 'label' },
-                { width: '*', text: atleta.entrenador_nombre, style: 'value' }
-              ]
-            } : null
-          ].filter(Boolean)
+                { width: '*', text: atleta.entrenador_nombre || 'N/A', style: 'value' }
+              ],
+              columnGap: 10
+            }
+          ]
         }
       ],
       columnGap: 20,
@@ -396,7 +417,7 @@ export const PdfReportService = {
   /**
          * Generates Attendance Report (General Table)
          */
-  generateAttendanceReport(attendanceData, categoryName, dates) {
+  generateAttendanceReport(attendanceData, categoryName, dates, trainerName) {
     const tableBody = [
       [
         { text: 'Atleta', style: 'tableHeader' },
@@ -424,7 +445,8 @@ export const PdfReportService = {
     })
 
     const content = [
-      { text: `Rango: ${dates ? dates.join(' al ') : 'Todo el periodo'}`, style: 'reportSubtitle', margin: [0, -10, 0, 10], fontSize: 10 },
+      { text: `Rango: ${dates && dates.length === 2 ? dates.join(' al ') : 'Todo el periodo'}`, style: 'reportSubtitle', margin: [0, -10, 0, 5], fontSize: 10 },
+      trainerName ? { text: `Entrenador: ${trainerName}`, style: 'reportSubtitle', fontSize: 11, margin: [0, 0, 0, 10] } : null,
       {
         table: {
           headerRows: 1,
@@ -435,14 +457,14 @@ export const PdfReportService = {
       }
     ]
 
-    const docDef = this._getBaseDocDefinition(content, 'Reporte de Asistencia', categoryName || 'Todas las Categorías')
+    const docDef = this._getBaseDocDefinition(content.filter(Boolean), 'Reporte de Asistencia', categoryName || 'Todas las Categorías')
     pdfMake.createPdf(docDef).open()
   },
 
   /**
          * Generates Individual Attendance Detail
          */
-  generateIndividualAttendanceReport(athleteName, attendanceList) {
+  generateIndividualAttendanceReport(athleteName, attendanceList, categoryName, trainerName) {
     const tableBody = [
       [
         { text: 'Fecha', style: 'tableHeader' },
@@ -465,6 +487,8 @@ export const PdfReportService = {
     })
 
     const content = [
+      categoryName ? { text: `Categoría: ${categoryName}`, style: 'reportSubtitle', fontSize: 11, margin: [0, -10, 0, 5] } : null,
+      trainerName ? { text: `Entrenador: ${trainerName}`, style: 'reportSubtitle', fontSize: 11, margin: [0, 0, 0, 10] } : null,
       {
         table: {
           headerRows: 1,
@@ -475,7 +499,7 @@ export const PdfReportService = {
       }
     ]
 
-    const docDef = this._getBaseDocDefinition(content, 'Detalle de Asistencia', athleteName)
+    const docDef = this._getBaseDocDefinition(content.filter(Boolean), 'Detalle de Asistencia', athleteName)
     pdfMake.createPdf(docDef).open()
   },
 
@@ -486,32 +510,38 @@ export const PdfReportService = {
     const tableBody = [
       // Header Row
       [
-        { text: 'Cédula/ID', style: 'tableHeader' },
+        { text: 'Cédula', style: 'tableHeader' },
         { text: 'Nombre', style: 'tableHeader' },
-        { text: 'Posición', style: 'tableHeader' },
         { text: 'Peso', style: 'tableHeader' },
         { text: 'Altura', style: 'tableHeader' },
         { text: 'IMC', style: 'tableHeader' },
+        { text: '% Grasa', style: 'tableHeader' },
+        { text: '% Musc.', style: 'tableHeader' },
+        { text: 'Enverg.', style: 'tableHeader' },
         { text: 'Fuerza', style: 'tableHeader' },
         { text: 'Vel.', style: 'tableHeader' },
         { text: 'Resist.', style: 'tableHeader' },
-        { text: 'Coord.', style: 'tableHeader' }
+        { text: 'Coord.', style: 'tableHeader' },
+        { text: 'Reacc.', style: 'tableHeader' }
       ]
     ]
 
     // Data Rows
     athletesData.forEach(a => {
       tableBody.push([
-        { text: a.cedula || '-', style: 'tableCell', fontSize: 8 },
-        { text: a.nombre, style: 'tableCell', fontSize: 8 },
-        { text: a.posicion, style: 'tableCell', fontSize: 8 },
-        { text: a.peso, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.altura, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.imc, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.fuerza, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.velocidad, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.resistencia, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.coordinacion, style: 'tableCell', alignment: 'center', fontSize: 8 }
+        { text: a.cedula || '-', style: 'tableCell', fontSize: 7 },
+        { text: a.nombre, style: 'tableCell', fontSize: 7 },
+        { text: a.peso, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.altura, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.imc, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.grasa, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.musculo, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.envergadura, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.fuerza, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.velocidad, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.resistencia, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.coordinacion, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.reaccion, style: 'tableCell', alignment: 'center', fontSize: 7 }
       ])
     })
 
@@ -520,7 +550,7 @@ export const PdfReportService = {
       {
         table: {
           headerRows: 1,
-          widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: tableBody
         },
         layout: 'lightHorizontalLines'

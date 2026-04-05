@@ -1,14 +1,13 @@
 <template>
-  <span>
-    <template v-if="icon">
-      <i v-if="icon.includes('el-icon')" :class="[icon, 'sub-el-icon']" />
-      <svg-icon v-else :icon-class="icon" />
-    </template>
-    <span v-if="title" class="menu-item-text">{{ title }}</span>
-  </span>
+  <el-icon v-if="icon" class="sub-el-icon">
+    <component v-if="icon.includes('el-icon')" :is="getIconComponent(icon)" />
+    <svg-icon v-else :icon-class="icon" />
+  </el-icon>
 </template>
 
 <script>
+import { Document, User, Medal, Avatar, DataLine, DataAnalysis, Calendar, Files, Setting, Lock, Odometer } from '@element-plus/icons-vue'
+
 export default {
   name: 'MenuItem',
   props: {
@@ -20,6 +19,25 @@ export default {
       type: String,
       default: ''
     }
+  },
+  setup() {
+    const getIconComponent = (name) => {
+      const map = {
+        'el-icon-document': Document,
+        'el-icon-user': User,
+        'el-icon-medal': Medal,
+        'el-icon-s-custom': Avatar,
+        'el-icon-data-line': DataLine,
+        'el-icon-data-analysis': DataAnalysis,
+        'el-icon-date': Calendar,
+        'el-icon-files': Files,
+        'el-icon-setting': Setting,
+        'el-icon-lock': Lock,
+        'el-icon-odometer': Odometer
+      }
+      return map[name] || Document
+    }
+    return { getIconComponent }
   }
 }
 </script>
