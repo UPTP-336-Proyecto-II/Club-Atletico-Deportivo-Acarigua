@@ -1,14 +1,9 @@
 const pool = require('../config/database');
-// const bcrypt = require('bcryptjs'); // Removed unused dependency to prevent load errors
-// loginController uses plain text comparison: if (password !== user.password)
-// validamos si usamos bcrypt o no. En loginController no usan hash... 
-// Pero para seguridad deberíamos.
-// Por ahora usaré texto plano si asi está el login, o mejor, simplemente comparo strings.
 
 // Obtener preguntas disponibles (catálogo)
 const getPreguntasDisponibles = async (req, res) => {
     try {
-        const [rows] = await pool.execute('SELECT * FROM preguntas_seguridad');
+        const [rows] = await pool.execute('SELECT preguntas_id, preguntas, grupo FROM preguntas_seguridad ORDER BY grupo ASC');
         res.json(rows);
     } catch (error) {
         console.error('Error obteniendo preguntas:', error);
@@ -19,7 +14,7 @@ const getPreguntasDisponibles = async (req, res) => {
 // Guardar respuestas de seguridad de un usuario
 const guardarPreguntas = async (req, res) => {
     try {
-        const userId = req.userId; // Ahora es el email
+        const email = req.userId; // Ahora es el email
         const { preguntas } = req.body; // Array de { pregunta_id, respuesta }
 
         if (!preguntas || !Array.isArray(preguntas) || preguntas.length === 0) {
@@ -27,13 +22,13 @@ const guardarPreguntas = async (req, res) => {
         }
 
         // Primero borramos las existentes para permitir actualización completa
-        await pool.execute('DELETE FROM respuesta_seguridad WHERE email_id = ?', [userId]);
+        await pool.execute('DELETE FROM respuesta_seguridad WHERE email_id = ?', [email]);
 
         // Insertamos las nuevas
         for (const p of preguntas) {
             await pool.execute(
                 'INSERT INTO respuesta_seguridad (email_id, pregunta_id, respuesta) VALUES (?, ?, ?)',
-                [userId, p.pregunta_id, p.respuesta.toLowerCase().trim()]
+                [email, p.pregunta_id, p.respuesta.toLowerCase().trim()]
             );
         }
 
@@ -48,7 +43,7 @@ const guardarPreguntas = async (req, res) => {
 // Verificar si un usuario ya tiene preguntas configuradas
 const tienePreguntas = async (req, res) => {
     try {
-        const { usuario_id } = req.params; // Ahora recibimos email
+        const { usuario_id } = req.params; // Sigue siendo param pero es email
         const [rows] = await pool.execute(
             'SELECT COUNT(*) as count FROM respuesta_seguridad WHERE email_id = ?',
             [usuario_id]
@@ -177,7 +172,6 @@ const verificarRespuestasYCambiarPassword = async (req, res) => {
         }
 
         // 2. Cambiar contraseña
-        // updateUsuario o directo update
         await pool.execute(
             'UPDATE usuarios SET password = ? WHERE email = ?',
             [newPassword, usuario_id]

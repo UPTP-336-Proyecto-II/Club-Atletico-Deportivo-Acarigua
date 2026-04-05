@@ -1,5 +1,6 @@
 import pdfMake from 'pdfmake/build/pdfmake'
 import pdfFonts from 'pdfmake/build/vfs_fonts'
+import { LOGO_BASE64 } from './logoBase64'
 
 // Register fonts
 // Fix for different build environments (Webpack vs others)
@@ -27,15 +28,14 @@ export const PdfReportService = {
           columns: [
             // Logo (placeholder or text if image fails)
             {
-              text: 'CADA',
-              style: 'headerLogo',
+              image: LOGO_BASE64,
               width: 50
             },
             // Title and Date
             {
               stack: [
                 { text: COMPANY_NAME, style: 'headerCompany' },
-                { text: new Date().toLocaleDateString(), alignment: 'right', style: 'headerDate' }
+                { text: `${new Date().toLocaleDateString('es-VE')} - ${new Date().toLocaleTimeString('es-VE')}`, alignment: 'right', style: 'headerDate' }
               ],
               width: '*'
             }
@@ -168,13 +168,34 @@ export const PdfReportService = {
               columnGap: 10,
               margin: [0, 0, 0, 5]
             },
-            atleta.entrenador_nombre ? {
+            {
               columns: [
+                { width: 'auto', text: 'Sexo: ', style: 'label' },
+                { width: '*', text: (atleta.sexo === 'M' ? 'Masculino' : (atleta.sexo === 'F' ? 'Femenino' : atleta.sexo)) || 'N/A', style: 'value' },
+                { width: 'auto', text: 'Edad: ', style: 'label' },
+                { width: '*', text: (() => {
+                  if (!atleta.fecha_nacimiento) return '-'
+                  const today = new Date()
+                  const birthDate = new Date(atleta.fecha_nacimiento)
+                  let age = today.getFullYear() - birthDate.getFullYear()
+                  const m = today.getMonth() - birthDate.getMonth()
+                  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--
+                  return age + ' años'
+                })(), style: 'value' }
+              ],
+              columnGap: 10,
+              margin: [0, 0, 0, 5]
+            },
+            {
+              columns: [
+                { width: 'auto', text: 'Teléfono: ', style: 'label' },
+                { width: '*', text: atleta.telefono || 'N/A', style: 'value' },
                 { width: 'auto', text: 'Entrenador: ', style: 'label' },
-                { width: '*', text: atleta.entrenador_nombre, style: 'value' }
-              ]
-            } : null
-          ].filter(Boolean)
+                { width: '*', text: atleta.entrenador_nombre || 'N/A', style: 'value' }
+              ],
+              columnGap: 10
+            }
+          ]
         }
       ],
       columnGap: 20,
@@ -272,8 +293,8 @@ export const PdfReportService = {
   },
 
   /**
-         * Generates Individual Athlete Card Report
-         */
+   * Generates Individual Athlete Card Report
+   */
   generateAthleteCardReport(atleta, medical, metrics, tests, tutor, photoBase64) {
     const content = []
 
@@ -314,11 +335,27 @@ export const PdfReportService = {
             {
               columns: [
                 { width: 'auto', text: 'Télefono: ', style: 'label' },
-                { width: '*', text: atleta.telefono || 'N/A', style: 'value' },
-                { width: 'auto', text: 'Dirección: ', style: 'label' },
-                { width: '*', text: atleta.direccion || 'No registrada', style: 'value' }
+                { width: '*', text: atleta.telefono || 'N/A', style: 'value' }
               ],
-              columnGap: 10
+              margin: [0, 0, 0, 5]
+            },
+            {
+              text: [
+                { text: 'Dirección: ', style: 'label' },
+                { text: [atleta.estado, atleta.municipio, atleta.parroquia].filter(Boolean).join(', ') || 'No registrada', style: 'value' }
+              ],
+              margin: [0, 0, 0, 2]
+            },
+            {
+              text: [
+                { text: 'Localidad: ', style: 'label' },
+                { text: atleta.localidad || 'N/A', style: 'value' },
+                { text: '   Tipo V.: ', style: 'label' },
+                { text: atleta.tipo_vivienda || 'N/A', style: 'value' },
+                { text: '   Ubicación: ', style: 'label' },
+                { text: atleta.ubicacion_vivienda || 'N/A', style: 'value' }
+              ],
+              margin: [0, 0, 0, 5]
             }
           ]
         }
@@ -330,14 +367,25 @@ export const PdfReportService = {
     content.push({ text: 'Información Médica', style: 'sectionHeader' })
     if (medical) {
       content.push({
-        columns: [
-          { text: [{ text: 'Tipo Sanguíneo: ', style: 'label' }, { text: medical.tipo_sanguineo || 'N/A', style: 'value' }] },
-          { text: [{ text: 'Alergias: ', style: 'label' }, { text: medical.alergias || 'Ninguna', style: 'value' }] },
-          { text: [{ text: 'Condición: ', style: 'label' }, { text: medical.condicion_medica || 'Ninguna', style: 'value' }] }
-        ],
-        margin: [0, 0, 0, 5]
+        table: {
+          widths: ['50%', '50%'],
+          body: [
+            [
+              { stack: [{ text: 'Grupo Sanguíneo', style: 'label' }, { text: medical.grupo_sanguineo || 'N/A', style: 'value' }], margin: [0, 2, 0, 2] },
+              { stack: [{ text: 'Alergias', style: 'label' }, { text: medical.alergias || 'Ninguna', style: 'value' }], margin: [0, 2, 0, 2] }
+            ],
+            [
+              { stack: [{ text: 'Antecedentes Familiares', style: 'label' }, { text: medical.antecedentes_familiares || 'Ninguno', style: 'value' }], margin: [0, 2, 0, 2] },
+              { stack: [{ text: 'Antecedentes Quirúrgicos / Lesiones', style: 'label' }, { text: medical.antecedentes_quirurgicos || 'Ninguno', style: 'value' }], margin: [0, 2, 0, 2] }
+            ],
+            [
+              { stack: [{ text: 'Condiciones Crónicas', style: 'label' }, { text: medical.condicion_cronica || 'Ninguna', style: 'value' }], margin: [0, 2, 0, 2] },
+              { stack: [{ text: 'Medicación Actual', style: 'label' }, { text: medical.medicacion_actual || 'Ninguna', style: 'value' }], margin: [0, 2, 0, 2] }
+            ]
+          ]
+        },
+        layout: 'noBorders'
       })
-      content.push({ text: [{ text: 'Lesiones: ', style: 'label' }, { text: medical.lesion || 'Sin registro', style: 'value' }], margin: [0, 5, 0, 0] })
     } else {
       content.push({ text: 'No hay información médica registrada.', style: 'value', italics: true })
     }
@@ -350,11 +398,29 @@ export const PdfReportService = {
           stack: [
             { text: 'Antropometría', style: 'sectionHeader' },
             metrics ? {
-              columns: [
-                { stack: [{ text: 'Peso', style: 'label' }, { text: metrics.peso + ' kg', style: 'value' }] },
-                { stack: [{ text: 'Altura', style: 'label' }, { text: metrics.altura + ' cm', style: 'value' }] },
-                { stack: [{ text: 'IMC', style: 'label' }, { text: metrics.indice_de_masa, style: 'value' }] }
-              ]
+              table: {
+                widths: ['50%', '50%'],
+                body: [
+                  [
+                    { stack: [{ text: 'Peso', style: 'label' }, { text: `${metrics.peso} kg`, style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] },
+                    { stack: [{ text: 'Altura', style: 'label' }, { text: `${metrics.altura} cm`, style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] }
+                  ],
+                  [
+                    { stack: [{ text: 'IMC', style: 'label' }, { text: metrics.indice_de_masa ? Number(metrics.indice_de_masa).toFixed(2) : '-', style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] },
+                    { stack: [{ text: 'Envergadura', style: 'label' }, { text: `${metrics.envergadura} cm`, style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] }
+                  ],
+                  [
+                    { stack: [{ text: 'P. Pierna', style: 'label' }, { text: `${metrics.largo_de_pierna} cm`, style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] },
+                    { stack: [{ text: 'P. Torso', style: 'label' }, { text: `${metrics.largo_de_torso} cm`, style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] }
+                  ]
+                ]
+              },
+              layout: {
+                hLineWidth: () => 1,
+                vLineWidth: () => 1,
+                hLineColor: () => '#e2e8f0',
+                vLineColor: () => '#e2e8f0'
+              }
             } : { text: 'Sin registros.', style: 'value', italics: true }
           ]
         },
@@ -363,11 +429,29 @@ export const PdfReportService = {
           stack: [
             { text: 'Último Rendimiento', style: 'sectionHeader' },
             tests ? {
-              columns: [
-                { stack: [{ text: 'Fuerza', style: 'label' }, { text: tests.test_de_fuerza, style: 'value' }] },
-                { stack: [{ text: 'Velocidad', style: 'label' }, { text: tests.test_velocidad, style: 'value' }] },
-                { stack: [{ text: 'Resistencia', style: 'label' }, { text: tests.test_resistencia, style: 'value' }] }
-              ]
+              table: {
+                widths: ['50%', '50%'],
+                body: [
+                  [
+                    { stack: [{ text: 'Fuerza', style: 'label' }, { text: tests.test_de_fuerza || '-', style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] },
+                    { stack: [{ text: 'Resistencia', style: 'label' }, { text: tests.test_resistencia || '-', style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] }
+                  ],
+                  [
+                    { stack: [{ text: 'Velocidad', style: 'label' }, { text: tests.test_velocidad || '-', style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] },
+                    { stack: [{ text: 'Coordinación', style: 'label' }, { text: tests.test_coordinacion || '-', style: 'value' }], fillColor: '#f8fafc', margin: [5, 5] }
+                  ],
+                  [
+                    { stack: [{ text: 'Reacción', style: 'label' }, { text: tests.test_de_reaccion || '-', style: 'value' }], fillColor: '#f8fafc', margin: [5, 5], colSpan: 2 },
+                    {}
+                  ]
+                ]
+              },
+              layout: {
+                hLineWidth: () => 1,
+                vLineWidth: () => 1,
+                hLineColor: () => '#e2e8f0',
+                vLineColor: () => '#e2e8f0'
+              }
             } : { text: 'Sin tests.', style: 'value', italics: true }
           ]
         }
@@ -375,18 +459,37 @@ export const PdfReportService = {
       columnGap: 20
     })
 
-    // 4. Tutor
-    content.push({ text: 'Información del Tutor', style: 'sectionHeader' })
+    // 4. Representative
+    content.push({ text: 'Información del Representante', style: 'sectionHeader' })
     if (tutor) {
       content.push({
         columns: [
           { text: [{ text: 'Nombre: ', style: 'label' }, { text: tutor.nombre_completo, style: 'value' }] },
           { text: [{ text: 'Relación: ', style: 'label' }, { text: tutor.tipo_relacion, style: 'value' }] },
           { text: [{ text: 'Teléfono: ', style: 'label' }, { text: tutor.telefono, style: 'value' }] }
-        ]
+        ],
+        margin: [0, 0, 0, 5]
+      })
+      content.push({
+        text: [
+          { text: 'Dirección: ', style: 'label' },
+          { text: [tutor.estado, tutor.municipio, tutor.parroquia].filter(Boolean).join(', ') || 'No registrada', style: 'value' }
+        ],
+        margin: [0, 0, 0, 2]
+      })
+      content.push({
+        text: [
+          { text: 'Localidad: ', style: 'label' },
+          { text: tutor.localidad || 'N/A', style: 'value' },
+          { text: '   Tipo V.: ', style: 'label' },
+          { text: tutor.tipo_vivienda || 'N/A', style: 'value' },
+          { text: '   Ubicación: ', style: 'label' },
+          { text: tutor.ubicacion_vivienda || 'N/A', style: 'value' }
+        ],
+        margin: [0, 0, 0, 5]
       })
     } else {
-      content.push({ text: 'No hay tutor asignado.', style: 'value', italics: true })
+      content.push({ text: 'No hay representante asignado.', style: 'value', italics: true })
     }
 
     const docDef = this._getBaseDocDefinition(content, 'Ficha Técnica de Atleta', `${atleta.nombre} ${atleta.apellido}`)
@@ -396,7 +499,7 @@ export const PdfReportService = {
   /**
          * Generates Attendance Report (General Table)
          */
-  generateAttendanceReport(attendanceData, categoryName, dates) {
+  generateAttendanceReport(attendanceData, categoryName, dates, trainerName) {
     const tableBody = [
       [
         { text: 'Atleta', style: 'tableHeader' },
@@ -423,26 +526,26 @@ export const PdfReportService = {
       ])
     })
 
-    const content = [
-      { text: `Rango: ${dates ? dates.join(' al ') : 'Todo el periodo'}`, style: 'reportSubtitle', margin: [0, -10, 0, 10], fontSize: 10 },
-      {
-        table: {
-          headerRows: 1,
-          widths: ['*', 'auto', 'auto', 'auto', 'auto'],
-          body: tableBody
-        },
-        layout: 'lightHorizontalLines'
-      }
-    ]
+    const infoStack = [
+      { text: `Rango: ${dates && dates.length === 2 ? dates.join(' al ') : 'Todo el periodo'}`, fontSize: 10, alignment: 'center', margin: [0, 0, 0, 5] },
+      trainerName ? { text: `Entrenador Responsable: ${trainerName}`, fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 10] } : null
+    ].filter(Boolean)
 
-    const docDef = this._getBaseDocDefinition(content, 'Reporte de Asistencia', categoryName || 'Todas las Categorías')
+    const docDef = this._getBaseDocDefinition([...infoStack, {
+      table: {
+        headerRows: 1,
+        widths: ['*', 'auto', 'auto', 'auto', 'auto'],
+        body: tableBody
+      },
+      layout: 'lightHorizontalLines'
+    }], 'Reporte de Asistencia', categoryName || 'Todas las Categorías')
     pdfMake.createPdf(docDef).open()
   },
 
   /**
          * Generates Individual Attendance Detail
          */
-  generateIndividualAttendanceReport(athleteName, attendanceList) {
+  generateIndividualAttendanceReport(athleteName, attendanceList, categoryName, trainerName) {
     const tableBody = [
       [
         { text: 'Fecha', style: 'tableHeader' },
@@ -464,18 +567,19 @@ export const PdfReportService = {
       ])
     })
 
-    const content = [
-      {
-        table: {
-          headerRows: 1,
-          widths: ['auto', 'auto', '*'],
-          body: tableBody
-        },
-        layout: 'lightHorizontalLines'
-      }
-    ]
+    const infoStack = [
+      categoryName ? { text: `Categoría: ${categoryName}`, fontSize: 11, alignment: 'center', margin: [0, 0, 0, 5] } : null,
+      trainerName ? { text: `Entrenador Responsable: ${trainerName}`, fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 10] } : null
+    ].filter(Boolean)
 
-    const docDef = this._getBaseDocDefinition(content, 'Detalle de Asistencia', athleteName)
+    const docDef = this._getBaseDocDefinition([...infoStack, {
+      table: {
+        headerRows: 1,
+        widths: ['auto', 'auto', '*'],
+        body: tableBody
+      },
+      layout: 'lightHorizontalLines'
+    }], 'Detalle de Asistencia', athleteName)
     pdfMake.createPdf(docDef).open()
   },
 
@@ -486,32 +590,38 @@ export const PdfReportService = {
     const tableBody = [
       // Header Row
       [
-        { text: 'Cédula/ID', style: 'tableHeader' },
+        { text: 'Cédula', style: 'tableHeader' },
         { text: 'Nombre', style: 'tableHeader' },
-        { text: 'Posición', style: 'tableHeader' },
         { text: 'Peso', style: 'tableHeader' },
         { text: 'Altura', style: 'tableHeader' },
         { text: 'IMC', style: 'tableHeader' },
+        { text: '% Grasa', style: 'tableHeader' },
+        { text: '% Musc.', style: 'tableHeader' },
+        { text: 'Enverg.', style: 'tableHeader' },
         { text: 'Fuerza', style: 'tableHeader' },
         { text: 'Vel.', style: 'tableHeader' },
         { text: 'Resist.', style: 'tableHeader' },
-        { text: 'Coord.', style: 'tableHeader' }
+        { text: 'Coord.', style: 'tableHeader' },
+        { text: 'Reacc.', style: 'tableHeader' }
       ]
     ]
 
     // Data Rows
     athletesData.forEach(a => {
       tableBody.push([
-        { text: a.cedula || '-', style: 'tableCell', fontSize: 8 },
-        { text: a.nombre, style: 'tableCell', fontSize: 8 },
-        { text: a.posicion, style: 'tableCell', fontSize: 8 },
-        { text: a.peso, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.altura, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.imc, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.fuerza, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.velocidad, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.resistencia, style: 'tableCell', alignment: 'center', fontSize: 8 },
-        { text: a.coordinacion, style: 'tableCell', alignment: 'center', fontSize: 8 }
+        { text: a.cedula || '-', style: 'tableCell', fontSize: 7 },
+        { text: a.nombre, style: 'tableCell', fontSize: 7 },
+        { text: a.peso, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.altura, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.imc, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.grasa, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.musculo, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.envergadura, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.fuerza, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.velocidad, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.resistencia, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.coordinacion, style: 'tableCell', alignment: 'center', fontSize: 7 },
+        { text: a.reaccion, style: 'tableCell', alignment: 'center', fontSize: 7 }
       ])
     })
 
@@ -520,7 +630,7 @@ export const PdfReportService = {
       {
         table: {
           headerRows: 1,
-          widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+          widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
           body: tableBody
         },
         layout: 'lightHorizontalLines'

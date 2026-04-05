@@ -138,10 +138,66 @@ const getEvolucionPeso = async (req, res) => {
   }
 };
 
+// Eliminar medición
+const deleteMedicion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const [result] = await pool.execute(
+      'DELETE FROM medidas_antropometricas WHERE medidas_id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Medición no encontrada' });
+    }
+
+    res.json({ message: 'Medición eliminada exitosamente' });
+  } catch (error) {
+    console.error('Error eliminando medición:', error);
+    res.status(500).json({ error: 'Error al eliminar medición' });
+  }
+};
+
+// Actualizar medición
+const updateMedicion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      fecha_medicion,
+      peso,
+      altura,
+      porcentaje_grasa,
+      porcentaje_musculatura,
+      envergadura,
+      largo_de_pierna,
+      largo_de_torso
+    } = req.body;
+
+    const [result] = await pool.execute(
+      `UPDATE medidas_antropometricas 
+       SET fecha_medicion = ?, peso = ?, altura = ?, envergadura = ?, largo_de_pierna = ?, largo_de_torso = ?, porcentaje_grasa = ?, porcentaje_musculatura = ?
+       WHERE medidas_id = ?`,
+      [fecha_medicion, peso, altura, envergadura, largo_de_pierna, largo_de_torso, porcentaje_grasa || null, porcentaje_musculatura || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Medición no encontrada' });
+    }
+
+    res.json({ message: 'Medición actualizada exitosamente' });
+  } catch (error) {
+    console.error('Error actualizando medición:', error);
+    res.status(500).json({ error: 'Error al actualizar medición' });
+  }
+};
+
 module.exports = {
   getMediciones,
   getMedicionesByAtleta,
   createMedicion,
   getUltimaMedicion,
-  getEvolucionPeso
+  getEvolucionPeso,
+  deleteMedicion,
+  updateMedicion
 };

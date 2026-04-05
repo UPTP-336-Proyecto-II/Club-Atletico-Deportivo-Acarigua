@@ -1,63 +1,23 @@
 const pool = require('../config/database');
-const {
-  isLegacySchema,
-  mapAttendanceStatusToApi,
-  mapAttendanceStatusToLegacy,
-  mapAttendanceStatusToNormalized,
-  mapActivityTypeToApi,
-  mapActivityTypeToLegacy
-} = require('../services/schemaService');
 
-function normalizeAttendanceRows(rows) {
-  return rows.map(row => ({
-    ...row,
-    estatus: mapAttendanceStatusToApi(row.estatus),
-    tipo_evento: mapActivityTypeToApi(row.tipo_evento)
-  }));
-}
-
-const getOrCreateEvento = async (fecha, tipo_evento, entrenador_id) => {
-  const legacySchema = await isLegacySchema();
-
-  if (legacySchema) {
-    const tipoActividad = mapActivityTypeToLegacy(tipo_evento);
-    const [existing] = await pool.execute(
-      `SELECT actividad_id
-       FROM actividades
-       WHERE fecha = ? AND tipo_actividad = ?
-       ORDER BY actividad_id DESC
-       LIMIT 1`,
-      [fecha, tipoActividad]
-    );
-
-    if (existing.length > 0) {
-      return existing[0].actividad_id;
-    }
-
-    const [result] = await pool.execute(
-      `INSERT INTO actividades (tipo_actividad, objetivo_principal, fecha, estatus)
-       VALUES (?, ?, ?, ?)`,
-      [tipoActividad, `Control de asistencia - ${mapActivityTypeToApi(tipo_evento)}`, fecha, 1]
-    );
-
-    return result.insertId;
-  }
-
-  const normalizedStatus = mapActivityTypeToApi(tipo_evento);
+const getOrCreateActividad = async (fecha, tipo_evento) => {
   const [existing] = await pool.execute(
-    `SELECT evento_id FROM evento_deportivo
-     WHERE fecha_evento = ? AND tipo_evento = ? AND entrenador_id = ?`,
-    [fecha, normalizedStatus, entrenador_id]
+    `SELECT actividad_id
+     FROM actividades
+     WHERE fecha = ? AND tipo_actividad = ?
+     ORDER BY actividad_id DESC
+     LIMIT 1`,
+    [fecha, tipo_evento]
   );
 
   if (existing.length > 0) {
-    return existing[0].evento_id;
+    return existing[0].actividad_id;
   }
 
   const [result] = await pool.execute(
-    `INSERT INTO evento_deportivo (entrenador_id, tipo_evento, fecha_evento)
-     VALUES (?, ?, ?)`,
-    [entrenador_id, normalizedStatus, fecha]
+    `INSERT INTO actividades (tipo_actividad, objetivo_principal, fecha, estatus)
+     VALUES (?, ?, ?, ?)`,
+    [tipo_evento, `Control de asistencia - Evento Tipo ${tipo_evento}`, fecha, 1]
   );
 
   return result.insertId;
@@ -66,64 +26,38 @@ const getOrCreateEvento = async (fecha, tipo_evento, entrenador_id) => {
 const getAsistencias = async (req, res) => {
   try {
     const { fecha, atleta_id, categoria_id } = req.query;
-    const legacySchema = await isLegacySchema();
 
-    let query;
+    let query = `
+          SELECT a.asistencia_id,
+                 a.actividad_id as evento_id,
+                 a.atleta_id,
+                 a.estatus,
+                 a.observaciones,
+                 act.fecha as fecha,
+                 act.tipo_actividad as tipo_evento,
+                 c.entrenador_id,
+                 atl.nombre as atleta_nombre,
+                 atl.apellido as atleta_apellido,
+                 atl.foto,
+                 c.nombre_categoria as categoria_nombre,
+                 p.nombre as entrenador_nombre,
+                 p.apellido as entrenador_apellido
+          FROM asistencias a
+          INNER JOIN actividades act ON a.actividad_id = act.actividad_id
+          LEFT JOIN atletas atl ON a.atleta_id = atl.atleta_id
+          LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
+          LEFT JOIN personal p ON c.entrenador_id = p.personal_id
+          WHERE 1=1`;
+    
     const params = [];
 
-    if (legacySchema) {
-      query = `
-            SELECT a.asistencia_id,
-                   a.actividad_id as evento_id,
-                   a.atleta_id,
-                   a.estatus,
-                   a.observaciones,
-                   act.fecha as fecha,
-                   act.tipo_actividad as tipo_evento,
-                   c.entrenador_id,
-                   atl.nombre as atleta_nombre,
-                   atl.apellido as atleta_apellido,
-                   atl.foto,
-                   c.nombre_categoria as categoria_nombre,
-                   p.nombre as entrenador_nombre,
-                   p.apellido as entrenador_apellido
-            FROM asistencias a
-            INNER JOIN actividades act ON a.actividad_id = act.actividad_id
-            LEFT JOIN atletas atl ON a.atleta_id = atl.atleta_id
-            LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
-            LEFT JOIN personal p ON c.entrenador_id = p.personal_id
-            WHERE 1=1`;
-    } else {
-      query = `
-            SELECT da.asistencia_id,
-                   da.evento_id,
-                   da.atleta_id,
-                   da.estatus,
-                   da.observaciones,
-                   e.fecha_evento as fecha,
-                   e.tipo_evento,
-                   e.entrenador_id,
-                   atl.nombre as atleta_nombre,
-                   atl.apellido as atleta_apellido,
-                   atl.foto,
-                   c.nombre_categoria as categoria_nombre,
-                   p.nombre as entrenador_nombre,
-                   p.apellido as entrenador_apellido
-            FROM detalle_asistencia da
-            INNER JOIN evento_deportivo e ON da.evento_id = e.evento_id
-            LEFT JOIN atletas atl ON da.atleta_id = atl.atleta_id
-            LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
-            LEFT JOIN plantel p ON e.entrenador_id = p.plantel_id
-            WHERE 1=1`;
-    }
-
     if (fecha) {
-      query += legacySchema ? ' AND act.fecha = ?' : ' AND e.fecha_evento = ?';
+      query += ' AND act.fecha = ?';
       params.push(fecha);
     }
 
     if (atleta_id) {
-      query += legacySchema ? ' AND a.atleta_id = ?' : ' AND da.atleta_id = ?';
+      query += ' AND a.atleta_id = ?';
       params.push(atleta_id);
     }
 
@@ -132,12 +66,21 @@ const getAsistencias = async (req, res) => {
       params.push(categoria_id);
     }
 
-    query += legacySchema
-      ? ' ORDER BY act.fecha DESC, atl.nombre ASC'
-      : ' ORDER BY e.fecha_evento DESC, atl.nombre ASC';
+    query += ' ORDER BY act.fecha DESC, atl.nombre ASC';
 
     const [rows] = await pool.execute(query, params);
-    res.json(normalizeAttendanceRows(rows));
+    
+    // Normalizar estatus a nombres string para el frontend usando el objeto local
+    const estatusMap = { 1: 'Asiste', 2: 'Falta Justificada', 3: 'Inasistencia', 4: 'Reposo' };
+    const tipoEventoMap = { 1: 'Entrenamiento', 2: 'Partido Amistoso', 3: 'Torneo Oficial', 4: 'Evaluación Técnica' };
+
+    const normalizedRows = rows.map(row => ({
+      ...row,
+      estatus: estatusMap[row.estatus] || 'Desconocido',
+      tipo_evento: tipoEventoMap[row.tipo_evento] || 'General'
+    }));
+
+    res.json(normalizedRows);
   } catch (error) {
     console.error('Error obteniendo asistencias:', error);
     res.status(500).json({ error: 'Error al obtener asistencias' });
@@ -146,15 +89,21 @@ const getAsistencias = async (req, res) => {
 
 const createAsistencia = async (req, res) => {
   try {
-    const { atleta_id, fecha, tipo_evento, estatus, observaciones, entrenador_id } = req.body;
-    const legacySchema = await isLegacySchema();
-    const evento_id = await getOrCreateEvento(fecha, tipo_evento || 'Entrenamiento', entrenador_id || null);
+    const { atleta_id, fecha, tipo_evento, estatus, observaciones } = req.body;
+    
+    // Map estatus to DB values
+    const estatusDbMap = { 'Asiste': 1, 'Falta Justificada': 2, 'Inasistencia': 3, 'Reposo': 4 };
+    const estatusValue = estatusDbMap[estatus] || 1;
+
+    // Map tipo_evento to DB values  
+    const tipoEventoDbMap = { 'Entrenamiento': 1, 'Partido Amistoso': 2, 'Torneo Oficial': 3, 'Evaluación Técnica': 4, 'General': 1 };
+    const tipoEventoValue = tipoEventoDbMap[tipo_evento] || 1;
+
+    const actividad_id = await getOrCreateActividad(fecha, tipoEventoValue);
 
     const [existing] = await pool.execute(
-      legacySchema
-        ? 'SELECT asistencia_id FROM asistencias WHERE atleta_id = ? AND actividad_id = ?'
-        : 'SELECT asistencia_id FROM detalle_asistencia WHERE atleta_id = ? AND evento_id = ?',
-      [atleta_id, evento_id]
+      'SELECT asistencia_id FROM asistencias WHERE atleta_id = ? AND actividad_id = ?',
+      [atleta_id, actividad_id]
     );
 
     if (existing.length > 0) {
@@ -164,23 +113,15 @@ const createAsistencia = async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      legacySchema
-        ? `INSERT INTO asistencias (actividad_id, atleta_id, estatus, observaciones)
-           VALUES (?, ?, ?, ?)`
-        : `INSERT INTO detalle_asistencia (evento_id, atleta_id, estatus, observaciones)
-           VALUES (?, ?, ?, ?)`,
-      [
-        evento_id,
-        atleta_id,
-        legacySchema ? mapAttendanceStatusToLegacy(estatus) : mapAttendanceStatusToNormalized(estatus),
-        observaciones || ''
-      ]
+      `INSERT INTO asistencias (actividad_id, atleta_id, estatus, observaciones)
+       VALUES (?, ?, ?, ?)`,
+      [actividad_id, atleta_id, estatusValue, observaciones || '']
     );
 
     res.status(200).json({
       message: 'Asistencia registrada exitosamente',
       id: result.insertId,
-      evento_id
+      evento_id: actividad_id
     });
   } catch (error) {
     console.error('Error registrando asistencia:', error);
@@ -191,50 +132,39 @@ const createAsistencia = async (req, res) => {
 const getAsistenciasByFecha = async (req, res) => {
   try {
     const { fecha } = req.params;
-    const legacySchema = await isLegacySchema();
 
     const [rows] = await pool.execute(
-      legacySchema
-        ? `SELECT a.asistencia_id,
-                  a.actividad_id as evento_id,
-                  a.atleta_id,
-                  a.estatus,
-                  a.observaciones,
-                  act.fecha as fecha,
-                  act.tipo_actividad as tipo_evento,
-                  atl.nombre as atleta_nombre,
-                  atl.apellido as atleta_apellido,
-                  atl.foto,
-                  c.nombre_categoria as categoria_nombre,
-                  TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad
-           FROM asistencias a
-           INNER JOIN actividades act ON a.actividad_id = act.actividad_id
-           LEFT JOIN atletas atl ON a.atleta_id = atl.atleta_id
-           LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
-           WHERE act.fecha = ? AND atl.estatus IN (1, 2)
-           ORDER BY atl.nombre ASC`
-        : `SELECT da.asistencia_id,
-                  da.evento_id,
-                  da.atleta_id,
-                  da.estatus,
-                  da.observaciones,
-                  e.fecha_evento as fecha,
-                  e.tipo_evento,
-                  atl.nombre as atleta_nombre,
-                  atl.apellido as atleta_apellido,
-                  atl.foto,
-                  c.nombre_categoria as categoria_nombre,
-                  TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad
-           FROM detalle_asistencia da
-           INNER JOIN evento_deportivo e ON da.evento_id = e.evento_id
-           LEFT JOIN atletas atl ON da.atleta_id = atl.atleta_id
-           LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
-           WHERE e.fecha_evento = ? AND atl.estatus IN ('Activo', 'Lesionado')
-           ORDER BY atl.nombre ASC`,
+      `SELECT a.asistencia_id,
+                a.actividad_id as evento_id,
+                a.atleta_id,
+                a.estatus,
+                a.observaciones,
+                act.fecha as fecha,
+                act.tipo_actividad as tipo_evento,
+                atl.nombre as atleta_nombre,
+                atl.apellido as atleta_apellido,
+                atl.foto,
+                c.nombre_categoria as categoria_nombre,
+                TIMESTAMPDIFF(YEAR, atl.fecha_nacimiento, CURDATE()) as edad
+         FROM asistencias a
+         INNER JOIN actividades act ON a.actividad_id = act.actividad_id
+         LEFT JOIN atletas atl ON a.atleta_id = atl.atleta_id
+         LEFT JOIN categoria c ON atl.categoria_id = c.categoria_id
+         WHERE act.fecha = ? AND atl.estatus IN (1, 2)
+         ORDER BY atl.nombre ASC`,
       [fecha]
     );
 
-    res.json(normalizeAttendanceRows(rows));
+    const estatusMap = { 1: 'Asiste', 2: 'Falta Justificada', 3: 'Inasistencia', 4: 'Reposo' };
+    const tipoEventoMap = { 1: 'Entrenamiento', 2: 'Partido Amistoso', 3: 'Torneo Oficial', 4: 'Evaluación Técnica' };
+
+    const normalizedRows = rows.map(row => ({
+      ...row,
+      estatus: estatusMap[row.estatus] || 'Desconocido',
+      tipo_evento: tipoEventoMap[row.tipo_evento] || 'General'
+    }));
+
+    res.json(normalizedRows);
   } catch (error) {
     console.error('Error obteniendo asistencias por fecha:', error);
     res.status(500).json({ error: 'Error al obtener asistencias' });
@@ -245,13 +175,14 @@ const updateAsistencia = async (req, res) => {
   try {
     const { id } = req.params;
     const { estatus, observaciones } = req.body;
-    const legacySchema = await isLegacySchema();
+    
+    // Map estatus to DB values
+    const estatusDbMap = { 'Asiste': 1, 'Falta Justificada': 2, 'Inasistencia': 3, 'Reposo': 4 };
+    const estatusValue = estatusDbMap[estatus] || 1;
 
     const [result] = await pool.execute(
-      legacySchema
-        ? 'UPDATE asistencias SET estatus = ?, observaciones = ? WHERE asistencia_id = ?'
-        : 'UPDATE detalle_asistencia SET estatus = ?, observaciones = ? WHERE asistencia_id = ?',
-      [legacySchema ? mapAttendanceStatusToLegacy(estatus) : mapAttendanceStatusToNormalized(estatus), observaciones || '', id]
+      'UPDATE asistencias SET estatus = ?, observaciones = ? WHERE asistencia_id = ?',
+      [estatusValue, observaciones || '', id]
     );
 
     if (result.affectedRows === 0) {
@@ -268,12 +199,9 @@ const updateAsistencia = async (req, res) => {
 const deleteAsistencia = async (req, res) => {
   try {
     const { id } = req.params;
-    const legacySchema = await isLegacySchema();
 
     const [result] = await pool.execute(
-      legacySchema
-        ? 'DELETE FROM asistencias WHERE asistencia_id = ?'
-        : 'DELETE FROM detalle_asistencia WHERE asistencia_id = ?',
+      'DELETE FROM asistencias WHERE asistencia_id = ?',
       [id]
     );
 

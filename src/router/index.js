@@ -80,7 +80,7 @@ export const constantRoutes = [
         path: 'index',
         component: () => import('@/views/dashboard/index.vue'),
         name: 'Inicio',
-        meta: { title: 'Inicio', icon: 'dashboard', affix: true }
+        meta: { title: 'Inicio', icon: 'el-icon-odometer', affix: true }
       }
     ]
   },

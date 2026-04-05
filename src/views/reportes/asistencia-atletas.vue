@@ -66,9 +66,26 @@
             />
           </div>
 
+          <div class="filter-item">
+            <span class="premium-search-label">Ordenar por</span>
+            <el-select v-model="filters.sort" placeholder="Seleccionar..." class="modern-search-input modern-filter-control" @change="handleFilterChange" style="width: 100%">
+              <el-option label="Porcentaje (Mayor a Menor)" value="perc_desc" />
+              <el-option label="Porcentaje (Menor a Mayor)" value="perc_asc" />
+              <el-option label="Nombre (A-Z)" value="name_asc" />
+              <el-option label="Nombre (Z-A)" value="name_desc" />
+            </el-select>
+          </div>
+
         </div>
       </div>
     </el-card>
+
+    <!-- Category Summary Bar (Non-Print) -->
+    <div v-if="filters.categoria_id && filters.categoria_id !== 'all'" class="category-summary-bar no-print">
+      <el-tag type="info" effect="dark" class="trainer-badge">
+        <i class="el-icon-user" /> Entrenador Responsable: <strong>{{ selectedTrainerName }}</strong>
+      </el-tag>
+    </div>
 
     <!-- Main Content -->
     <div class="table-container">
@@ -79,7 +96,7 @@
       <div v-else>
         <!-- TABLA DESKTOP (oculta en móvil) -->
         <el-table
-          :data="filteredAthletesStats"
+          :data="paginatedAthletes"
           style="width: 100%"
           class="custom-table desktop-table"
           :header-cell-style="{
@@ -96,7 +113,7 @@
               <div class="athlete-cell">
                 <div class="athlete-photo-wrapper">
                   <img v-if="scope.row.foto" :src="getFotoUrl(scope.row.foto)" class="avatar-img" @error="handleImgError">
-                  <div v-else class="avatar-placeholder"><i class="el-icon-user" /></div>
+                  <div v-else class="avatar-placeholder initials-avatar">{{ getInitials(scope.row.nombre, scope.row.apellido) }}</div>
                 </div>
                 <div class="athlete-info">
                   <span class="name">{{ scope.row.nombre }} {{ scope.row.apellido }}</span>
@@ -107,7 +124,7 @@
           </el-table-column>
 
           <!-- New Explicit Category Column -->
-          <el-table-column label="Categoría" min-width="120" align="center">
+          <el-table-column label="Categoría" min-width="160" align="center">
             <template #default="scope">
               <el-tag size="medium" effect="plain" type="info" class="category-tag">
                 {{ scope.row.categoria_nombre }}
@@ -181,7 +198,7 @@
         <!-- VISTA TARJETAS MÓVIL (oculta en desktop) -->
         <div class="mobile-cards-view">
           <div
-            v-for="atleta in filteredAthletesStats"
+            v-for="atleta in paginatedAthletes"
             :key="atleta.atleta_id"
             class="athlete-card"
           >
@@ -189,7 +206,7 @@
             <div class="card-header-section">
               <div class="athlete-photo-wrapper">
                 <img v-if="atleta.foto" :src="getFotoUrl(atleta.foto)" class="avatar-img" @error="handleImgError">
-                <div v-else class="avatar-placeholder"><i class="el-icon-user" /></div>
+                <div v-else class="avatar-placeholder initials-avatar">{{ getInitials(atleta.nombre, atleta.apellido) }}</div>
               </div>
               <div class="athlete-info">
                 <span class="name">{{ atleta.nombre }} {{ atleta.apellido }}</span>
@@ -248,8 +265,16 @@
           <p>No se encontraron datos coincidente con los filtros.</p>
         </div>
 
-        <div v-if="filteredAthletesStats.length > 0" class="table-footer">
+        <div v-if="filteredAthletesStats.length > 0" class="table-footer" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 20px; gap: 15px;">
           <span>Total: <strong>{{ filteredAthletesStats.length }}</strong> atletas</span>
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[10, 25, 50, 100]"
+            layout="total, sizes, prev, pager, next"
+            :total="filteredAthletesStats.length"
+            background
+          />
         </div>
 
       </div>
@@ -289,19 +314,19 @@
         </div>
 
         <el-table
-          :data="selectedAthleteHistory"
-          height="400"
+          :data="paginatedHistory"
+          height="350"
           border
           stripe
           style="width: 100%"
           class="detail-table"
         >
-          <el-table-column prop="fecha" label="Fecha" width="120">
+          <el-table-column prop="fecha" label="Fecha" min-width="120">
             <template #default="scope">
               {{ formatDate(scope.row.fecha) }}
             </template>
           </el-table-column>
-          <el-table-column prop="tipo_evento" label="Evento" width="140" />
+          <el-table-column prop="tipo_evento" label="Evento" min-width="160" />
           <el-table-column prop="estatus" label="Estado" align="center">
             <template #default="scope">
               <el-tag :type="getStatusType(scope.row.estatus)">
@@ -312,6 +337,17 @@
           <el-table-column prop="observaciones" label="Observaciones" show-overflow-tooltip />
         </el-table>
 
+        <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+          <el-pagination
+            v-model:current-page="modalCurrentPage"
+            v-model:page-size="modalPageSize"
+            :page-sizes="[5, 10, 20]"
+            layout="total, prev, pager, next"
+            :total="selectedAthleteHistory.length"
+            background
+            small
+          />
+        </div>
       </div>
 
       <template #footer><div class="dialog-footer no-print">
@@ -338,7 +374,8 @@ const asistencias = ref([])
 const filters = ref({
   categoria_id: '',
   dateRange: [],
-  search: ''
+  search: '',
+  sort: 'name_asc'
 })
 const showDetailModal = ref(false)
 const selectedAthlete = ref(null)
@@ -348,6 +385,42 @@ const selectedCategoryName = computed(() => {
   if (!filters.value.categoria_id) return 'Todas las Categorías'
   const cat = categorias.value.find(c => c.categoria_id === filters.value.categoria_id)
   return cat ? cat.nombre_categoria : ''
+})
+
+const selectedTrainerName = computed(() => {
+  if (!filters.value.categoria_id) return ''
+  const cat = categorias.value.find(c => String(c.categoria_id) === String(filters.value.categoria_id))
+  if (!cat) return ''
+  const name = cat.entrenador_nombre || cat.nombre_entrenador || ''
+  const last = cat.entrenador_apellido || cat.apellido_entrenador || ''
+  const fullName = `${name} ${last}`.trim()
+  return fullName || 'No asignado'
+})
+
+const getTrainerForAthlete = (atleta) => {
+  if (!atleta || !atleta.categoria_id) return 'No asignado'
+  const cat = categorias.value.find(c => String(c.categoria_id) === String(atleta.categoria_id))
+  if (!cat) return 'No asignado'
+  const name = cat.entrenador_nombre || cat.nombre_entrenador || ''
+  const last = cat.entrenador_apellido || cat.apellido_entrenador || ''
+  const fullName = `${name} ${last}`.trim()
+  return fullName || 'No asignado'
+}
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+const paginatedAthletes = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredAthletesStats.value.slice(start, start + pageSize.value)
+})
+
+const modalCurrentPage = ref(1)
+const modalPageSize = ref(5)
+
+const paginatedHistory = computed(() => {
+  const start = (modalCurrentPage.value - 1) * modalPageSize.value
+  return selectedAthleteHistory.value.slice(start, start + modalPageSize.value)
 })
 
 const filteredAthletesStats = computed(() => {
@@ -402,8 +475,19 @@ const filteredAthletesStats = computed(() => {
         percentage
       }
     }
+  }).sort((a, b) => {
+    if (filters.value.sort === 'perc_desc') return b.stats.percentage - a.stats.percentage
+    if (filters.value.sort === 'perc_asc') return a.stats.percentage - b.stats.percentage
+    if (filters.value.sort === 'name_asc') return `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`)
+    if (filters.value.sort === 'name_desc') return `${b.nombre} ${b.apellido}`.localeCompare(`${a.nombre} ${a.apellido}`)
+    return 0
   })
 })
+
+const getInitials = (nombre, apellido) => {
+  if (!nombre && !apellido) return '?'
+  return `${(nombre || '').charAt(0)}${(apellido || '').charAt(0)}`.toUpperCase()
+}
 
 const selectedAthleteHistory = computed(() => {
   if (!selectedAthlete.value) return []
@@ -439,10 +523,12 @@ const initialLoad = async () => {
 }
 
 const handleFilterChange = () => {
+  currentPage.value = 1
 }
 
 const viewDetail = (row) => {
   selectedAthlete.value = row
+  modalCurrentPage.value = 1
   showDetailModal.value = true
 }
 
@@ -457,7 +543,9 @@ const printIndividual = async (row) => {
 
     PdfReportService.generateIndividualAttendanceReport(
       `${row.nombre} ${row.apellido}`,
-      sorted
+      sorted,
+      row.categoria_nombre,
+      getTrainerForAthlete(row)
     )
   } catch (e) {
     console.error(e)
@@ -485,7 +573,8 @@ const handlePrint = async () => {
     PdfReportService.generateAttendanceReport(
       dataForPdf,
       selectedCategoryName.value,
-      filters.value.dateRange
+      filters.value.dateRange,
+      selectedTrainerName.value
     )
   } catch (e) {
     console.error(e)
@@ -545,6 +634,33 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.asistencia-report .category-summary-bar {
+  margin: 0 0 20px 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.asistencia-report .trainer-badge {
+  font-size: 0.95rem;
+  height: auto;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.asistencia-report .trainer-badge i {
+  margin-right: 8px;
+  color: var(--color-primary);
+}
+
+.asistencia-report .trainer-badge strong {
+  color: var(--color-primary);
+  margin-left: 4px;
+}
+
 .report-container {
   padding: 20px;
   --filter-shell-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);

@@ -3,7 +3,7 @@ const { isLegacySchema, isMigratedLegacySchema } = require('./schemaService');
 
 const addressService = {
     async findOrCreateAddress(addressData) {
-        const { pais, estado, municipio, parroquia, descripcion_descriptiva } = addressData;
+        const { pais, estado, municipio, parroquia, descripcion_descriptiva, localidad, tipo_vivienda, ubicacion_vivienda } = addressData;
         const legacySchema = await isLegacySchema();
         const migratedLegacySchema = await isMigratedLegacySchema();
 
@@ -17,13 +17,15 @@ const addressService = {
                 const estadoName = estado || '';
                 const municipioName = municipio || '';
                 const parroquiaName = parroquia || '';
-                const localidad = descripcion_descriptiva || '';
+                const loc = localidad || descripcion_descriptiva || '';
+                const tipoViv = tipo_vivienda || '';
+                const ubiViv = ubicacion_vivienda || '';
 
                 if (migratedLegacySchema) {
                     // Migrated legacy schema: 'parroquias' table is gone, 'direcciones' has direct columns
                     const [dirRes] = await connection.execute(
                         'INSERT INTO direcciones (parroquias_id, pais, estado, municipio, parroquia, descripcion_descriptiva, localidad, tipo_vivienda, `ubicación vivienda`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        [0, pais || 'Venezuela', estadoName, municipioName, parroquiaName, localidad, localidad, '', '']
+                        [0, pais || 'Venezuela', estadoName, municipioName, parroquiaName, descripcion_descriptiva || '', loc, tipoViv, ubiViv]
                     );
                     direccionId = dirRes.insertId;
                 } else {
@@ -79,9 +81,15 @@ const addressService = {
                         }
                     }
 
+                    let finalParroquiaId = parroquiaId;
+                    if (!finalParroquiaId) {
+                        const [defaultP] = await connection.execute('SELECT parroquia_id FROM parroquias LIMIT 1');
+                        finalParroquiaId = defaultP.length > 0 ? defaultP[0].parroquia_id : 1;
+                    }
+
                     const [dirRes] = await connection.execute(
                         'INSERT INTO direcciones (parroquias_id, localidad, tipo_vivienda, `ubicación vivienda`) VALUES (?, ?, ?, ?)',
-                        [parroquiaId || 0, localidad, '', localidad]
+                        [finalParroquiaId, loc, tipoViv, ubiViv]
                     );
                     direccionId = dirRes.insertId;
                 }
@@ -164,7 +172,10 @@ const addressService = {
                     d.municipio as municipio,
                     d.parroquia as parroquia,
                     d.descripcion_descriptiva as descripcion_descriptiva,
-                    d.pais as pais
+                    d.pais as pais,
+                    d.localidad as localidad,
+                    d.tipo_vivienda as tipo_vivienda,
+                    d.\`ubicación vivienda\` as ubicacion_vivienda
                 `;
             }
             return `
@@ -172,7 +183,10 @@ const addressService = {
                 m.municipio as municipio,
                 p.parroquia as parroquia,
                 d.localidad as descripcion_descriptiva,
-                'Venezuela' as pais
+                'Venezuela' as pais,
+                d.localidad as localidad,
+                d.tipo_vivienda as tipo_vivienda,
+                d.\`ubicación vivienda\` as ubicacion_vivienda
             `;
         }
         return `
@@ -180,7 +194,10 @@ const addressService = {
             ue.nombre as estado, 
             um.nombre as municipio, 
             upa.nombre as parroquia, 
-            d.punto_referencia as descripcion_descriptiva
+            d.punto_referencia as descripcion_descriptiva,
+            d.localidad as localidad,
+            d.tipo_vivienda as tipo_vivienda,
+            d.\`ubicación vivienda\` as ubicacion_vivienda
         `;
     },
 
@@ -209,19 +226,21 @@ const addressService = {
     },
 
     getSelectColumns: () => `
-        up.nombre as pais, 
-        ue.nombre as estado, 
-        um.nombre as municipio, 
-        upa.nombre as parroquia, 
-        d.punto_referencia as descripcion_descriptiva
+        e.estado as estado,
+        m.municipio as municipio,
+        p.parroquia as parroquia,
+        d.localidad as descripcion_descriptiva,
+        'Venezuela' as pais,
+        d.localidad as localidad,
+        d.tipo_vivienda as tipo_vivienda,
+        d.\`ubicación vivienda\` as ubicacion_vivienda
     `,
 
     getJoins: () => `
         LEFT JOIN direcciones d ON entity.direccion_id = d.direccion_id
-        LEFT JOIN ubicacion_parroquia upa ON d.parroquia_id = upa.parroquia_id
-        LEFT JOIN ubicacion_municipio um ON upa.municipio_id = um.municipio_id
-        LEFT JOIN ubicacion_estado ue ON um.estado_id = ue.estado_id
-        LEFT JOIN ubicacion_pais up ON ue.pais_id = up.pais_id
+        LEFT JOIN parroquias p ON d.parroquias_id = p.parroquia_id
+        LEFT JOIN municipios m ON p.municipio_id = m.municipio_id
+        LEFT JOIN estados e ON m.estadoi_id = e.estado_id
     `,
 
     getLegacySelectColumns: (isMigrated = false) => {
@@ -231,7 +250,10 @@ const addressService = {
                 d.municipio as municipio,
                 d.parroquia as parroquia,
                 d.descripcion_descriptiva as descripcion_descriptiva,
-                d.pais as pais
+                d.pais as pais,
+                d.localidad as localidad,
+                d.tipo_vivienda as tipo_vivienda,
+                d.\`ubicación vivienda\` as ubicacion_vivienda
             `;
         }
         return `
@@ -239,7 +261,10 @@ const addressService = {
             m.municipio as municipio,
             p.parroquia as parroquia,
             d.localidad as descripcion_descriptiva,
-            'Venezuela' as pais
+            'Venezuela' as pais,
+            d.localidad as localidad,
+            d.tipo_vivienda as tipo_vivienda,
+            d.\`ubicación vivienda\` as ubicacion_vivienda
         `;
     },
 

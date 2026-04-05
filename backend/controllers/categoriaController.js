@@ -4,23 +4,14 @@ const { isLegacySchema } = require('../services/schemaService');
 const getCategorias = async (req, res) => {
   try {
     const { estatus } = req.query;
-    const legacySchema = await isLegacySchema();
 
-    let query = legacySchema
-      ? `SELECT c.*,
+    let query = `SELECT c.*,
                 p.nombre as entrenador_nombre,
                 p.apellido as entrenador_apellido,
                 COUNT(a.atleta_id) as total_atletas
          FROM categoria c
          LEFT JOIN personal p ON c.entrenador_id = p.personal_id
-         LEFT JOIN atletas a ON c.categoria_id = a.categoria_id AND a.estatus IN (1, 2)`
-      : `SELECT c.*,
-                p.nombre as entrenador_nombre,
-                p.apellido as entrenador_apellido,
-                COUNT(a.atleta_id) as total_atletas
-         FROM categoria c
-         LEFT JOIN plantel p ON c.entrenador_id = p.plantel_id
-         LEFT JOIN atletas a ON c.categoria_id = a.categoria_id AND a.estatus IN ('Activo', 'Lesionado')`;
+         LEFT JOIN atletas a ON c.categoria_id = a.categoria_id AND a.estatus IN (1, 2)`;
 
     const params = [];
 
@@ -42,22 +33,14 @@ const getCategorias = async (req, res) => {
 const getCategoriaById = async (req, res) => {
   try {
     const { id } = req.params;
-    const legacySchema = await isLegacySchema();
 
     const [rows] = await pool.execute(
-      legacySchema
-        ? `SELECT c.*,
-                  p.nombre as entrenador_nombre,
-                  p.apellido as entrenador_apellido
-           FROM categoria c
-           LEFT JOIN personal p ON c.entrenador_id = p.personal_id
-           WHERE c.categoria_id = ?`
-        : `SELECT c.*,
-                  p.nombre as entrenador_nombre,
-                  p.apellido as entrenador_apellido
-           FROM categoria c
-           LEFT JOIN plantel p ON c.entrenador_id = p.plantel_id
-           WHERE c.categoria_id = ?`,
+      `SELECT c.*,
+                p.nombre as entrenador_nombre,
+                p.apellido as entrenador_apellido
+         FROM categoria c
+         LEFT JOIN personal p ON c.entrenador_id = p.personal_id
+         WHERE c.categoria_id = ?`,
       [id]
     );
 

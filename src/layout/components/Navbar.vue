@@ -1,9 +1,6 @@
 <template>
   <div class="navbar">
-    <!-- Hamburger para móvil -->
-    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" />
-
-    <breadcrumb id="breadcrumb-container" class="breadcrumb-container" />
+    <breadcrumb id="breadcrumb-container" class="breadcrumb-container" style="margin-left: 20px;" />
 
     <div class="right-menu">
       <!-- Theme Toggle -->
@@ -47,7 +44,6 @@ import { applyTheme, getSavedTheme, saveTheme } from '@/utils/theme'
 export default {
   components: {
     Breadcrumb,
-    Hamburger,
     ArrowDown,
     Moon,
     Sunny

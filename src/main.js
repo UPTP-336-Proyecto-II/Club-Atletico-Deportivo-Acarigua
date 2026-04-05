@@ -5,6 +5,7 @@ import Cookies from 'js-cookie'
 import 'normalize.css' // a modern alternative to CSS resets
 
 import ElementPlus from 'element-plus'
+import es from 'element-plus/dist/locale/es.mjs'
 import 'element-plus/dist/index.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
@@ -35,7 +36,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 app.component('svg-icon', SvgIcon)
 
 app.use(ElementPlus, {
-  size: Cookies.get('size') || 'default'
+  size: Cookies.get('size') || 'default',
+  locale: es
 })
 app.use(store)
 app.use(router)

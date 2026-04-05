@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 
-// Configuración de Multer para avatares
+// ConfiguraciÃ³n de Multer para avatares
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     const dir = 'uploads/avatars';
@@ -28,7 +28,7 @@ const upload = multer({
     if (mimetype && extname) {
       return cb(null, true);
     }
-    cb(new Error('Solo se permiten imágenes (jpeg, jpg, png)'));
+    cb(new Error('Solo se permiten imÃ¡genes (jpeg, jpg, png)'));
   }
 }).single('avatar');
 const jwt = require('jsonwebtoken');
@@ -77,8 +77,8 @@ const buildUserIdentifierCondition = (identifier, schema, tableAlias = 'u') => {
   };
 };
 
+// Obtener todos los usuarios con informaciÃ³n del rol y plantel
 // Obtener todos los usuarios con información del rol y plantel
-// Obtener todos los usuarios con informaci�n del rol y plantel
 const getUsuarios = async (req, res) => {
   try {
     const { estatus, rol, sort, search } = req.query;
@@ -251,7 +251,7 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email y contraseña son requeridos' });
+      return res.status(400).json({ error: 'Email y contraseÃ±a son requeridos' });
     }
 
     // Buscar usuario en la base de datos
@@ -261,14 +261,14 @@ const login = async (req, res) => {
     );
 
     if (users.length === 0) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      return res.status(401).json({ error: 'Credenciales invÃ¡lidas' });
     }
 
     const user = users[0];
 
-    // Verificar contraseña (comparación directa - sin hash para desarrollo)
+    // Verificar contraseÃ±a (comparaciÃ³n directa - sin hash para desarrollo)
     if (password !== user.password) {
-      return res.status(401).json({ error: 'Credenciales inválidas' });
+      return res.status(401).json({ error: 'Credenciales invÃ¡lidas' });
     }
 
     // Generar token JWT
@@ -354,7 +354,7 @@ const logout = async (req, res) => {
     });
   } catch (error) {
     console.error('Error en logout:', error);
-    res.status(500).json({ error: 'Error al cerrar sesión' });
+    res.status(500).json({ error: 'Error al cerrar sesiÃ³n' });
   }
 };
 
@@ -636,7 +636,7 @@ const updateProfile = async (req, res) => {
     const userId = req.userId; // Ahora es el email
     const { password, newPassword, confirmPassword, foto } = req.body;
 
-    // Obtener usuario actual para verificar contraseña
+    // Obtener usuario actual para verificar contraseÃ±a
     const [users] = await pool.execute(
       'SELECT * FROM usuarios WHERE email = ? AND estatus = ?',
       [userId, 'Activo']
@@ -647,28 +647,28 @@ const updateProfile = async (req, res) => {
     }
     const user = users[0];
 
-    // Verificar contraseña actual obligatoria para cualquier cambio sensible
+    // Verificar contraseÃ±a actual obligatoria para cualquier cambio sensible
     if (!password) {
-      return res.status(400).json({ error: 'Se requiere la contraseña actual para guardar cambios' });
+      return res.status(400).json({ error: 'Se requiere la contraseÃ±a actual para guardar cambios' });
     }
 
     if (password !== user.password) {
-      return res.status(400).json({ error: 'Contraseña actual incorrecta' });
+      return res.status(400).json({ error: 'ContraseÃ±a actual incorrecta' });
     }
 
     const updates = [];
     const params = [];
 
-    // Cambiar Contraseña
+    // Cambiar ContraseÃ±a
     if (newPassword) {
       if (newPassword !== confirmPassword) {
-        return res.status(400).json({ error: 'La nueva contraseña y la confirmación no coinciden' });
+        return res.status(400).json({ error: 'La nueva contraseÃ±a y la confirmaciÃ³n no coinciden' });
       }
       updates.push('password = ?');
       params.push(newPassword);
     }
 
-    // Actualizar foto (si se envió desde el frontend el filename)
+    // Actualizar foto (si se enviÃ³ desde el frontend el filename)
     if (foto) {
       updates.push('foto = ?');
       params.push(foto);
@@ -704,7 +704,7 @@ const uploadAvatar = (req, res) => {
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: 'No se ha subido ningún archivo' });
+      return res.status(400).json({ error: 'No se ha subido ningÃºn archivo' });
     }
 
     // Retorna el nombre del archivo para que el frontend lo use en updateProfile

@@ -66,13 +66,13 @@ export function isAdmin() {
 export function getVisibleAtletasTabs() {
   const userRoles = store.getters?.roles || []
 
-  // Si es médico, solo puede ver ficha médica y tutor
+  // Si es médico, solo puede ver ficha médica y representante
   if (userRoles.includes('medico')) {
-    return ['ficha-medica', 'tutor']
+    return ['ficha-medica', 'representante']
   }
 
   // Cualquier otro rol puede ver todas las pestañas
-  return ['datos-personales', 'ficha-medica', 'medidas-antropometricas', 'rendimiento', 'tutor']
+  return ['datos-personales', 'ficha-medica', 'medidas-antropometricas', 'rendimiento', 'representante']
 }
 
 /**

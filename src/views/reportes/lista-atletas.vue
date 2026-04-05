@@ -13,6 +13,7 @@
     <!-- Control Panel -->
     <el-card class="premium-control-card" shadow="hover">
       <div class="control-content">
+        <h3 style="margin-top: 0; margin-bottom: 10px; color: var(--color-text-main); font-size: 1.1rem;">Filtros</h3>
         <div class="filter-section">
           <div class="filter-item">
             <span class="premium-search-label">Categoría</span>
@@ -72,6 +73,16 @@
               @input="v => filters.cedula = v.replace(/\D/g, '')"
             />
           </div>
+
+          <div class="filter-item">
+            <span class="premium-search-label">Ordenar por</span>
+            <el-select v-model="filters.sort" placeholder="Seleccionar orden" class="modern-search-input filter-control modern-filter-control" style="width: 100%">
+              <el-option label="Más recientes" value="recent" />
+              <el-option label="Más antiguos" value="oldest" />
+              <el-option label="Nombre (A-Z)" value="name_asc" />
+              <el-option label="Nombre (Z-A)" value="name_desc" />
+            </el-select>
+          </div>
         </div>
 
         <div class="actions-section">
@@ -86,7 +97,7 @@
       <!-- TABLA DESKTOP (oculta en móvil) -->
       <el-table
         v-loading="loading"
-        :data="filteredAthletes"
+        :data="paginatedAthletes"
         style="width: 100%"
         class="desktop-table"
         :header-cell-style="{background: '#f5f7fa', color: '#324157', fontWeight: 'bold'}"
@@ -97,10 +108,10 @@
           <template #default="{row}">
             <div class="athlete-cell">
               <img v-if="row.foto" :src="getFotoUrl(row.foto)" class="cell-avatar" @error="handleImgError">
-              <div v-else class="cell-avatar-placeholder"><i class="el-icon-user" /></div>
+              <div v-else class="cell-avatar-placeholder initials-avatar">{{ getInitials(row.nombre, row.apellido) }}</div>
               <div class="athlete-name">
                 <span class="name">{{ row.nombre }} {{ row.apellido }}</span>
-                <span class="sub-text">{{ row.telefono || 'Sin teléfono' }}</span>
+                <span class="sub-text">C.I: {{ row.cedula || 'S/N' }} | {{ row.telefono || 'Sin teléfono' }}</span>
               </div>
             </div>
           </template>
@@ -160,10 +171,9 @@
         </el-table-column>
       </el-table>
 
-      <!-- VISTA TARJETAS MÓVIL (oculta en desktop) -->
       <div v-loading="loading" class="mobile-cards-view">
         <div
-          v-for="atleta in filteredAthletes"
+          v-for="atleta in paginatedAthletes"
           :key="atleta.atleta_id"
           class="athlete-card"
         >
@@ -171,11 +181,11 @@
           <div class="card-header-section">
             <div class="card-photo-wrapper">
               <img v-if="atleta.foto" :src="getFotoUrl(atleta.foto)" class="card-avatar" @error="handleImgError">
-              <div v-else class="card-avatar-placeholder"><i class="el-icon-user" /></div>
+              <div v-else class="card-avatar-placeholder initials-avatar">{{ getInitials(atleta.nombre, atleta.apellido) }}</div>
             </div>
             <div class="card-athlete-info">
               <span class="card-name">{{ atleta.nombre }} {{ atleta.apellido }}</span>
-              <span class="card-phone">{{ atleta.telefono || 'Sin teléfono' }}</span>
+              <span class="card-phone">C.I: {{ atleta.cedula || 'S/N' }} | {{ atleta.telefono || 'Sin teléfono' }}</span>
             </div>
           </div>
 
@@ -215,8 +225,16 @@
         </div>
       </div>
 
-      <div class="table-footer">
-        <span>Total: <strong>{{ filteredAthletes.length }}</strong> atletas</span>
+      <div class="table-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+        <span>Total filtrados: <strong>{{ filteredAthletes.length }}</strong> atletas</span>
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          :total="filteredAthletes.length"
+          background
+        />
       </div>
     </div>
 
@@ -243,7 +261,7 @@
           <div class="profile-header">
             <div class="profile-photo-container">
               <img v-if="selectedAthlete.foto" :src="getFotoUrl(selectedAthlete.foto)" class="profile-photo" @error="handleImgError">
-              <div v-else class="profile-placeholder"><i class="el-icon-user" /></div>
+              <div v-else class="profile-placeholder initials-avatar-large">{{ getInitials(selectedAthlete.nombre, selectedAthlete.apellido) }}</div>
             </div>
             <div class="profile-main-info">
               <h3 class="athlete-fullname">{{ selectedAthlete.nombre }} {{ selectedAthlete.apellido }}</h3>
@@ -253,6 +271,8 @@
                 <span :class="['info-tag status', selectedAthlete.estatus ? selectedAthlete.estatus.toLowerCase() : '']">{{ selectedAthlete.estatus }}</span>
               </div>
               <div class="basic-details-grid">
+                <div class="detail-item"><strong>Cédula:</strong> {{ selectedAthlete.cedula || 'S/N' }}</div>
+                <div class="detail-item"><strong>Sexo:</strong> {{ selectedAthlete.sexo === 'M' ? 'Masculino' : (selectedAthlete.sexo === 'F' ? 'Femenino' : 'N/A') }}</div>
                 <div class="detail-item"><strong>Edad:</strong> {{ calculateAge(selectedAthlete.fecha_nacimiento) }} años</div>
                 <div class="detail-item"><strong>Nacimiento:</strong> {{ formatDate(selectedAthlete.fecha_nacimiento) }}</div>
                 <div class="detail-item"><strong>Teléfono:</strong> {{ selectedAthlete.telefono || 'N/A' }}</div>
@@ -261,8 +281,16 @@
             </div>
           </div>
 
-          <div class="address-box">
-            <strong><i class="el-icon-location" /> Dirección:</strong> {{ selectedAthlete.direccion || 'Dirección no registrada' }}
+          <div class="address-box" style="line-height: 1.6;">
+            <strong><i class="el-icon-location" /> Dirección:</strong>
+            <p style="margin: 5px 0 0 0;">
+              {{ [selectedAthlete.estado, selectedAthlete.municipio, selectedAthlete.parroquia].filter(Boolean).join(', ') || 'No registrada' }}
+            </p>
+            <p v-if="selectedAthlete.localidad || selectedAthlete.tipo_vivienda || selectedAthlete.ubicacion_vivienda" style="margin: 2px 0 0 0; font-size: 0.9em;">
+              <span v-if="selectedAthlete.localidad"><strong>Localidad:</strong> {{ selectedAthlete.localidad }}</span>
+              <span v-if="selectedAthlete.tipo_vivienda" style="margin-left: 10px;"><strong>Tipo V.:</strong> {{ selectedAthlete.tipo_vivienda }}</span>
+              <span v-if="selectedAthlete.ubicacion_vivienda" style="margin-left: 10px;"><strong>Ubicación:</strong> {{ selectedAthlete.ubicacion_vivienda }}</span>
+            </p>
           </div>
         </div>
 
@@ -271,18 +299,13 @@
           <div class="sheet-section">
             <div class="sheet-title"><h4><i class="el-icon-first-aid-kit" /> Información Médica</h4></div>
             <div v-if="selectedMedical" class="sheet-content">
-              <div class="info-grid-3">
-                <div class="info-item"><label>Tipo Sanguíneo</label><span>{{ selectedMedical.tipo_sanguineo || 'N/A' }}</span></div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="info-item"><label>Grupo Sanguíneo</label><span>{{ selectedMedical.grupo_sanguineo || 'N/A' }}</span></div>
                 <div class="info-item"><label>Alergias</label><span>{{ selectedMedical.alergias || 'Ninguna' }}</span></div>
-                <div class="info-item"><label>Condición</label><span>{{ selectedMedical.condicion_medica || 'Ninguna' }}</span></div>
-              </div>
-              <div class="info-row">
-                <label>Lesiones:</label>
-                <p>{{ selectedMedical.lesion || 'Sin registro de lesiones' }}</p>
-              </div>
-              <div class="info-row">
-                <label>Observaciones:</label>
-                <p>{{ selectedMedical.observacion || 'Sin observaciones' }}</p>
+                <div class="info-item"><label>Antecedentes Familiares</label><span>{{ selectedMedical.antecedentes_familiares || 'Ninguno' }}</span></div>
+                <div class="info-item"><label>Antecedentes Quirúrgicos / Lesiones</label><span>{{ selectedMedical.antecedentes_quirurgicos || 'Ninguno' }}</span></div>
+                <div class="info-item"><label>Condiciones Crónicas</label><span>{{ selectedMedical.condicion_cronica || 'Ninguna' }}</span></div>
+                <div class="info-item"><label>Medicación Actual</label><span>{{ selectedMedical.medicacion_actual || 'Ninguna' }}</span></div>
               </div>
             </div>
             <div v-else class="empty-sheet">No hay información médica registrada.</div>
@@ -296,12 +319,10 @@
                 <div class="metrics-grid">
                   <div class="metric-box"><strong>Peso</strong><span>{{ selectedMetrics.peso }} kg</span></div>
                   <div class="metric-box"><strong>Altura</strong><span>{{ selectedMetrics.altura }} cm</span></div>
-                  <div class="metric-box"><strong>IMC</strong><span>{{ selectedMetrics.indice_de_masa }}</span></div>
+                  <div class="metric-box"><strong>IMC</strong><span>{{ selectedMetrics.indice_de_masa ? Number(selectedMetrics.indice_de_masa).toFixed(2) : '-' }}</span></div>
                   <div class="metric-box"><strong>Envergadura</strong><span>{{ selectedMetrics.envergadura }} cm</span></div>
-                </div>
-                <div class="metric-row">
-                  <span>P. Pierna: <strong>{{ selectedMetrics.largo_de_pierna }} cm</strong></span> |
-                  <span>P. Torso: <strong>{{ selectedMetrics.largo_de_torso }} cm</strong></span>
+                  <div class="metric-box"><strong>P. Pierna</strong><span>{{ selectedMetrics.largo_de_pierna }} cm</span></div>
+                  <div class="metric-box"><strong>P. Torso</strong><span>{{ selectedMetrics.largo_de_torso }} cm</span></div>
                 </div>
                 <div class="metric-date">Medición: {{ formatDate(selectedMetrics.fecha_medicion) }}</div>
               </div>
@@ -317,9 +338,7 @@
                   <div class="metric-box performance"><strong>Resistencia</strong><span>{{ selectedTest.test_resistencia }}</span></div>
                   <div class="metric-box performance"><strong>Velocidad</strong><span>{{ selectedTest.test_velocidad }}</span></div>
                   <div class="metric-box performance"><strong>Coord.</strong><span>{{ selectedTest.test_coordinacion }}</span></div>
-                </div>
-                <div class="metric-row">
-                  <span>Reacción: <strong>{{ selectedTest.test_de_reaccion }}</strong></span>
+                  <div class="metric-box performance" style="grid-column: span 2;"><strong>Reacción</strong><span>{{ selectedTest.test_de_reaccion }}</span></div>
                 </div>
                 <div class="metric-date">Test: {{ formatDate(selectedTest.fecha_test) }}</div>
               </div>
@@ -327,23 +346,28 @@
             </div>
           </div>
 
-          <!-- Tutor Sheet -->
+          <!-- Representative Sheet -->
           <div class="sheet-section">
-            <div class="sheet-title"><h4><i class="el-icon-s-custom" /> Información del Tutor</h4></div>
+            <div class="sheet-title"><h4><i class="el-icon-s-custom" /> Información del Representante</h4></div>
             <div v-if="selectedTutor" class="sheet-content">
               <div class="info-grid-3">
                 <div class="info-item"><label>Nombre</label><span>{{ selectedTutor.nombre_completo }}</span></div>
                 <div class="info-item"><label>Relación</label><span>{{ selectedTutor.tipo_relacion }}</span></div>
                 <div class="info-item"><label>Teléfono</label><span>{{ selectedTutor.telefono }}</span></div>
               </div>
-              <div class="info-row">
-                <label>Correo:</label> <span>{{ selectedTutor.correo || 'N/A' }}</span>
-              </div>
-              <div class="info-row">
-                <label>Dirección:</label> <span>{{ selectedTutor.direccion || 'No especificada' }}</span>
+              <div class="info-row" style="flex-direction: column; align-items: flex-start; gap: 2px;">
+                <label>Dirección:</label>
+                <p>
+                  {{ [selectedTutor.estado, selectedTutor.municipio, selectedTutor.parroquia].filter(Boolean).join(', ') || 'No especificada' }}
+                </p>
+                <p v-if="selectedTutor.localidad || selectedTutor.tipo_vivienda || selectedTutor.ubicacion_vivienda" style="margin: 2px 0 0 0; font-size: 0.9em;">
+                  <span v-if="selectedTutor.localidad"><strong>Localidad:</strong> {{ selectedTutor.localidad }}</span>
+                  <span v-if="selectedTutor.tipo_vivienda" style="margin-left: 10px;"><strong>Tipo V.:</strong> {{ selectedTutor.tipo_vivienda }}</span>
+                  <span v-if="selectedTutor.ubicacion_vivienda" style="margin-left: 10px;"><strong>Ubicación:</strong> {{ selectedTutor.ubicacion_vivienda }}</span>
+                </p>
               </div>
             </div>
-            <div v-else class="empty-sheet">No hay tutor asignado.</div>
+            <div v-else class="empty-sheet">No hay representante asignado.</div>
           </div>
         </div>
 
@@ -367,15 +391,18 @@ const atletas = ref([])
 const categories = ref([])
 const loading = ref(false)
 const backendUrl = ref('http://localhost:3000')
-
 const filters = ref({
   category: 'all',
   position: 'all',
   status: 'all',
   age: 'all',
   cedulaFilter: 'todos',
-  cedula: ''
+  cedula: '',
+  sort: 'recent'
 })
+
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const showModal = ref(false)
 const activeTab = ref('personal')
@@ -424,8 +451,24 @@ const filteredAthletes = computed(() => {
     }
 
     return true
+  }).sort((a, b) => {
+    if (filters.value.sort === 'recent') return new Date(b.created_at || 0) - new Date(a.created_at || 0)
+    if (filters.value.sort === 'oldest') return new Date(a.created_at || 0) - new Date(b.created_at || 0)
+    if (filters.value.sort === 'name_asc') return `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`)
+    if (filters.value.sort === 'name_desc') return `${b.nombre} ${b.apellido}`.localeCompare(`${a.nombre} ${a.apellido}`)
+    return 0
   })
 })
+
+const paginatedAthletes = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredAthletes.value.slice(start, start + pageSize.value)
+})
+
+const getInitials = (nombre, apellido) => {
+  if (!nombre && !apellido) return '?'
+  return `${(nombre || '').charAt(0)}${(apellido || '').charAt(0)}`.toUpperCase()
+}
 
 const fetchData = async () => {
   loading.value = true
@@ -460,11 +503,11 @@ const openDetailModal = async (athlete) => {
   showModal.value = true 
 
   try {
-    const [medical, metrics, tests, tutors] = await Promise.all([
+    const [medical, metrics, tests, tutorData] = await Promise.all([
       request({ url: `/ficha-medica`, method: 'get' }),
       request({ url: `/mediciones?atleta_id=${athlete.atleta_id}`, method: 'get' }),
       request({ url: `/tests?atleta_id=${athlete.atleta_id}`, method: 'get' }),
-      request({ url: `/tutor`, method: 'get' })
+      athlete.representante_id ? request({ url: `/tutor/${athlete.representante_id}`, method: 'get' }) : Promise.resolve(null)
     ])
 
     if (Array.isArray(medical)) {
@@ -474,8 +517,8 @@ const openDetailModal = async (athlete) => {
     if (Array.isArray(metrics) && metrics.length > 0) selectedMetrics.value = metrics[metrics.length - 1]
     if (Array.isArray(tests) && tests.length > 0) selectedTest.value = tests[0]
 
-    if (athlete.tutor_id && Array.isArray(tutors)) {
-      selectedTutor.value = tutors.find(t => t.tutor_id === athlete.tutor_id)
+    if (tutorData) {
+      selectedTutor.value = tutorData
     }
   } catch (e) {
     console.error('Error loading details', e)
