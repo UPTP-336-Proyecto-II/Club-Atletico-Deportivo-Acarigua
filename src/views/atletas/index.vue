@@ -233,10 +233,16 @@
                   <p>{{ currentAtleta.telefono || 'No registrado' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Dirección</label>
+                  <label>Dirección de Habitación</label>
                   <p>
-                    {{ [currentAtleta.estado, currentAtleta.municipio, currentAtleta.parroquia, currentAtleta.descripcion_descriptiva].filter(Boolean).join(', ') || 'No registrada' }}
+                    {{ [currentAtleta.estado, currentAtleta.municipio, currentAtleta.parroquia].filter(Boolean).join(', ') || 'No registrada' }}
                   </p>
+                  <p v-if="currentAtleta.localidad" style="margin-top: 5px;"><strong>Localidad:</strong> {{ currentAtleta.localidad }}</p>
+                  <p v-if="currentAtleta.tipo_vivienda || currentAtleta.ubicacion_vivienda" style="margin-top: 5px;">
+                    <span v-if="currentAtleta.tipo_vivienda"><strong>Vivienda:</strong> {{ currentAtleta.tipo_vivienda }}</span>
+                    <span v-if="currentAtleta.ubicacion_vivienda" style="margin-left: 15px;"><strong>Ubicación:</strong> {{ currentAtleta.ubicacion_vivienda }}</span>
+                  </p>
+                  <p v-if="currentAtleta.descripcion_descriptiva" style="margin-top: 5px;"><strong>Detalle:</strong> {{ currentAtleta.descripcion_descriptiva }}</p>
                 </div>
               </div>
             </el-tab-pane>
@@ -395,10 +401,16 @@
                   <p>{{ tutor.telefono || 'No especificado' }}</p>
                 </div>
                 <div class="form-item full-width">
-                  <label>Dirección</label>
+                  <label>Dirección del Representante</label>
                   <p>
-                    {{ [tutor.estado, tutor.municipio, tutor.parroquia, tutor.descripcion_descriptiva].filter(Boolean).join(', ') || 'No registrada' }}
+                    {{ [tutor.estado, tutor.municipio, tutor.parroquia].filter(Boolean).join(', ') || 'No registrada' }}
                   </p>
+                  <p v-if="tutor.localidad" style="margin-top: 5px;"><strong>Localidad:</strong> {{ tutor.localidad }}</p>
+                  <p v-if="tutor.tipo_vivienda || tutor.ubicacion_vivienda" style="margin-top: 5px;">
+                    <span v-if="tutor.tipo_vivienda"><strong>Vivienda:</strong> {{ tutor.tipo_vivienda }}</span>
+                    <span v-if="tutor.ubicacion_vivienda" style="margin-left: 15px;"><strong>Ubicación:</strong> {{ tutor.ubicacion_vivienda }}</span>
+                  </p>
+                  <p v-if="tutor.descripcion_descriptiva" style="margin-top: 5px;"><strong>Detalle:</strong> {{ tutor.descripcion_descriptiva }}</p>
                 </div>
               </div>
               <div v-else class="empty-tab">
@@ -415,6 +427,9 @@
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" class="modern-action-btn" :icon="fichaMedica ? 'Edit' : 'DocumentAdd'" round @click="openMedicalModal">
                   {{ fichaMedica ? 'Editar Ficha Médica' : 'Agregar Ficha Médica' }}
                 </el-button>
+                <el-button v-if="canUserEdit || isUserMedico" type="warning" class="modern-action-btn" icon="Plus" round @click="openCarnetModal()">
+                  Registrar Carnet Discapacidad
+                </el-button>
               </div>
               <div v-if="fichaMedica" class="form-grid">
                 <div class="form-item">
@@ -425,21 +440,47 @@
                   <label>Alergias</label>
                   <p>{{ fichaMedica.alergias || 'Ninguna' }}</p>
                 </div>
-                <div class="form-item full-width">
+                <div class="form-item">
                   <label>Antecedentes Familiares</label>
                   <p>{{ fichaMedica.antecedentes_familiares || 'Ninguno' }}</p>
                 </div>
-                <div class="form-item full-width">
+                <div class="form-item">
                   <label>Antecedentes Quirúrgicos / Lesiones</label>
                   <p>{{ fichaMedica.antecedentes_quirurgicos || 'Ninguno' }}</p>
                 </div>
-                <div class="form-item full-width">
+                <div class="form-item">
                   <label>Condiciones Crónicas</label>
                   <p>{{ fichaMedica.condicion_cronica || 'Ninguna' }}</p>
                 </div>
-                <div class="form-item full-width">
+                <div class="form-item">
                   <label>Medicación Actual</label>
                   <p>{{ fichaMedica.medicacion_actual || 'Ninguna' }}</p>
+                </div>
+
+                <!-- Lista de Carnets de Discapacidad -->
+                <div class="form-item full-width" style="margin-top: 20px; border-top: 1px solid var(--color-border); padding-top: 20px;">
+                  <label style="color: var(--color-primary); font-size: 1.1rem; margin-bottom: 15px; display: block;">
+                    <el-icon style="vertical-align: middle; margin-right: 5px;"><CollectionTag /></el-icon>
+                    Carnets de Discapacidad
+                  </label>
+                  
+                  <el-table v-if="carnetsDiscapacidad && carnetsDiscapacidad.length > 0" :data="carnetsDiscapacidad" border stripe size="small" style="width: 100%">
+                    <el-table-column label="Tipo" prop="nombre_tipo" min-width="150" />
+                    <el-table-column label="Nro. Carnet" prop="nro_carnet" width="120" align="center" />
+                    <el-table-column label="Porcentaje" width="100" align="center">
+                      <template #default="{row}">{{ row.porcentaje_discapacidad }}%</template>
+                    </el-table-column>
+                    <el-table-column label="Fecha Reg." width="120" align="center">
+                      <template #default="{row}">{{ formatDate(row.fecha_registro) }}</template>
+                    </el-table-column>
+                    <el-table-column label="Acciones" width="100" align="center">
+                      <template #default="{row}">
+                        <el-button type="primary" :icon="Edit" circle size="small" @click="openCarnetModal(row)" />
+                        <el-button type="danger" :icon="Delete" circle size="small" @click="deleteCarnet(row.id)" />
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                  <p v-else class="hint">No hay carnets de discapacidad registrados para este atleta.</p>
                 </div>
               </div>
               <div v-else class="empty-tab">
@@ -455,23 +496,8 @@
                 <el-button v-if="canUserEdit || isUserMedico" type="primary" class="modern-action-btn" icon="Plus" round @click="openAtencionModal">
                   Registrar Atención
                 </el-button>
-                <el-button v-if="canUserEdit || isUserMedico" type="warning" class="modern-action-btn" :icon="carnetDiscapacidad ? 'Edit' : 'DocumentAdd'" plain round @click="openCarnetModal">
-                  {{ carnetDiscapacidad ? 'Editar Carnet Discapacidad' : 'Registrar Carnet Discapacidad' }}
-                </el-button>
-                <el-button v-if="(canUserEdit || isUserMedico) && carnetDiscapacidad" type="danger" class="modern-action-btn" icon="Delete" plain round @click="deleteCarnet">
-                  Eliminar Carnet
-                </el-button>
               </div>
-              <div v-if="carnetDiscapacidad" class="carnet-info-banner">
-                <el-alert
-                  :title="'Posee carnet de discapacidad: ' + carnetDiscapacidad.nombre_tipo + ' (' + carnetDiscapacidad.porcentaje_discapacidad + '%)'"
-                  type="info"
-                  show-icon
-                  :closable="false"
-                >
-                  <p><strong>Nro Carnet:</strong> {{ carnetDiscapacidad.nro_carnet }} | <strong>Fecha Registro:</strong> {{ formatDate(carnetDiscapacidad.fecha_registro) }}</p>
-                </el-alert>
-              </div>
+
 
               <div class="medical-attention-list">
                 <!-- Tabla aquí -->
@@ -525,7 +551,7 @@
             </el-tab-pane>
 
             <!-- Tab 7: Historial de Partidos -->
-            <el-tab-pane v-if="isTabVisible('rendimiento')" label="Historial de Partidos" name="historial_partidos">
+            <el-tab-pane v-if="false" label="Historial de Partidos" name="historial_partidos">
               <div class="partidos-list">
                 <el-table
                   :data="paginatedHistorialPartidos"
@@ -711,9 +737,19 @@
             </el-col>
           </el-row>
           <el-row :gutter="20">
-            <el-col :span="24">
-              <el-form-item label="Descripción de la Dirección" class="is-required">
-                <el-input v-model="atletaForm.direccion.descripcion_descriptiva" placeholder="Calle, casa, edificio, referencias..." type="textarea" :rows="2" />
+            <el-col :span="8">
+              <el-form-item label="Localidad" prop="direccion.localidad">
+                <el-input v-model="atletaForm.direccion.localidad" placeholder="Ej: urbanismo, barrio, sector..." />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="Tipo de Vivienda" prop="direccion.tipo_vivienda">
+                <el-input v-model="atletaForm.direccion.tipo_vivienda" placeholder="Casa, Apartamento..." />
+              </el-form-item>
+            </el-col>
+            <el-col :span="8">
+              <el-form-item label="Descripción de la ubicación" prop="direccion.ubicacion_vivienda">
+                <el-input v-model="atletaForm.direccion.ubicacion_vivienda" placeholder="Ej: calle, vereda, casa..." />
               </el-form-item>
             </el-col>
           </el-row>
@@ -984,9 +1020,19 @@
           </el-col>
         </el-row>
         <el-row :gutter="20">
-          <el-col :span="24">
-            <el-form-item label="Descripción de la Dirección" class="is-required">
-              <el-input v-model="atletaForm.direccion.descripcion_descriptiva" placeholder="Calle, casa, edificio, referencias..." type="textarea" :rows="2" />
+          <el-col :span="8">
+            <el-form-item label="Localidad" prop="direccion.localidad">
+              <el-input v-model="atletaForm.direccion.localidad" placeholder="Ej: urbanismo, barrio, sector..." />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Tipo de Vivienda" prop="direccion.tipo_vivienda">
+              <el-input v-model="atletaForm.direccion.tipo_vivienda" placeholder="Casa, Apartamento..." />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Descripción de la ubicación" prop="direccion.ubicacion_vivienda">
+              <el-input v-model="atletaForm.direccion.ubicacion_vivienda" placeholder="Ej: calle, vereda, casa..." />
             </el-form-item>
           </el-col>
         </el-row>
@@ -1092,18 +1138,30 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Antecedentes Familiares">
-          <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes médicos en la familia" />
-        </el-form-item>
-        <el-form-item label="Antecedentes Quirúrgicos / Lesiones">
-          <el-input v-model="medicalForm.antecedentes_quirurgicos" type="textarea" :rows="2" placeholder="Operaciones o lesiones previas" />
-        </el-form-item>
-        <el-form-item label="Condiciones Crónicas">
-          <el-input v-model="medicalForm.condicion_cronica" type="textarea" :rows="2" placeholder="Asma, diabetes, etc" />
-        </el-form-item>
-        <el-form-item label="Medicación Actual">
-          <el-input v-model="medicalForm.medicacion_actual" type="textarea" :rows="2" placeholder="Medicamentos que usa actualmente" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Antecedentes Familiares">
+              <el-input v-model="medicalForm.antecedentes_familiares" type="textarea" :rows="2" placeholder="Antecedentes médicos en la familia" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Antecedentes Quirúrgicos / Lesiones">
+              <el-input v-model="medicalForm.antecedentes_quirurgicos" type="textarea" :rows="2" placeholder="Operaciones o lesiones previas" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="Condiciones Crónicas">
+              <el-input v-model="medicalForm.condicion_cronica" type="textarea" :rows="2" placeholder="Asma, diabetes, etc" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="Medicación Actual">
+              <el-input v-model="medicalForm.medicacion_actual" type="textarea" :rows="2" placeholder="Medicamentos que usa actualmente" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
         <el-button @click="showMedicalModal = false">Cancelar</el-button>
@@ -1316,9 +1374,23 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="Dirección Detallada" prop="direccion.descripcion_descriptiva" class="is-required">
-          <el-input v-model="tutorForm.direccion.descripcion_descriptiva" type="textarea" :rows="2" placeholder="Calle, casa, edificio..." />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="Localidad" prop="direccion.localidad">
+              <el-input v-model="tutorForm.direccion.localidad" placeholder="Ej: urbanismo, barrio, sector..." />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Tipo Viv." prop="direccion.tipo_vivienda">
+              <el-input v-model="tutorForm.direccion.tipo_vivienda" placeholder="Casa, Apartamento..." />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="Descripción de la ubicación" prop="direccion.ubicacion_vivienda">
+              <el-input v-model="tutorForm.direccion.ubicacion_vivienda" placeholder="Ej: calle, vereda, casa..." />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
         <el-button @click="showTutorModal = false">Cancelar</el-button>
@@ -1498,7 +1570,8 @@ const medidas = ref([])
 const tests = ref([])
 const tutor = ref(null)
 const atencionesMedicas = ref([])
-const carnetDiscapacidad = ref(null)
+const carnetsDiscapacidad = ref([])
+const carnetDiscapacidad = ref(null) // Para el formulario de edición actual
 const historialPartidos = ref([])
 const activeTab = ref('personal')
 const loading = ref(false)
@@ -1580,7 +1653,7 @@ const carnetFormRef = ref(null)
 const atletaForm = reactive({
   nombre: '', apellido: '', cedula: '', fecha_nacimiento: '', sexo: 'M',
   posicion_de_juego: '', categoria_id: '', tutor_id: null, telefono: '',
-  direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' },
+  direccion: { estado: '', municipio: '', parroquia: '', localidad: '', tipo_vivienda: '', ubicacion_vivienda: '' },
   representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' },
   estatus: 'ACTIVO', foto: null, pierna_dominante: 'Derecha'
 })
@@ -1598,7 +1671,7 @@ const performanceForm = reactive({
 })
 const tutorForm = reactive({
   nombre_completo: '', cedula: '', telefono: '',
-  direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' },
+  direccion: { estado: '', municipio: '', parroquia: '', localidad: '', tipo_vivienda: '', ubicacion_vivienda: '' },
   tipo_relacion: ''
 })
 const atencionForm = reactive({
@@ -1622,7 +1695,10 @@ const atletaRules = {
   ],
   fecha_nacimiento: [{ required: true, message: 'La fecha de nacimiento es requerida', trigger: 'change' }],
   sexo: [{ required: true, message: 'El sexo es requerido', trigger: 'change' }],
-  categoria_id: [{ required: true, message: 'La categoría es requerida', trigger: 'change' }]
+  categoria_id: [{ required: true, message: 'La categoría es requerida', trigger: 'change' }],
+  'direccion.localidad': [{ required: true, message: 'La localidad es requerida', trigger: 'blur' }],
+  'direccion.tipo_vivienda': [{ required: true, message: 'El tipo de vivienda es requerido', trigger: 'blur' }],
+  'direccion.ubicacion_vivienda': [{ required: true, message: 'La descripción de la ubicación es requerida', trigger: 'blur' }]
 }
 const tutorRules = {
   nombre_completo: [
@@ -1641,7 +1717,9 @@ const tutorRules = {
   'direccion.estado': [{ required: true, message: 'El estado es requerido', trigger: 'change' }],
   'direccion.municipio': [{ required: true, message: 'El municipio es requerido', trigger: 'blur' }],
   'direccion.parroquia': [{ required: true, message: 'La parroquia es requerida', trigger: 'blur' }],
-  'direccion.descripcion_descriptiva': [{ required: true, message: 'La dirección detallada es requerida', trigger: 'blur' }]
+  'direccion.localidad': [{ required: true, message: 'La localidad es requerida', trigger: 'blur' }],
+  'direccion.tipo_vivienda': [{ required: true, message: 'El tipo de vivienda es requerido', trigger: 'blur' }],
+  'direccion.ubicacion_vivienda': [{ required: true, message: 'La descripción de la ubicación es requerida', trigger: 'blur' }]
 }
 
 // === COMPUTED ===
@@ -1779,7 +1857,7 @@ async function selectAtleta(id, keepTab = false) {
   loadFichaMedica(id); loadMedidas(id); loadTests(id); loadTutor(currentAtleta.value.representante_id)
 }
 async function loadAtencionesMedicas(aid) { try { const r = await request({ url: `/atencion-medica/atleta/${aid}`, method: 'get' }); atencionesMedicas.value = Array.isArray(r) ? r : [] } catch { atencionesMedicas.value = [] } }
-async function loadCarnetDiscapacidad(aid) { try { const r = await request({ url: `/carnet-discapacidad/atleta/${aid}`, method: 'get' }); carnetDiscapacidad.value = r || null } catch { carnetDiscapacidad.value = null } }
+async function loadCarnetDiscapacidad(aid) { try { const r = await request({ url: `/carnet-discapacidad/atleta/${aid}`, method: 'get' }); carnetsDiscapacidad.value = Array.isArray(r) ? r : [] } catch { carnetsDiscapacidad.value = [] } }
 async function loadHistorialPartidos(cid) { if (!cid) { historialPartidos.value = []; return }; try { const r = await request({ url: `/historial-partidos/categoria/${cid}`, method: 'get' }); historialPartidos.value = Array.isArray(r) ? r : [] } catch { historialPartidos.value = [] } }
 async function loadFichaMedica(aid) { try { const r = await request({ url: `/ficha-medica?atleta_id=${aid}`, method: 'get' }); fichaMedica.value = Array.isArray(r) && r.length > 0 ? r[0] : null } catch { fichaMedica.value = null } }
 async function loadMedidas(aid) { try { const r = await request({ url: `/mediciones?atleta_id=${aid}`, method: 'get' }); medidas.value = Array.isArray(r) ? r : [] } catch { medidas.value = [] } }
@@ -1807,7 +1885,14 @@ function openAtletaModal(editing) {
       representante_id: currentAtleta.value.representante_id || null, telefono: currentAtleta.value.telefono || '',
       estatus: currentAtleta.value.estatus || 'ACTIVO', foto: currentAtleta.value.foto || '',
       pierna_dominante: currentAtleta.value.pierna_dominante || 'Derecha',
-      direccion: { estado: currentAtleta.value.estado || '', municipio: currentAtleta.value.municipio || '', parroquia: currentAtleta.value.parroquia || '', descripcion_descriptiva: currentAtleta.value.descripcion_descriptiva || '' },
+      direccion: { 
+        estado: currentAtleta.value.estado || '', 
+        municipio: currentAtleta.value.municipio || '', 
+        parroquia: currentAtleta.value.parroquia || '', 
+        localidad: currentAtleta.value.localidad || '',
+        tipo_vivienda: currentAtleta.value.tipo_vivienda || '',
+        ubicacion_vivienda: currentAtleta.value.ubicacion_vivienda || ''
+      },
       representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }
     })
     if (atletaForm.direccion.estado) fetchMunicipiosAtleta(atletaForm.direccion.estado).then(() => { if (atletaForm.direccion.municipio) fetchParroquiasAtleta(atletaForm.direccion.municipio) })
@@ -1826,10 +1911,22 @@ function openEditPersonalModal() {
   isEditingAtleta.value = true
   if (currentAtleta.value) {
     Object.assign(atletaForm, {
-      nombre: currentAtleta.value.nombre, apellido: currentAtleta.value.apellido, cedula: currentAtleta.value.cedula,
-      fecha_nacimiento: currentAtleta.value.fecha_nacimiento, sexo: currentAtleta.value.sexo || 'M',
-      telefono: currentAtleta.value.telefono || '', estatus: currentAtleta.value.estatus || 'ACTIVO', foto: currentAtleta.value.foto || '',
-      direccion: { estado: currentAtleta.value.estado || '', municipio: currentAtleta.value.municipio || '', parroquia: currentAtleta.value.parroquia || '', descripcion_descriptiva: currentAtleta.value.descripcion_descriptiva || '' },
+      nombre: currentAtleta.value.nombre, 
+      apellido: currentAtleta.value.apellido, 
+      cedula: currentAtleta.value.cedula,
+      fecha_nacimiento: currentAtleta.value.fecha_nacimiento, 
+      sexo: currentAtleta.value.sexo || 'M',
+      telefono: currentAtleta.value.telefono || '', 
+      estatus: currentAtleta.value.estatus || 'ACTIVO', 
+      foto: currentAtleta.value.foto || '',
+      direccion: { 
+        estado: currentAtleta.value.estado || '', 
+        municipio: currentAtleta.value.municipio || '', 
+        parroquia: currentAtleta.value.parroquia || '', 
+        localidad: currentAtleta.value.localidad || '',
+        tipo_vivienda: currentAtleta.value.tipo_vivienda || '',
+        ubicacion_vivienda: currentAtleta.value.ubicacion_vivienda || ''
+      },
       representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }
     })
     if (atletaForm.direccion.estado) fetchMunicipiosAtleta(atletaForm.direccion.estado).then(() => { if (atletaForm.direccion.municipio) fetchParroquiasAtleta(atletaForm.direccion.municipio) })
@@ -1842,7 +1939,7 @@ function openEditSportsModal() {
     Object.assign(atletaForm, {
       posicion_de_juego: currentAtleta.value.posicion_de_juego || '', categoria_id: currentAtleta.value.categoria_id,
       pierna_dominante: currentAtleta.value.pierna_dominante || 'Derecha',
-      direccion: { estado: '', municipio: '', parroquia: '', descripcion_descriptiva: '' },
+      direccion: { estado: '', municipio: '', parroquia: '', localidad: '', tipo_vivienda: '', ubicacion_vivienda: '' },
       representante: { nombre: '', apellido: '', cedula: '', telefono: '', tipo_relacion: '' }
     })
   }
@@ -1857,7 +1954,7 @@ async function nextAtletaStep() {
       const { telefono, direccion } = atletaForm
       if (!isUnderage.value) { if (!telefono || telefono.length !== 11) { ElMessage.error('Debe ingresar un número de teléfono válido de 11 dígitos para atletas mayores de edad.'); return } }
       else if (telefono && telefono.length !== 11) { ElMessage.error('El número de teléfono ingresado está incompleto (deben ser 11 dígitos).'); return }
-      if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.descripcion_descriptiva) { ElMessage.error('Todos los atletas deben registrar su dirección completa.'); return }
+      if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.localidad || !direccion.tipo_vivienda || !direccion.ubicacion_vivienda) { ElMessage.error('Todos los atletas deben registrar su dirección completa.'); return }
       if (atletaForm.cedula) {
         if (atletaForm.cedula.length < 7 && atletaForm.cedula.toUpperCase() !== 'S/N') { ElMessage.error('La cédula del atleta debe tener al menos 7 dígitos (o "S/N").'); return }
         try {
@@ -1955,20 +2052,52 @@ function openPerformanceModal(test = null) {
 function openTutorModal() {
   if (tutor.value && !isSelfRepresented.value) {
     isEditingTutor.value = true
-    Object.assign(tutorForm, { nombre_completo: tutor.value.nombre_completo, cedula: tutor.value.cedula === 'S/N' ? '' : tutor.value.cedula, telefono: (tutor.value.telefono === 'S/N' ? '' : tutor.value.telefono) || '', direccion: { estado: tutor.value.estado || '', municipio: tutor.value.municipio || '', parroquia: tutor.value.parroquia || '', descripcion_descriptiva: tutor.value.descripcion_descriptiva || '' }, tipo_relacion: tutor.value.tipo_relacion })
+    Object.assign(tutorForm, { 
+      nombre_completo: tutor.value.nombre_completo, 
+      cedula: tutor.value.cedula === 'S/N' ? '' : tutor.value.cedula, 
+      telefono: (tutor.value.telefono === 'S/N' ? '' : tutor.value.telefono) || '', 
+      direccion: { 
+        estado: tutor.value.estado || '', 
+        municipio: tutor.value.municipio || '', 
+        parroquia: tutor.value.parroquia || '', 
+        localidad: tutor.value.localidad || '',
+        tipo_vivienda: tutor.value.tipo_vivienda || '',
+        ubicacion_vivienda: tutor.value.ubicacion_vivienda || ''
+      }, 
+      tipo_relacion: tutor.value.tipo_relacion 
+    })
     if (tutorForm.direccion.estado) fetchMunicipiosTutor(tutorForm.direccion.estado).then(() => { if (tutorForm.direccion.municipio) fetchParroquiasTutor(tutorForm.direccion.municipio) })
   } else {
     isEditingTutor.value = false; resetTutorForm()
-    if (currentAtleta.value) Object.assign(tutorForm.direccion, { pais: currentAtleta.value.pais || 'venezuela', estado: currentAtleta.value.estado || '', municipio: currentAtleta.value.municipio || '', parroquia: currentAtleta.value.parroquia || '', descripcion_descriptiva: currentAtleta.value.descripcion_descriptiva || '' })
+    if (currentAtleta.value) Object.assign(tutorForm.direccion, { 
+      pais: currentAtleta.value.pais || 'venezuela', 
+      estado: currentAtleta.value.estado || '', 
+      municipio: currentAtleta.value.municipio || '', 
+      parroquia: currentAtleta.value.parroquia || '', 
+      localidad: currentAtleta.value.localidad || '',
+      tipo_vivienda: currentAtleta.value.tipo_vivienda || '',
+      ubicacion_vivienda: currentAtleta.value.ubicacion_vivienda || ''
+    })
   }
   showTutorModal.value = true
 }
 function openAtencionModal() { isEditingAtencion.value = false; isViewingAtencion.value = false; resetAtencionForm(); atencionForm.fecha_suceso = new Date().toISOString().split('T')[0]; showAtencionModal.value = true }
 function editAtencion(row) { isViewingAtencion.value = false; isEditingAtencion.value = true; Object.assign(atencionForm, { ...row }); if (atencionForm.fecha_suceso) atencionForm.fecha_suceso = atencionForm.fecha_suceso.split('T')[0]; if (atencionForm.fecha_alta_estimada) atencionForm.fecha_alta_estimada = atencionForm.fecha_alta_estimada.split('T')[0]; if (atencionForm.fecha_alta_real) atencionForm.fecha_alta_real = atencionForm.fecha_alta_real.split('T')[0]; showAtencionModal.value = true }
 function viewAtencion(row) { isViewingAtencion.value = true; isEditingAtencion.value = true; Object.assign(atencionForm, { ...row }); if (atencionForm.fecha_suceso) atencionForm.fecha_suceso = atencionForm.fecha_suceso.split('T')[0]; if (atencionForm.fecha_alta_estimada) atencionForm.fecha_alta_estimada = atencionForm.fecha_alta_estimada.split('T')[0]; if (atencionForm.fecha_alta_real) atencionForm.fecha_alta_real = atencionForm.fecha_alta_real.split('T')[0]; showAtencionModal.value = true }
-function openCarnetModal() {
-  if (carnetDiscapacidad.value) { Object.assign(carnetForm, { tipo_discapacidad_id: carnetDiscapacidad.value.tipo_discapacidad_id, nro_carnet: carnetDiscapacidad.value.nro_carnet, porcentaje_discapacidad: carnetDiscapacidad.value.porcentaje_discapacidad, fecha_registro: carnetDiscapacidad.value.fecha_registro ? carnetDiscapacidad.value.fecha_registro.split('T')[0] : '' }) }
-  else { resetCarnetForm(); carnetForm.fecha_registro = new Date().toISOString().split('T')[0] }
+function openCarnetModal(carnet = null) {
+  if (carnet) {
+    carnetDiscapacidad.value = carnet
+    Object.assign(carnetForm, { 
+      tipo_discapacidad_id: carnet.tipo_discapacidad_id, 
+      nro_carnet: carnet.nro_carnet, 
+      porcentaje_discapacidad: carnet.porcentaje_discapacidad, 
+      fecha_registro: carnet.fecha_registro ? carnet.fecha_registro.split('T')[0] : '' 
+    })
+  } else {
+    carnetDiscapacidad.value = null
+    resetCarnetForm()
+    carnetForm.fecha_registro = new Date().toISOString().split('T')[0]
+  }
   showCarnetModal.value = true
 }
 
@@ -1983,7 +2112,7 @@ function saveAtleta() {
       if (rep.telefono.length !== 11) { ElMessage.error('El teléfono del representante debe tener exactamente 11 dígitos.'); return }
     } else { if (!atletaForm.telefono || atletaForm.telefono.length !== 11) { ElMessage.error('Debe ingresar un teléfono válido de 11 dígitos para atletas mayores de edad.'); return } }
     const dir = atletaForm.direccion
-    if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.descripcion_descriptiva) { ElMessage.error('Complete todos los datos de la dirección.'); return }
+    if (!dir.estado || !dir.municipio || !dir.parroquia || !dir.localidad || !dir.tipo_vivienda || !dir.ubicacion_vivienda) { ElMessage.error('Complete todos los datos de la dirección.'); return }
     loading.value = true
     try {
       if (isEditingAtleta.value) { await request({ url: `/atletas/${currentAtletaId.value}`, method: 'put', data: { ...atletaForm } }); ElMessage.success('Atleta actualizado correctamente') }
@@ -2001,7 +2130,7 @@ function saveEditPersonal() {
     if (!isUnderage.value) { 
       if (!telefono || telefono.length !== 11) { ElMessage.error('Debe ingresar un número de teléfono válido de 11 dígitos para atletas mayores de edad.'); return } 
     } else if (telefono && telefono.length !== 11) { ElMessage.error('El número de teléfono ingresado está incompleto (deben ser 11 dígitos).'); return }
-    if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.descripcion_descriptiva) { ElMessage.error('Complete todos los datos de la dirección.'); return }
+    if (!direccion.estado || !direccion.municipio || !direccion.parroquia || !direccion.localidad || !direccion.tipo_vivienda || !direccion.ubicacion_vivienda) { ElMessage.error('Complete todos los datos de la dirección.'); return }
     if (cedula && cedula.length < 7 && cedula.toUpperCase() !== 'S/N') { ElMessage.error('La cédula del atleta debe tener al menos 7 dígitos (o "S/N").'); return }
     loading.value = true
     try {
@@ -2107,10 +2236,15 @@ async function saveCarnet() {
 }
 
 // === DELETE FUNCTIONS ===
-async function deleteCarnet() {
-  try { await ElMessageBox.confirm('¿Está seguro de que desea eliminar el carnet de discapacidad?', 'Confirmar eliminación', { confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning' }) } catch { return }
+async function deleteCarnet(id) {
+  if (!id) return
+  try { await ElMessageBox.confirm('¿Está seguro de que desea eliminar este carnet de discapacidad?', 'Confirmar eliminación', { confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar', type: 'warning' }) } catch { return }
   loading.value = true
-  try { await request({ url: `/carnet-discapacidad/${carnetDiscapacidad.value.id}`, method: 'delete' }); ElMessage.success('Carnet de discapacidad eliminado'); await loadCarnetDiscapacidad(currentAtletaId.value) }
+  try { 
+    await request({ url: `/carnet-discapacidad/${id}`, method: 'delete' }); 
+    ElMessage.success('Carnet de discapacidad eliminado'); 
+    await loadCarnetDiscapacidad(currentAtletaId.value) 
+  }
   catch (error) { console.error('Error eliminando carnet:', error); ElMessage.error('Error al eliminar carnet') } finally { loading.value = false }
 }
 

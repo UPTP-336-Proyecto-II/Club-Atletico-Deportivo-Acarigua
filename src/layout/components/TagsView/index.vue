@@ -286,10 +286,12 @@ export default {
       }
 
       &.active {
-        background-color: var(--color-primary);
-        color: #fff;
-        border-color: var(--color-primary);
-        font-weight: 500;
+        background-color: var(--color-bg-body);
+        color: var(--color-primary);
+        border-color: var(--color-border);
+        border-bottom-color: transparent;
+        font-weight: 600;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 
         &::before {
           display: none;
@@ -298,12 +300,12 @@ export default {
         &::after {
           content: '';
           position: absolute;
-          bottom: 0;
+          top: 0;
           left: 0;
           right: 0;
           height: 3px;
-          background: #ffffff;
-          border-radius: 3px 3px 0 0;
+          background: var(--color-primary);
+          border-radius: 0 0 3px 3px;
         }
       }
     }

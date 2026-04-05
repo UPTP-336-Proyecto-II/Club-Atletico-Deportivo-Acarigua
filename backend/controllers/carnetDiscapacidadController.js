@@ -32,7 +32,7 @@ const getCarnetByAtleta = async (req, res) => {
       WHERE c.ficha_id = ?
     `, [fichaId]);
 
-    res.json(rows.length ? rows[0] : null);
+    res.json(rows);
   } catch (error) {
     console.error('Error fetching carnet discapacidad:', error);
     res.status(500).json({ error: 'Error al obtener el carnet de discapacidad' });

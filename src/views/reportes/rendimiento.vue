@@ -39,7 +39,7 @@
               >
                 <div class="atleta-option">
                   <img v-if="item.foto" :src="getFotoUrl(item.foto)" class="option-avatar">
-                  <div v-else class="option-avatar-placeholder"><i class="el-icon-user" /></div>
+                  <div v-else class="option-avatar-placeholder initials-avatar-mini">{{ getInitials(item.nombre, item.apellido) }}</div>
                   <span>{{ item.nombre }} {{ item.apellido }}</span>
                 </div>
               </el-option>
@@ -122,7 +122,7 @@
         <div class="summary-content">
           <div class="athlete-avatar">
             <img v-if="atleta.foto" :src="getFotoUrl(atleta.foto)" class="avatar-img">
-            <i v-else class="el-icon-user" />
+            <div v-else class="avatar-placeholder initials-avatar-large">{{ getInitials(atleta.nombre, atleta.apellido) }}</div>
           </div>
           <div class="athlete-details">
             <h2>{{ atleta.nombre }} {{ atleta.apellido }}</h2>
@@ -375,6 +375,11 @@ const handleAtletaChange = async (id) => {
 
 const getFotoUrl = (filename) => {
   return `${backendUrl.value}/uploads/atletas/${filename}`
+}
+
+const getInitials = (nombre, apellido) => {
+  if (!nombre && !apellido) return '?'
+  return `${(nombre || '').charAt(0)}${(apellido || '').charAt(0)}`.toUpperCase()
 }
 
 const initPerformanceChart = () => {

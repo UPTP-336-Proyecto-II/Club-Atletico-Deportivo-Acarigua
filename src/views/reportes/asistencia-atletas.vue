@@ -66,9 +66,26 @@
             />
           </div>
 
+          <div class="filter-item">
+            <span class="premium-search-label">Ordenar por</span>
+            <el-select v-model="filters.sort" placeholder="Seleccionar..." class="modern-search-input modern-filter-control" @change="handleFilterChange" style="width: 100%">
+              <el-option label="Porcentaje (Mayor a Menor)" value="perc_desc" />
+              <el-option label="Porcentaje (Menor a Mayor)" value="perc_asc" />
+              <el-option label="Nombre (A-Z)" value="name_asc" />
+              <el-option label="Nombre (Z-A)" value="name_desc" />
+            </el-select>
+          </div>
+
         </div>
       </div>
     </el-card>
+
+    <!-- Category Summary Bar (Non-Print) -->
+    <div v-if="filters.categoria_id && filters.categoria_id !== 'all'" class="category-summary-bar no-print">
+      <el-tag type="info" effect="dark" class="trainer-badge">
+        <i class="el-icon-user" /> Entrenador Responsable: <strong>{{ selectedTrainerName }}</strong>
+      </el-tag>
+    </div>
 
     <!-- Main Content -->
     <div class="table-container">
@@ -96,7 +113,7 @@
               <div class="athlete-cell">
                 <div class="athlete-photo-wrapper">
                   <img v-if="scope.row.foto" :src="getFotoUrl(scope.row.foto)" class="avatar-img" @error="handleImgError">
-                  <div v-else class="avatar-placeholder"><i class="el-icon-user" /></div>
+                  <div v-else class="avatar-placeholder initials-avatar">{{ getInitials(scope.row.nombre, scope.row.apellido) }}</div>
                 </div>
                 <div class="athlete-info">
                   <span class="name">{{ scope.row.nombre }} {{ scope.row.apellido }}</span>
@@ -189,7 +206,7 @@
             <div class="card-header-section">
               <div class="athlete-photo-wrapper">
                 <img v-if="atleta.foto" :src="getFotoUrl(atleta.foto)" class="avatar-img" @error="handleImgError">
-                <div v-else class="avatar-placeholder"><i class="el-icon-user" /></div>
+                <div v-else class="avatar-placeholder initials-avatar">{{ getInitials(atleta.nombre, atleta.apellido) }}</div>
               </div>
               <div class="athlete-info">
                 <span class="name">{{ atleta.nombre }} {{ atleta.apellido }}</span>
@@ -357,7 +374,8 @@ const asistencias = ref([])
 const filters = ref({
   categoria_id: '',
   dateRange: [],
-  search: ''
+  search: '',
+  sort: 'name_asc'
 })
 const showDetailModal = ref(false)
 const selectedAthlete = ref(null)
@@ -371,9 +389,23 @@ const selectedCategoryName = computed(() => {
 
 const selectedTrainerName = computed(() => {
   if (!filters.value.categoria_id) return ''
-  const cat = categorias.value.find(c => c.categoria_id === filters.value.categoria_id)
-  return cat ? cat.entrenador_nombre : ''
+  const cat = categorias.value.find(c => String(c.categoria_id) === String(filters.value.categoria_id))
+  if (!cat) return ''
+  const name = cat.entrenador_nombre || cat.nombre_entrenador || ''
+  const last = cat.entrenador_apellido || cat.apellido_entrenador || ''
+  const fullName = `${name} ${last}`.trim()
+  return fullName || 'No asignado'
 })
+
+const getTrainerForAthlete = (atleta) => {
+  if (!atleta || !atleta.categoria_id) return 'No asignado'
+  const cat = categorias.value.find(c => String(c.categoria_id) === String(atleta.categoria_id))
+  if (!cat) return 'No asignado'
+  const name = cat.entrenador_nombre || cat.nombre_entrenador || ''
+  const last = cat.entrenador_apellido || cat.apellido_entrenador || ''
+  const fullName = `${name} ${last}`.trim()
+  return fullName || 'No asignado'
+}
 
 const currentPage = ref(1)
 const pageSize = ref(10)
@@ -443,8 +475,19 @@ const filteredAthletesStats = computed(() => {
         percentage
       }
     }
+  }).sort((a, b) => {
+    if (filters.value.sort === 'perc_desc') return b.stats.percentage - a.stats.percentage
+    if (filters.value.sort === 'perc_asc') return a.stats.percentage - b.stats.percentage
+    if (filters.value.sort === 'name_asc') return `${a.nombre} ${a.apellido}`.localeCompare(`${b.nombre} ${b.apellido}`)
+    if (filters.value.sort === 'name_desc') return `${b.nombre} ${b.apellido}`.localeCompare(`${a.nombre} ${a.apellido}`)
+    return 0
   })
 })
+
+const getInitials = (nombre, apellido) => {
+  if (!nombre && !apellido) return '?'
+  return `${(nombre || '').charAt(0)}${(apellido || '').charAt(0)}`.toUpperCase()
+}
 
 const selectedAthleteHistory = computed(() => {
   if (!selectedAthlete.value) return []
@@ -502,7 +545,7 @@ const printIndividual = async (row) => {
       `${row.nombre} ${row.apellido}`,
       sorted,
       row.categoria_nombre,
-      selectedTrainerName.value
+      getTrainerForAthlete(row)
     )
   } catch (e) {
     console.error(e)
@@ -591,6 +634,33 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.asistencia-report .category-summary-bar {
+  margin: 0 0 20px 0;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.asistencia-report .trainer-badge {
+  font-size: 0.95rem;
+  height: auto;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-main);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.asistencia-report .trainer-badge i {
+  margin-right: 8px;
+  color: var(--color-primary);
+}
+
+.asistencia-report .trainer-badge strong {
+  color: var(--color-primary);
+  margin-left: 4px;
+}
+
 .report-container {
   padding: 20px;
   --filter-shell-bg: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);

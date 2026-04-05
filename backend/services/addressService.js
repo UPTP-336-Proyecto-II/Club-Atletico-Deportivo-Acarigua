@@ -3,7 +3,7 @@ const { isLegacySchema, isMigratedLegacySchema } = require('./schemaService');
 
 const addressService = {
     async findOrCreateAddress(addressData) {
-        const { pais, estado, municipio, parroquia, descripcion_descriptiva } = addressData;
+        const { pais, estado, municipio, parroquia, descripcion_descriptiva, localidad, tipo_vivienda, ubicacion_vivienda } = addressData;
         const legacySchema = await isLegacySchema();
         const migratedLegacySchema = await isMigratedLegacySchema();
 
@@ -17,13 +17,15 @@ const addressService = {
                 const estadoName = estado || '';
                 const municipioName = municipio || '';
                 const parroquiaName = parroquia || '';
-                const localidad = descripcion_descriptiva || '';
+                const loc = localidad || descripcion_descriptiva || '';
+                const tipoViv = tipo_vivienda || '';
+                const ubiViv = ubicacion_vivienda || '';
 
                 if (migratedLegacySchema) {
                     // Migrated legacy schema: 'parroquias' table is gone, 'direcciones' has direct columns
                     const [dirRes] = await connection.execute(
                         'INSERT INTO direcciones (parroquias_id, pais, estado, municipio, parroquia, descripcion_descriptiva, localidad, tipo_vivienda, `ubicación vivienda`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                        [0, pais || 'Venezuela', estadoName, municipioName, parroquiaName, localidad, localidad, '', '']
+                        [0, pais || 'Venezuela', estadoName, municipioName, parroquiaName, descripcion_descriptiva || '', loc, tipoViv, ubiViv]
                     );
                     direccionId = dirRes.insertId;
                 } else {
@@ -87,7 +89,7 @@ const addressService = {
 
                     const [dirRes] = await connection.execute(
                         'INSERT INTO direcciones (parroquias_id, localidad, tipo_vivienda, `ubicación vivienda`) VALUES (?, ?, ?, ?)',
-                        [finalParroquiaId, localidad, '', localidad]
+                        [finalParroquiaId, loc, tipoViv, ubiViv]
                     );
                     direccionId = dirRes.insertId;
                 }
@@ -170,7 +172,10 @@ const addressService = {
                     d.municipio as municipio,
                     d.parroquia as parroquia,
                     d.descripcion_descriptiva as descripcion_descriptiva,
-                    d.pais as pais
+                    d.pais as pais,
+                    d.localidad as localidad,
+                    d.tipo_vivienda as tipo_vivienda,
+                    d.\`ubicación vivienda\` as ubicacion_vivienda
                 `;
             }
             return `
@@ -178,7 +183,10 @@ const addressService = {
                 m.municipio as municipio,
                 p.parroquia as parroquia,
                 d.localidad as descripcion_descriptiva,
-                'Venezuela' as pais
+                'Venezuela' as pais,
+                d.localidad as localidad,
+                d.tipo_vivienda as tipo_vivienda,
+                d.\`ubicación vivienda\` as ubicacion_vivienda
             `;
         }
         return `
@@ -186,7 +194,10 @@ const addressService = {
             ue.nombre as estado, 
             um.nombre as municipio, 
             upa.nombre as parroquia, 
-            d.punto_referencia as descripcion_descriptiva
+            d.punto_referencia as descripcion_descriptiva,
+            d.localidad as localidad,
+            d.tipo_vivienda as tipo_vivienda,
+            d.\`ubicación vivienda\` as ubicacion_vivienda
         `;
     },
 
@@ -219,7 +230,10 @@ const addressService = {
         m.municipio as municipio,
         p.parroquia as parroquia,
         d.localidad as descripcion_descriptiva,
-        'Venezuela' as pais
+        'Venezuela' as pais,
+        d.localidad as localidad,
+        d.tipo_vivienda as tipo_vivienda,
+        d.\`ubicación vivienda\` as ubicacion_vivienda
     `,
 
     getJoins: () => `
@@ -236,7 +250,10 @@ const addressService = {
                 d.municipio as municipio,
                 d.parroquia as parroquia,
                 d.descripcion_descriptiva as descripcion_descriptiva,
-                d.pais as pais
+                d.pais as pais,
+                d.localidad as localidad,
+                d.tipo_vivienda as tipo_vivienda,
+                d.\`ubicación vivienda\` as ubicacion_vivienda
             `;
         }
         return `
@@ -244,7 +261,10 @@ const addressService = {
             m.municipio as municipio,
             p.parroquia as parroquia,
             d.localidad as descripcion_descriptiva,
-            'Venezuela' as pais
+            'Venezuela' as pais,
+            d.localidad as localidad,
+            d.tipo_vivienda as tipo_vivienda,
+            d.\`ubicación vivienda\` as ubicacion_vivienda
         `;
     },
 
