@@ -93,10 +93,14 @@
           </div>
           <div v-if="canUserEdit" class="card-actions">
             <el-button
-              type="text"
-              icon="el-icon-edit"
+              type="primary"
+              size="small"
+              :icon="Edit"
+              class="edit-category-btn"
               @click="editarCategoria(cat)"
-            />
+            >
+              Editar
+            </el-button>
           </div>
         </div>
 
@@ -119,7 +123,7 @@
       </el-card>
     </div>
 
-    <!-- Modal Form (Solo editar entrenador y estatus) -->
+    <!-- Modal Form -->
     <el-dialog
       title="Editar Categoría"
       v-model="mostrarModal"
@@ -133,6 +137,15 @@
       </div>
 
       <el-form ref="form" :model="formulario" label-position="top">
+        <el-form-item label="Nombre de la CategorÃ­a">
+          <el-input
+            v-model="formulario.nombre_categoria"
+            maxlength="50"
+            show-word-limit
+            placeholder="Ej: Sub-13"
+          />
+        </el-form-item>
+
         <el-form-item label="Entrenador Responsable">
           <el-select v-model="formulario.entrenador_id" placeholder="Seleccionar entrenador" style="width: 100%" filterable clearable>
             <el-option
@@ -174,6 +187,7 @@ import { ref, computed, onMounted } from 'vue'
 import request from '@/utils/request'
 import { canEdit } from '@/utils/permission'
 import { ElMessage } from 'element-plus'
+import { Edit } from '@element-plus/icons-vue'
 import { useServerDataRefresh } from '@/composables/useServerDataRefresh'
 
 const loading = ref(false)
@@ -196,6 +210,12 @@ const formulario = ref({
 })
 
 const canUserEdit = computed(() => canEdit())
+
+const normalizeText = (value) => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .toLowerCase()
+  .trim()
 
 const categoriasFiltradas = computed(() => {
   let result = categorias.value
@@ -264,19 +284,37 @@ const editarCategoria = (categoria) => {
 }
 
 const guardarCategoria = async () => {
+  const nombreCategoria = String(formulario.value.nombre_categoria || '').trim()
+
+  if (!nombreCategoria) {
+    ElMessage.warning('El nombre de la categoria es obligatorio')
+    return
+  }
+
+  const existeNombre = categorias.value.some(cat =>
+    String(cat.categoria_id) !== String(formulario.value.id) &&
+    normalizeText(cat.nombre_categoria) === normalizeText(nombreCategoria)
+  )
+
+  if (existeNombre) {
+    ElMessage.warning('Ya existe una categoria con ese nombre')
+    return
+  }
+
   guardando.value = true
   try {
     await request({
       url: `/categoria/${formulario.value.id}`,
       method: 'put',
       data: {
+        nombre_categoria: nombreCategoria,
         entrenador_id: formulario.value.entrenador_id,
         estatus: formulario.value.estatus
       }
     })
     ElMessage.success('Categoría actualizada')
     mostrarModal.value = false
-    cargarDatos()
+    await cargarDatos()
   } catch (error) {
     console.error(error)
     ElMessage.error('Error al guardar')
@@ -390,13 +428,48 @@ onMounted(() => {
   margin-left: auto;
 }
 
-.card-actions .el-button {
-  font-size: 1.2rem;
-  color: var(--color-text-muted);
+.edit-category-btn {
+  background: linear-gradient(135deg, #ff3b30 0%, #cf1a1e 100%) !important;
+  border: 1px solid rgba(255, 59, 48, 0.92) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  box-shadow: 0 8px 18px rgba(255, 59, 48, 0.28) !important;
+  transition: all 0.25s ease !important;
 }
 
-.card-actions .el-button:hover {
-  color: var(--color-primary);
+.edit-category-btn:hover {
+  background: linear-gradient(135deg, #ff574d 0%, #e2291f 100%) !important;
+  border-color: rgba(255, 87, 77, 0.98) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(255, 59, 48, 0.34) !important;
+}
+
+.edit-category-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(255, 59, 48, 0.25) !important;
+}
+
+.edit-category-btn :deep(.el-icon),
+.edit-category-btn :deep(span) {
+  color: #ffffff !important;
+}
+
+[data-theme='dark'] .edit-category-btn,
+html.dark .edit-category-btn {
+  background: linear-gradient(135deg, #ff4d4f 0%, #d7263d 100%) !important;
+  border-color: rgba(255, 128, 128, 0.9) !important;
+  box-shadow:
+    0 10px 24px rgba(255, 59, 48, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.09) inset !important;
+}
+
+[data-theme='dark'] .edit-category-btn:hover,
+html.dark .edit-category-btn:hover {
+  background: linear-gradient(135deg, #ff6668 0%, #e5384f 100%) !important;
+  border-color: rgba(255, 170, 170, 0.95) !important;
 }
 
 .card-body {

@@ -105,17 +105,17 @@ export const constantRoutes = [
  * the routes that need to be dynamically loaded based on user roles
  */
 export const asyncRoutes = [
-  // ========== ASISTENCIA (Solo super_user y administrador) ==========
+  // ========== ASISTENCIA (super_user, administrador, entrenador) ==========
   {
     path: '/asistencia',
     component: Layout,
-    meta: { roles: ['super_user', 'administrador'] },
+    meta: { roles: ['super_user', 'administrador', 'entrenador'] },
     children: [
       {
         path: 'registro',
         component: () => import('@/views/asistencia/registro.vue'),
         name: 'RegistroDiario',
-        meta: { title: 'Asistencia', icon: 'el-icon-document', roles: ['super_user', 'administrador'] }
+        meta: { title: 'Asistencia', icon: 'el-icon-document', roles: ['super_user', 'administrador', 'entrenador'] }
       }
     ]
   },

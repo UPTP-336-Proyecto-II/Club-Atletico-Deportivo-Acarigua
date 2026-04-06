@@ -32,7 +32,7 @@
             v-model="categoria_id"
             placeholder="Seleccionar..."
             filterable
-            @change="loadData"
+            @change="handleCategoriaChange"
             popper-class="modern-filter-popper"
             class="modern-filter-control"
             style="width: 100%"
@@ -51,9 +51,7 @@
           <el-select
             v-model="entrenador_id"
             placeholder="Responsable"
-            filterable
-            clearable
-            @change="handleEntrenadorChange"
+            :disabled="true"
             popper-class="modern-filter-popper"
             class="modern-filter-control"
             style="width: 100%"
@@ -100,7 +98,7 @@
             type="primary"
             icon="el-icon-check"
             :loading="saving"
-            :disabled="!categoria_id || listaAtletas.length === 0"
+            :disabled="!canUserEdit || !categoria_id || listaAtletas.length === 0"
             @click="performSave"
             class="premium-save-btn"
           >
@@ -125,8 +123,8 @@
         <!-- Bulk Actions -->
         <div class="bulk-actions">
           <el-button-group>
-            <el-button size="mini" type="success" plain @click="setAllStatus('presente')">Todos Presentes</el-button>
-            <el-button size="mini" type="danger" plain @click="setAllStatus('ausente')">Todos Ausentes</el-button>
+            <el-button size="mini" type="success" plain :disabled="!canUserEdit" @click="setAllStatus('presente')">Todos Presentes</el-button>
+            <el-button size="mini" type="danger" plain :disabled="!canUserEdit" @click="setAllStatus('ausente')">Todos Ausentes</el-button>
           </el-button-group>
           <span class="summary-text">
             Total: {{ filteredAtletas.length }} |
@@ -163,7 +161,7 @@
 
           <el-table-column label="Asistencia" min-width="320" align="center">
             <template #default="scope">
-              <el-radio-group v-model="scope.row.status" size="small" class="status-group" @change="scope.row.isSaved = false">
+              <el-radio-group v-model="scope.row.status" size="small" class="status-group" :disabled="!canUserEdit" @change="scope.row.isSaved = false">
                 <el-radio-button label="presente">
                   <i class="el-icon-check" /> Presente
                 </el-radio-button>
@@ -183,6 +181,7 @@
                 v-model="scope.row.observaciones"
                 size="small"
                 placeholder="Nota opcional..."
+                :disabled="!canUserEdit"
                 @input="scope.row.isSaved = false"
               />
             </template>
@@ -225,7 +224,7 @@
             <!-- Asistencia Radio Buttons -->
             <div class="card-attendance-section">
               <span class="section-label">Asistencia:</span>
-              <el-radio-group v-model="atleta.status" size="small" class="status-group-mobile" @change="atleta.isSaved = false">
+              <el-radio-group v-model="atleta.status" size="small" class="status-group-mobile" :disabled="!canUserEdit" @change="atleta.isSaved = false">
                 <el-radio-button label="presente">
                   <i class="el-icon-check" /> Presente
                 </el-radio-button>
@@ -245,6 +244,7 @@
                 v-model="atleta.observaciones"
                 size="small"
                 placeholder="Nota opcional..."
+                :disabled="!canUserEdit"
                 @input="atleta.isSaved = false"
               />
             </div>
@@ -261,6 +261,7 @@ import { getCategorias } from '@/api/categorias'
 import { getAtletas } from '@/api/atletas'
 import { getAsistencias, createAsistencia, updateAsistencia } from '@/api/asistencias'
 import { getPlantel } from '@/api/plantel'
+import { canEdit } from '@/utils/permission'
 import { ElMessage } from 'element-plus'
 import { useServerDataRefresh } from '@/composables/useServerDataRefresh'
 
@@ -275,6 +276,7 @@ const tipo_evento = ref('Entrenamiento')
 const listaAtletas = ref([])
 const searchQuery = ref('')
 const backendUrl = 'http://localhost:3000'
+const canUserEdit = computed(() => canEdit())
 
 const normalizeText = (value) => {
   return String(value || '')
@@ -285,12 +287,7 @@ const normalizeText = (value) => {
 }
 
 const categoriasFiltradas = computed(() => {
-  if (!entrenador_id.value) return categorias.value
-
-  const entrenadorActual = String(entrenador_id.value)
-  const matches = categorias.value.filter(cat => String(cat.entrenador_id || '') === entrenadorActual)
-
-  return matches.length > 0 ? matches : categorias.value
+  return categorias.value
 })
 
 const filteredAtletas = computed(() => {
@@ -318,6 +315,7 @@ const getTodayDate = () => {
 const fetchCategorias = async () => {
   try {
     categorias.value = await getCategorias()
+    syncEntrenadorFromCategoria()
   } catch (error) {
     ElMessage.error('Error cargando categorías')
   }
@@ -336,15 +334,20 @@ const fetchEntrenadores = async () => {
   }
 }
 
-const handleEntrenadorChange = async () => {
-  if (!categoria_id.value) return
-
-  const categoriaSigueDisponible = categoriasFiltradas.value.some(
+const syncEntrenadorFromCategoria = () => {
+  const categoriaSeleccionada = categorias.value.find(
     cat => String(cat.categoria_id) === String(categoria_id.value)
   )
 
-  if (!categoriaSigueDisponible) {
-    categoria_id.value = ''
+  entrenador_id.value = categoriaSeleccionada && categoriaSeleccionada.entrenador_id
+    ? categoriaSeleccionada.entrenador_id
+    : ''
+}
+
+const handleCategoriaChange = async () => {
+  syncEntrenadorFromCategoria()
+
+  if (!categoria_id.value) {
     listaAtletas.value = []
     return
   }
@@ -360,6 +363,7 @@ const handleTipoEventoChange = async () => {
 const loadData = async () => {
   if (!categoria_id.value) return
 
+  syncEntrenadorFromCategoria()
   loading.value = true
   listaAtletas.value = []
 
@@ -403,6 +407,7 @@ const loadData = async () => {
 }
 
 const setAllStatus = (status) => {
+  if (!canUserEdit.value) return
   listaAtletas.value.forEach(a => {
     a.status = status
     a.isSaved = false
@@ -410,8 +415,13 @@ const setAllStatus = (status) => {
 }
 
 const performSave = async () => {
-  if (entrenadores.value.length > 0 && !entrenador_id.value) {
-    ElMessage.warning('Seleccione un entrenador responsable')
+  if (!canUserEdit.value) {
+    ElMessage.warning('No tiene permisos para editar asistencias')
+    return
+  }
+
+  if (!entrenador_id.value) {
+    ElMessage.warning('La categorÃ­a no tiene entrenador asignado')
     return
   }
 
@@ -474,6 +484,7 @@ useServerDataRefresh(async () => {
     fetchCategorias(),
     fetchEntrenadores()
   ])
+  syncEntrenadorFromCategoria()
 
   if (categoria_id.value) {
     await loadData()

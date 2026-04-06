@@ -381,6 +381,28 @@ const showDetailModal = ref(false)
 const selectedAthlete = ref(null)
 const backendUrl = ref('http://localhost:3000')
 
+const normalizeStatus = (value) => {
+  if (value === undefined || value === null || value === '') return 'presente'
+
+  const numericValue = Number(value)
+  if (!Number.isNaN(numericValue) && String(value).trim() !== '') {
+    if (numericValue === 0 || numericValue === 3) return 'ausente'
+    if (numericValue === 2 || numericValue === 4) return 'justificativo'
+    return 'presente'
+  }
+
+  const normalized = String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+
+  if (['presente', 'asiste', 'asistencia'].includes(normalized)) return 'presente'
+  if (['ausente', 'inasistencia', 'falta'].includes(normalized)) return 'ausente'
+  if (['justificado', 'justificativo', 'falta justificada', 'reposo'].includes(normalized)) return 'justificativo'
+  return 'presente'
+}
+
 const selectedCategoryName = computed(() => {
   if (!filters.value.categoria_id) return 'Todas las Categorías'
   const cat = categorias.value.find(c => c.categoria_id === filters.value.categoria_id)
@@ -503,7 +525,13 @@ const fetchAtletas = async () => {
 }
 
 const fetchAsistencias = async () => {
-  asistencias.value = await getAsistencias()
+  const response = await getAsistencias()
+  asistencias.value = Array.isArray(response)
+    ? response.map(item => ({
+      ...item,
+      estatus: normalizeStatus(item.estatus)
+    }))
+    : []
 }
 
 const initialLoad = async () => {
@@ -588,21 +616,23 @@ const formatDate = (date) => {
 }
 
 const getStatusType = (estatus) => {
+  const normalizedStatus = normalizeStatus(estatus)
   const map = {
     'presente': 'success',
     'ausente': 'danger',
     'justificativo': 'warning'
   }
-  return map[estatus] || 'info'
+  return map[normalizedStatus] || 'info'
 }
 
 const getStatusLabel = (estatus) => {
+  const normalizedStatus = normalizeStatus(estatus)
   const map = {
     'presente': 'Presente',
     'ausente': 'Ausente',
     'justificativo': 'Justificado'
   }
-  return map[estatus] || estatus
+  return map[normalizedStatus] || normalizedStatus
 }
 
 const getProgressColor = (per) => {
